@@ -41,10 +41,11 @@ export async function sendSubmissionNotification(
   const resend = getResend();
 
   if (!resend) {
-    console.warn('Email notifications disabled: RESEND_API_KEY not set');
+    console.warn('[Email] RESEND_API_KEY not set - emails disabled');
     return { success: false, error: 'Email not configured' };
   }
 
+  console.log(`[Email] Preparing submission notification for form ${submission.formName}`);
   const { formName, formId, submissionId, submittedAt, data, workspaceName } = submission;
 
   // Format submission data as HTML table
@@ -137,17 +138,18 @@ Submission ID: ${submissionId}
   `.trim();
 
   try {
-    await resend.emails.send({
+    console.log(`[Email] Sending submission notification to ${Array.isArray(to) ? to.join(', ') : to}`);
+    const result = await resend.emails.send({
       from: EMAIL_FROM,
       to,
       subject: `New submission: ${formName}`,
       html,
       text,
     });
-
+    console.log(`[Email] Sent successfully:`, result);
     return { success: true };
   } catch (error) {
-    console.error('Failed to send email notification:', error);
+    console.error('[Email] Failed to send submission notification:', error);
     return { success: false, error: String(error) };
   }
 }
@@ -280,17 +282,18 @@ https://withforma.io
   `.trim();
 
   try {
-    await resend.emails.send({
+    console.log(`[Email] Sending invitation to ${email} for workspace ${workspaceName}`);
+    const result = await resend.emails.send({
       from: EMAIL_FROM,
       to: email,
       subject: `${invitedByName} invited you to join ${workspaceName} on Forma`,
       html,
       text,
     });
-
+    console.log(`[Email] Invitation sent successfully:`, result);
     return { success: true };
   } catch (error) {
-    console.error('Failed to send invitation email:', error);
+    console.error('[Email] Failed to send invitation:', error);
     return { success: false, error: String(error) };
   }
 }
