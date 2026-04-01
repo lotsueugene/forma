@@ -88,14 +88,41 @@ export async function POST(request: NextRequest) {
     let textContent: string | null = email.text || null;
     let htmlContent: string | null = email.html || null;
 
-    if (resend && email.email_id && !textContent && !htmlContent) {
+    // Try fetching from Resend's inbound API directly
+    if (email.email_id && !textContent && !htmlContent) {
       try {
         console.log(`[Resend Inbound] Fetching email content for ${email.email_id}`);
-        const fullEmail = await resend.emails.get(email.email_id);
-        console.log(`[Resend Inbound] Full email data:`, JSON.stringify(fullEmail, null, 2));
-        if (fullEmail.data) {
-          textContent = (fullEmail.data as { text?: string }).text || null;
-          htmlContent = (fullEmail.data as { html?: string }).html || null;
+
+        // Try the inbound-specific endpoint
+        const response = await fetch(`https://api.resend.com/emails/${email.email_id}`, {
+          headers: {
+            'Authorization': `Bearer ${process.env.RESEND_API_KEY}`,
+          },
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          console.log(`[Resend Inbound] API response:`, JSON.stringify(data, null, 2));
+          textContent = data.text || null;
+          htmlContent = data.html || null;
+        } else {
+          console.log(`[Resend Inbound] API returned ${response.status}`);
+
+          // Try inbound-specific endpoint
+          const inboundResponse = await fetch(`https://api.resend.com/inbound-emails/${email.email_id}`, {
+            headers: {
+              'Authorization': `Bearer ${process.env.RESEND_API_KEY}`,
+            },
+          });
+
+          if (inboundResponse.ok) {
+            const inboundData = await inboundResponse.json();
+            console.log(`[Resend Inbound] Inbound API response:`, JSON.stringify(inboundData, null, 2));
+            textContent = inboundData.text || inboundData.body || null;
+            htmlContent = inboundData.html || null;
+          } else {
+            console.log(`[Resend Inbound] Inbound API returned ${inboundResponse.status}`);
+          }
         }
       } catch (fetchError) {
         console.error(`[Resend Inbound] Failed to fetch email content:`, fetchError);
