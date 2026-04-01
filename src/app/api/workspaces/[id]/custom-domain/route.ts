@@ -17,7 +17,8 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
     const { id } = await params;
-    const access = await verifyWorkspaceAccess(session.user.id, id, 'manager');
+    // Allow any workspace member to view custom domain status
+    const access = await verifyWorkspaceAccess(session.user.id, id, 'viewer');
     if (!access.allowed) {
       return NextResponse.json({ error: access.error }, { status: 403 });
     }

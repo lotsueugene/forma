@@ -419,16 +419,17 @@ export default function TeamPage() {
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-6">
-                    <div className="hidden sm:flex items-center gap-2">
+                  <div className="flex items-center gap-2 sm:gap-6">
+                    <div className="flex items-center gap-2">
                       <div
                         className={cn(
-                          'flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium capitalize',
+                          'flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-1 rounded-full text-[10px] sm:text-xs font-medium capitalize',
                           roleColor
                         )}
                       >
-                        <RoleIcon size={14} />
-                        {member.role}
+                        <RoleIcon size={12} className="sm:hidden" />
+                        <RoleIcon size={14} className="hidden sm:block" />
+                        <span className="hidden sm:inline">{member.role}</span>
                       </div>
                     </div>
 

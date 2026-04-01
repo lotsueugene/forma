@@ -517,25 +517,19 @@ export default function SettingsPage() {
       </div>
 
       <div className="flex flex-col lg:flex-row gap-6">
-        {/* Mobile Horizontal Tabs */}
-        <div className="lg:hidden overflow-x-auto -mx-4 px-4 pb-2">
-          <div className="flex gap-2 min-w-max">
+        {/* Mobile Dropdown */}
+        <div className="lg:hidden">
+          <select
+            value={activeTab}
+            onChange={(e) => setActiveTab(e.target.value as SettingsTab)}
+            className="w-full h-12 px-4 text-base bg-white border border-gray-300 rounded-lg outline-none focus:border-safety-orange"
+          >
             {tabs.map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id as SettingsTab)}
-                className={cn(
-                  'flex items-center gap-2 px-4 py-2 rounded-full text-sm whitespace-nowrap transition-colors',
-                  activeTab === tab.id
-                    ? 'bg-safety-orange text-white'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                )}
-              >
-                <tab.icon size={16} weight={activeTab === tab.id ? 'fill' : 'regular'} />
+              <option key={tab.id} value={tab.id}>
                 {tab.label}
-              </button>
+              </option>
             ))}
-          </div>
+          </select>
         </div>
 
         {/* Desktop Sidebar */}
