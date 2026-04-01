@@ -23,6 +23,9 @@ import {
   WebhooksLogo,
   Spinner,
   Link as LinkIcon,
+  Play,
+  Pause,
+  Archive,
 } from '@phosphor-icons/react';
 import { cn } from '@/lib/utils';
 
@@ -62,6 +65,8 @@ export default function FormDetailPage() {
   const [copied, setCopied] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [showExportMenu, setShowExportMenu] = useState(false);
+  const [showStatusMenu, setShowStatusMenu] = useState(false);
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
 
   // Filter submissions based on search query
   const filteredSubmissions = submissions.filter((submission) => {
@@ -180,6 +185,28 @@ export default function FormDetailPage() {
     setTimeout(() => setCopied(null), 2000);
   };
 
+  const updateFormStatus = async (newStatus: string) => {
+    if (!form) return;
+    setIsUpdatingStatus(true);
+    try {
+      const response = await fetch(`/api/forms/${formId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setForm({ ...form, status: data.form.status });
+      }
+    } catch (err) {
+      console.error('Failed to update status:', err);
+    } finally {
+      setIsUpdatingStatus(false);
+      setShowStatusMenu(false);
+    }
+  };
+
   const toggleSelectAll = () => {
     if (selectedSubmissions.length === filteredSubmissions.length) {
       setSelectedSubmissions([]);
@@ -245,13 +272,77 @@ export default function FormDetailPage() {
           <div>
             <div className="flex items-center gap-3">
               <h1 className="text-2xl font-semibold text-gray-900">{form.name}</h1>
-              <div
-                className={cn(
-                  'badge',
-                  form.status === 'active' ? 'badge-success' : 'badge-warning'
-                )}
-              >
-                {form.status}
+              <div className="relative">
+                <button
+                  onClick={() => setShowStatusMenu(!showStatusMenu)}
+                  disabled={isUpdatingStatus}
+                  className={cn(
+                    'badge cursor-pointer flex items-center gap-1 hover:opacity-80 transition-opacity',
+                    form.status === 'active' ? 'badge-success' :
+                    form.status === 'paused' ? 'bg-amber-100 text-amber-700' :
+                    form.status === 'archived' ? 'bg-gray-100 text-gray-600' :
+                    'badge-warning'
+                  )}
+                >
+                  {isUpdatingStatus ? (
+                    <Spinner size={12} className="animate-spin" />
+                  ) : (
+                    <>
+                      {form.status}
+                      <CaretDown size={12} />
+                    </>
+                  )}
+                </button>
+                <AnimatePresence>
+                  {showStatusMenu && (
+                    <>
+                      <div className="fixed inset-0 z-10" onClick={() => setShowStatusMenu(false)} />
+                      <motion.div
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: 8 }}
+                        className="absolute left-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden z-20"
+                      >
+                        {form.status !== 'active' && (
+                          <button
+                            onClick={() => updateFormStatus('active')}
+                            className="w-full px-4 py-3 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                          >
+                            <Play size={16} className="text-emerald-600" />
+                            {form.status === 'draft' ? 'Publish' : 'Resume'}
+                          </button>
+                        )}
+                        {form.status === 'active' && (
+                          <button
+                            onClick={() => updateFormStatus('paused')}
+                            className="w-full px-4 py-3 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                          >
+                            <Pause size={16} className="text-amber-600" />
+                            Pause
+                          </button>
+                        )}
+                        {form.status !== 'draft' && (
+                          <button
+                            onClick={() => updateFormStatus('draft')}
+                            className="w-full px-4 py-3 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2 border-t border-gray-100"
+                          >
+                            <PencilSimple size={16} className="text-gray-500" />
+                            Unpublish (Draft)
+                          </button>
+                        )}
+                        {form.status !== 'archived' && (
+                          <button
+                            onClick={() => updateFormStatus('archived')}
+                            className="w-full px-4 py-3 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2 border-t border-gray-100"
+                          >
+                            <Archive size={16} className="text-gray-500" />
+                            Archive
+                          </button>
+                        )}
+                      </motion.div>
+                    </>
+                  )}
+                </AnimatePresence>
               </div>
             </div>
             <p className="text-gray-500">{form.description || 'No description'}</p>
@@ -305,15 +396,21 @@ export default function FormDetailPage() {
           <div className="text-sm text-gray-500 mb-1">Form Status</div>
           <div className={cn(
             'text-lg font-semibold',
-            form.status === 'active' ? 'text-emerald-600' : 'text-yellow-600'
+            form.status === 'active' ? 'text-emerald-600' :
+            form.status === 'paused' ? 'text-amber-600' :
+            form.status === 'archived' ? 'text-gray-500' :
+            'text-yellow-600'
           )}>
-            {form.status === 'active' ? 'Live' : 'Draft'}
+            {form.status === 'active' ? 'Live' :
+             form.status === 'paused' ? 'Paused' :
+             form.status === 'archived' ? 'Archived' :
+             'Draft'}
           </div>
         </div>
       </div>
 
-      {/* Quick Share Section - Always visible for active forms */}
-      {form.status === 'active' && (
+      {/* Quick Share Section - Visible for active and paused forms */}
+      {(form.status === 'active' || form.status === 'paused') && (
         <div className="card p-6 border-safety-orange/30 bg-safety-orange/5">
           <div className="flex items-center gap-2 mb-4">
             <LinkIcon size={20} className="text-safety-orange" />
