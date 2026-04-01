@@ -132,6 +132,17 @@ export default function PricingSection() {
       .finally(() => setLoading(false));
   }, []);
 
+  // Calculate discount percentage from plans that have both monthly and yearly prices
+  const discountPercent = (() => {
+    const planWithPrices = plans.find(
+      p => p.monthlyPrice && p.yearlyPrice && p.monthlyPrice > 0 && p.yearlyPrice > 0
+    );
+    if (planWithPrices && planWithPrices.monthlyPrice && planWithPrices.yearlyPrice) {
+      return Math.round((1 - planWithPrices.yearlyPrice / planWithPrices.monthlyPrice) * 100);
+    }
+    return 0;
+  })();
+
   return (
     <section id="pricing" className="relative py-24 lg:py-32 bg-white">
       <div className="relative mx-auto w-full max-w-[1400px] px-4 lg:px-9">
@@ -184,16 +195,18 @@ export default function PricingSection() {
               )}
             >
               Yearly
-              <span
-                className={cn(
-                  'text-[11px] px-2 py-0.5 rounded-sm whitespace-nowrap',
-                  isYearly
-                    ? 'bg-safety-orange text-white'
-                    : 'bg-safety-orange/20 text-safety-orange'
-                )}
-              >
-                -20%
-              </span>
+              {discountPercent > 0 && (
+                <span
+                  className={cn(
+                    'text-[11px] px-2 py-0.5 rounded-sm whitespace-nowrap',
+                    isYearly
+                      ? 'bg-safety-orange text-white'
+                      : 'bg-safety-orange/20 text-safety-orange'
+                  )}
+                >
+                  -{discountPercent}%
+                </span>
+              )}
             </button>
           </div>
         </motion.div>
