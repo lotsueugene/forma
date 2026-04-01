@@ -177,6 +177,7 @@ async function verifyRecaptcha(
 
 /**
  * Parse spam settings from form settings JSON
+ * If reCAPTCHA is enabled but no secretKey provided, uses env var
  */
 export function parseSpamSettings(formSettings: string | null): SpamSettings {
   if (!formSettings) {
@@ -185,7 +186,14 @@ export function parseSpamSettings(formSettings: string | null): SpamSettings {
 
   try {
     const settings = JSON.parse(formSettings) as { spam?: SpamSettings };
-    return settings.spam || getDefaultSpamSettings();
+    const spamSettings = settings.spam || getDefaultSpamSettings();
+
+    // If reCAPTCHA enabled but no key, use env var
+    if (spamSettings.recaptcha?.enabled && !spamSettings.recaptcha.secretKey) {
+      spamSettings.recaptcha.secretKey = process.env.RECAPTCHA_SECRET_KEY || '';
+    }
+
+    return spamSettings;
   } catch {
     return getDefaultSpamSettings();
   }
@@ -193,11 +201,9 @@ export function parseSpamSettings(formSettings: string | null): SpamSettings {
 
 /**
  * Get default spam settings for new forms
- * Automatically enables reCAPTCHA if env var is configured
+ * reCAPTCHA is disabled by default - must be explicitly enabled per form
  */
 export function getDefaultSpamSettings(): SpamSettings {
-  const recaptchaSecretKey = process.env.RECAPTCHA_SECRET_KEY;
-
   return {
     honeypot: {
       enabled: true,
@@ -209,8 +215,8 @@ export function getDefaultSpamSettings(): SpamSettings {
       maxPerHour: 30,
     },
     recaptcha: {
-      enabled: !!recaptchaSecretKey,
-      secretKey: recaptchaSecretKey || '',
+      enabled: false,
+      secretKey: '',
       minScore: 0.5,
     },
   };
