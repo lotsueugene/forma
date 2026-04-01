@@ -76,6 +76,7 @@ export const authOptions: NextAuthOptions = {
     async jwt({ token, user, trigger }) {
       if (user) {
         token.id = user.id;
+        token.image = user.image;
         // Get user's default workspace on login
         const workspace = await getDefaultWorkspace(user.id);
         token.workspaceId = workspace?.id;
@@ -85,6 +86,14 @@ export const authOptions: NextAuthOptions = {
       if (trigger === 'update' && token.id) {
         const workspace = await getDefaultWorkspace(token.id as string);
         token.workspaceId = workspace?.id;
+        // Refresh image from database
+        const dbUser = await prisma.user.findUnique({
+          where: { id: token.id as string },
+          select: { image: true },
+        });
+        if (dbUser) {
+          token.image = dbUser.image;
+        }
       }
 
       return token;
@@ -93,6 +102,7 @@ export const authOptions: NextAuthOptions = {
       if (session.user) {
         session.user.id = token.id as string;
         session.user.workspaceId = token.workspaceId as string | undefined;
+        session.user.image = token.image as string | undefined;
       }
       return session;
     },

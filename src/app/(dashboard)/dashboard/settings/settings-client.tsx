@@ -549,12 +549,17 @@ export default function SettingsPage() {
                 {/* Avatar */}
                 <div className="flex items-center gap-4 mb-6">
                   <div className="relative">
-                    <div className="w-20 h-20 rounded-full bg-gradient-to-br from-[#ef6f2e] to-[#ee6018] flex items-center justify-center text-white font-bold text-2xl">
-                      {userInitials}
-                    </div>
-                    <button className="absolute bottom-0 right-0 w-7 h-7 bg-gray-100 border border-gray-200 rounded-full flex items-center justify-center text-gray-600 hover:text-gray-900">
-                      <Camera size={14} />
-                    </button>
+                    {user?.image ? (
+                      <img
+                        src={user.image}
+                        alt={user.name || 'Profile'}
+                        className="w-20 h-20 rounded-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-20 h-20 rounded-full bg-gradient-to-br from-[#ef6f2e] to-[#ee6018] flex items-center justify-center text-white font-bold text-2xl">
+                        {userInitials}
+                      </div>
+                    )}
                   </div>
                   <div>
                     <div className="font-medium text-gray-900">{user?.name || 'User'}</div>
