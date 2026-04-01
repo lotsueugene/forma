@@ -115,9 +115,11 @@ export default function SettingsPage() {
   const [passwordMessage, setPasswordMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   // Workspace settings state
+  const [workspaceName, setWorkspaceName] = useState('');
   const [workspaceLogoUrl, setWorkspaceLogoUrl] = useState('');
   const [workspaceNotificationEmail, setWorkspaceNotificationEmail] = useState('');
   const [isSavingWorkspace, setIsSavingWorkspace] = useState(false);
+  const [isSavingWorkspaceName, setIsSavingWorkspaceName] = useState(false);
   const [workspaceMessage, setWorkspaceMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   // Billing state
@@ -232,6 +234,7 @@ export default function SettingsPage() {
     fetch(`/api/workspaces/${currentWorkspace.id}`)
       .then(res => res.json())
       .then(data => {
+        setWorkspaceName(data.workspace?.name || '');
         setWorkspaceLogoUrl(data.workspace?.logoUrl || '');
         setWorkspaceNotificationEmail(data.workspace?.notificationEmail || '');
       })
@@ -441,6 +444,33 @@ export default function SettingsPage() {
     }
   };
 
+  // Save workspace name
+  const handleSaveWorkspaceName = async () => {
+    if (!currentWorkspace || !workspaceName.trim()) return;
+    setIsSavingWorkspaceName(true);
+    setWorkspaceMessage(null);
+    try {
+      const response = await fetch(`/api/workspaces/${currentWorkspace.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: workspaceName.trim() }),
+      });
+
+      if (response.ok) {
+        setWorkspaceMessage({ type: 'success', text: 'Workspace name updated' });
+        // Refresh workspace context
+        window.location.reload();
+      } else {
+        const data = await response.json();
+        setWorkspaceMessage({ type: 'error', text: data.error || 'Failed to update name' });
+      }
+    } catch (error) {
+      setWorkspaceMessage({ type: 'error', text: 'Failed to update name' });
+    } finally {
+      setIsSavingWorkspaceName(false);
+    }
+  };
+
   // Save workspace settings
   const handleSaveWorkspace = async () => {
     if (!currentWorkspace) return;
@@ -597,8 +627,9 @@ export default function SettingsPage() {
               animate={{ opacity: 1, y: 0 }}
               className="space-y-6"
             >
+              {/* Workspace Name */}
               <div className="card p-6">
-                <h2 className="font-semibold text-gray-900 mb-6">Workspace Branding</h2>
+                <h2 className="font-semibold text-gray-900 mb-6">Workspace Name</h2>
 
                 {workspaceMessage && (
                   <div
@@ -612,6 +643,42 @@ export default function SettingsPage() {
                     {workspaceMessage.text}
                   </div>
                 )}
+
+                <div className="form-field">
+                  <label className="form-label">Name</label>
+                  <input
+                    type="text"
+                    value={workspaceName}
+                    onChange={(e) => setWorkspaceName(e.target.value)}
+                    placeholder="My Workspace"
+                    className="input"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    This name is shown in the workspace switcher and team invites.
+                  </p>
+                </div>
+
+                <div className="mt-6 flex justify-end">
+                  <button
+                    onClick={handleSaveWorkspaceName}
+                    disabled={isSavingWorkspaceName || !workspaceName.trim()}
+                    className="btn btn-primary"
+                  >
+                    {isSavingWorkspaceName ? (
+                      <>
+                        <Spinner size={16} className="animate-spin" />
+                        Saving...
+                      </>
+                    ) : (
+                      'Save Name'
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              {/* Workspace Branding */}
+              <div className="card p-6">
+                <h2 className="font-semibold text-gray-900 mb-6">Workspace Branding</h2>
 
                 <div className="space-y-4">
                   <div className="form-field">
