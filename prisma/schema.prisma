@@ -489,8 +489,9 @@ model JobPosting {
   requirements String?  // Requirements/qualifications
   benefits    String?   // Benefits and perks
   salary      String?   // Salary range (optional)
-  applyUrl    String?   // External application URL
-  applyEmail  String?   // Email to apply
+  applyFormId String?   // Forma form ID for applications
+  applyUrl    String?   // External application URL (fallback)
+  applyEmail  String?   // Email to apply (fallback)
   published   Boolean   @default(false)
   publishedAt DateTime?
   featured    Boolean   @default(false)

@@ -99,7 +99,7 @@ export default async function JobPostingPage({ params }: Props) {
 
           {/* Apply CTA - Mobile */}
           <div className="mb-8 lg:hidden">
-            <ApplyButton job={job} />
+            <ApplyButton job={job} title={job.title} />
           </div>
 
           <div className="lg:flex lg:gap-12">
@@ -139,7 +139,7 @@ export default async function JobPostingPage({ params }: Props) {
               <div className="sticky top-8">
                 <div className="border border-gray-200 rounded-xl p-6">
                   <h3 className="font-semibold text-gray-900 mb-4">Apply for this role</h3>
-                  <ApplyButton job={job} />
+                  <ApplyButton job={job} title={job.title} />
                 </div>
               </div>
             </div>
@@ -157,7 +157,20 @@ export default async function JobPostingPage({ params }: Props) {
   );
 }
 
-function ApplyButton({ job }: { job: { applyUrl: string | null; applyEmail: string | null } }) {
+function ApplyButton({ job, title }: { job: { applyFormId: string | null; applyUrl: string | null; applyEmail: string | null }; title: string }) {
+  // Priority: Form > URL > Email
+  if (job.applyFormId) {
+    return (
+      <a
+        href={`/f/${job.applyFormId}`}
+        className="btn btn-primary w-full justify-center"
+      >
+        Apply Now
+        <ArrowSquareOut size={18} />
+      </a>
+    );
+  }
+
   if (job.applyUrl) {
     return (
       <a
@@ -175,7 +188,7 @@ function ApplyButton({ job }: { job: { applyUrl: string | null; applyEmail: stri
   if (job.applyEmail) {
     return (
       <a
-        href={`mailto:${job.applyEmail}?subject=Application: ${job}`}
+        href={`mailto:${job.applyEmail}?subject=Application: ${title}`}
         className="btn btn-primary w-full justify-center"
       >
         Apply via Email
@@ -184,15 +197,7 @@ function ApplyButton({ job }: { job: { applyUrl: string | null; applyEmail: stri
     );
   }
 
-  return (
-    <a
-      href="mailto:careers@withforma.io"
-      className="btn btn-primary w-full justify-center"
-    >
-      Apply via Email
-      <EnvelopeSimple size={18} />
-    </a>
-  );
+  return null;
 }
 
 // Simple markdown-to-HTML conversion

@@ -28,6 +28,7 @@ interface JobPosting {
   requirements: string | null;
   benefits: string | null;
   salary: string | null;
+  applyFormId: string | null;
   applyUrl: string | null;
   applyEmail: string | null;
   published: boolean;
@@ -37,11 +38,17 @@ interface JobPosting {
   updatedAt: string;
 }
 
+interface FormaForm {
+  id: string;
+  name: string;
+}
+
 const departments = ['Engineering', 'Design', 'Product', 'Marketing', 'Sales', 'Operations', 'Support', 'Other'];
 const jobTypes = ['Full-time', 'Part-time', 'Contract', 'Internship', 'Remote'];
 
 export default function AdminCareersPage() {
   const [jobs, setJobs] = useState<JobPosting[]>([]);
+  const [forms, setForms] = useState<FormaForm[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [editingJob, setEditingJob] = useState<JobPosting | null>(null);
@@ -58,6 +65,7 @@ export default function AdminCareersPage() {
     requirements: '',
     benefits: '',
     salary: '',
+    applyFormId: '',
     applyUrl: '',
     applyEmail: '',
     published: false,
@@ -67,6 +75,7 @@ export default function AdminCareersPage() {
 
   useEffect(() => {
     fetchJobs();
+    fetchForms();
   }, []);
 
   const fetchJobs = async () => {
@@ -78,6 +87,16 @@ export default function AdminCareersPage() {
       console.error('Error fetching jobs:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchForms = async () => {
+    try {
+      const res = await fetch('/api/forms');
+      const data = await res.json();
+      setForms(data.forms || []);
+    } catch (error) {
+      console.error('Error fetching forms:', error);
     }
   };
 
@@ -94,6 +113,7 @@ export default function AdminCareersPage() {
       requirements: '',
       benefits: '',
       salary: '',
+      applyFormId: '',
       applyUrl: '',
       applyEmail: '',
       published: false,
@@ -114,6 +134,7 @@ export default function AdminCareersPage() {
       requirements: job.requirements || '',
       benefits: job.benefits || '',
       salary: job.salary || '',
+      applyFormId: job.applyFormId || '',
       applyUrl: job.applyUrl || '',
       applyEmail: job.applyEmail || '',
       published: job.published,
@@ -394,26 +415,46 @@ export default function AdminCareersPage() {
             <div className="card p-6 space-y-4">
               <h3 className="font-medium text-gray-900">Application</h3>
               <div className="form-field">
-                <label className="form-label">Apply URL</label>
-                <input
-                  type="text"
-                  value={formData.applyUrl}
-                  onChange={(e) => setFormData({ ...formData, applyUrl: e.target.value })}
-                  placeholder="https://..."
+                <label className="form-label">Application Form</label>
+                <select
+                  value={formData.applyFormId}
+                  onChange={(e) => setFormData({ ...formData, applyFormId: e.target.value })}
                   className="input"
-                />
-                <p className="form-helper">External application link</p>
+                >
+                  <option value="">Select a form...</option>
+                  {forms.map((form) => (
+                    <option key={form.id} value={form.id}>
+                      {form.name}
+                    </option>
+                  ))}
+                </select>
+                <p className="form-helper">Recommended: Use a Forma form to collect applications</p>
               </div>
-              <div className="form-field">
-                <label className="form-label">Apply Email</label>
-                <input
-                  type="email"
-                  value={formData.applyEmail}
-                  onChange={(e) => setFormData({ ...formData, applyEmail: e.target.value })}
-                  placeholder="careers@example.com"
-                  className="input"
-                />
-                <p className="form-helper">Or email for applications</p>
+
+              <div className="pt-3 border-t border-gray-200">
+                <p className="text-xs text-gray-500 mb-3">Or use external options:</p>
+                <div className="form-field">
+                  <label className="form-label">Apply URL</label>
+                  <input
+                    type="text"
+                    value={formData.applyUrl}
+                    onChange={(e) => setFormData({ ...formData, applyUrl: e.target.value })}
+                    placeholder="https://..."
+                    className="input"
+                    disabled={!!formData.applyFormId}
+                  />
+                </div>
+                <div className="form-field">
+                  <label className="form-label">Apply Email</label>
+                  <input
+                    type="email"
+                    value={formData.applyEmail}
+                    onChange={(e) => setFormData({ ...formData, applyEmail: e.target.value })}
+                    placeholder="careers@example.com"
+                    className="input"
+                    disabled={!!formData.applyFormId}
+                  />
+                </div>
               </div>
             </div>
           </div>

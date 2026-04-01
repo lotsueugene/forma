@@ -87,13 +87,9 @@ export default async function CareersPage() {
               <h2 className="text-2xl font-semibold text-gray-900 mb-3">
                 No Open Positions
               </h2>
-              <p className="text-gray-600 max-w-md mx-auto mb-6">
-                We don't have any open positions right now, but we're always interested in
-                hearing from talented people. Send us your resume!
+              <p className="text-gray-600 max-w-md mx-auto">
+                We don't have any open positions right now. Check back later for new opportunities.
               </p>
-              <Link href="mailto:careers@withforma.io" className="btn btn-primary">
-                Send Your Resume
-              </Link>
             </div>
           ) : (
             <div className="space-y-12">
