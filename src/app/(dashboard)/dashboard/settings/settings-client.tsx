@@ -126,6 +126,7 @@ export default function SettingsPage() {
   interface SubscriptionInfo {
     plan: string;
     status: string;
+    billingInterval: 'monthly' | 'yearly' | null;
     limits: { submissions: number; forms: number; members: number };
     features: { analytics: boolean; teamMembers: boolean; apiAccess: boolean };
     usage: { submissions: number; forms: number; members: number };
@@ -954,7 +955,7 @@ export default function SettingsPage() {
                         id="pro-monthly"
                         className={cn(
                           'rounded-xl border p-5 flex flex-col bg-gray-50/80 scroll-mt-6 relative',
-                          subscription?.plan === 'pro'
+                          subscription?.plan === 'pro' && subscription?.billingInterval === 'monthly'
                             ? 'border-[#ef6f2e]/40 ring-1 ring-[#ef6f2e]/20'
                             : 'border-[#ef6f2e]/25'
                         )}
@@ -975,7 +976,7 @@ export default function SettingsPage() {
                           <li>Analytics, team invites, webhooks</li>
                           <li>Custom domain</li>
                         </ul>
-                        {subscription?.plan === 'pro' ? (
+                        {subscription?.plan === 'pro' && subscription?.billingInterval === 'monthly' ? (
                           <>
                             <div className="text-xs text-emerald-600/90 font-medium mb-3">Current plan</div>
                             <button
@@ -986,6 +987,14 @@ export default function SettingsPage() {
                               Manage billing
                             </button>
                           </>
+                        ) : subscription?.plan === 'pro' ? (
+                          <button
+                            type="button"
+                            onClick={handleManageBilling}
+                            className="btn btn-secondary w-full"
+                          >
+                            Switch to monthly
+                          </button>
                         ) : (
                           <button
                             type="button"
@@ -1010,7 +1019,7 @@ export default function SettingsPage() {
                         id="pro-yearly"
                         className={cn(
                           'rounded-xl border p-5 flex flex-col bg-gray-50/80 scroll-mt-6',
-                          subscription?.plan === 'pro'
+                          subscription?.plan === 'pro' && subscription?.billingInterval === 'yearly'
                             ? 'border-[#ef6f2e]/40 ring-1 ring-[#ef6f2e]/20'
                             : 'border-gray-200'
                         )}
@@ -1032,7 +1041,7 @@ export default function SettingsPage() {
                           <li>One payment per year</li>
                           <li>Best for committed teams</li>
                         </ul>
-                        {subscription?.plan === 'pro' ? (
+                        {subscription?.plan === 'pro' && subscription?.billingInterval === 'yearly' ? (
                           <>
                             <div className="text-xs text-emerald-600/90 font-medium mb-3">Current plan</div>
                             <button
@@ -1043,6 +1052,14 @@ export default function SettingsPage() {
                               Manage billing
                             </button>
                           </>
+                        ) : subscription?.plan === 'pro' ? (
+                          <button
+                            type="button"
+                            onClick={handleManageBilling}
+                            className="btn btn-secondary w-full"
+                          >
+                            Switch to yearly
+                          </button>
                         ) : (
                           <button
                             type="button"

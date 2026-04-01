@@ -1,5 +1,5 @@
 import { prisma } from './prisma';
-import { PLAN_LIMITS, PlanType, PlanFeatures } from './stripe';
+import { PLAN_LIMITS, PlanType, PlanFeatures, STRIPE_PRICES } from './stripe';
 
 /**
  * Check if workspace has an admin owner (admins get Pro features automatically)
@@ -18,6 +18,7 @@ async function hasAdminOwner(workspaceId: string): Promise<boolean> {
 export interface SubscriptionInfo {
   plan: PlanType;
   status: string;
+  billingInterval: 'monthly' | 'yearly' | null; // null for free/trial
   limits: {
     submissions: number;
     forms: number;
@@ -157,9 +158,20 @@ export async function getSubscriptionInfo(workspaceId: string): Promise<Subscrip
     effectiveConfig.features.teamMembers &&
     (limits.members === -1 || seatsCommitted < limits.members);
 
+  // Determine billing interval from Stripe price ID
+  let billingInterval: 'monthly' | 'yearly' | null = null;
+  if (subscription.stripePriceId) {
+    if (subscription.stripePriceId === STRIPE_PRICES.pro_monthly) {
+      billingInterval = 'monthly';
+    } else if (subscription.stripePriceId === STRIPE_PRICES.pro_yearly) {
+      billingInterval = 'yearly';
+    }
+  }
+
   return {
     plan: effectivePlan,
     status: subscription.status,
+    billingInterval,
     limits,
     features: effectiveConfig.features,
     usage: currentUsage,
