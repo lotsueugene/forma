@@ -10,8 +10,10 @@ import {
   Shield,
   User as UserIcon,
   Trash,
+  DotsThreeVertical,
 } from '@phosphor-icons/react';
 import { cn } from '@/lib/utils';
+import { AnimatePresence, motion } from 'framer-motion';
 
 interface User {
   id: string;
@@ -42,6 +44,7 @@ export default function AdminUsersPage() {
   });
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState('');
+  const [menuOpenId, setMenuOpenId] = useState<string | null>(null);
 
   const loadUsers = useCallback(async () => {
     setLoading(true);
@@ -97,6 +100,7 @@ export default function AdminUsersPage() {
     } catch (error) {
       console.error('Failed to update user:', error);
     }
+    setMenuOpenId(null);
   };
 
   const deleteUser = async (userId: string, email: string | null) => {
@@ -116,13 +120,14 @@ export default function AdminUsersPage() {
     } catch (error) {
       console.error('Failed to delete user:', error);
     }
+    setMenuOpenId(null);
   };
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold text-gray-900">Users</h1>
-        <p className="text-gray-500">Manage all platform users</p>
+        <h1 className="text-xl sm:text-2xl font-semibold text-gray-900">Users</h1>
+        <p className="text-gray-500 text-sm">Manage all platform users</p>
       </div>
 
       {/* Filters */}
@@ -145,7 +150,7 @@ export default function AdminUsersPage() {
             setRoleFilter(e.target.value);
             setPagination(p => ({ ...p, page: 1 }));
           }}
-          className="input w-auto"
+          className="input w-full sm:w-auto"
         >
           <option value="">All roles</option>
           <option value="user">Users only</option>
@@ -153,8 +158,8 @@ export default function AdminUsersPage() {
         </select>
       </div>
 
-      {/* Users Table */}
-      <div className="card overflow-hidden">
+      {/* Users Table - Desktop */}
+      <div className="card overflow-hidden hidden sm:block">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead className="bg-gray-50 border-b border-gray-200">
@@ -230,7 +235,7 @@ export default function AdminUsersPage() {
           </table>
         </div>
 
-        {/* Pagination */}
+        {/* Pagination - Desktop */}
         {pagination.totalPages > 1 && (
           <div className="flex items-center justify-between px-4 py-3 border-t border-gray-200">
             <div className="text-sm text-gray-500">
@@ -254,6 +259,114 @@ export default function AdminUsersPage() {
                 disabled={pagination.page === pagination.totalPages}
                 className="btn btn-ghost disabled:opacity-50"
               >
+                <CaretRight size={16} />
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Users Cards - Mobile */}
+      <div className="sm:hidden space-y-3">
+        {loading ? (
+          <div className="card p-8 text-center">
+            <Spinner size={24} className="animate-spin text-gray-400 mx-auto" />
+          </div>
+        ) : users.length === 0 ? (
+          <div className="card p-8 text-center text-gray-500">No users found</div>
+        ) : (
+          users.map((user) => (
+            <div key={user.id} className="card p-4">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-medium text-gray-900 truncate">
+                      {user.name || 'Unnamed'}
+                    </span>
+                    <span className={cn(
+                      'inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium flex-shrink-0',
+                      user.role === 'admin'
+                        ? 'bg-safety-orange/10 text-safety-orange'
+                        : 'bg-gray-100 text-gray-600'
+                    )}>
+                      {user.role === 'admin' ? <Shield size={10} /> : <UserIcon size={10} />}
+                      {user.role}
+                    </span>
+                  </div>
+                  <div className="text-sm text-gray-500 truncate mt-0.5">{user.email}</div>
+                  <div className="flex items-center gap-3 mt-2 text-xs text-gray-500">
+                    <span>{user.workspaceCount} workspace{user.workspaceCount !== 1 ? 's' : ''}</span>
+                    <span>Joined {new Date(user.createdAt).toLocaleDateString()}</span>
+                  </div>
+                </div>
+
+                {user.id === currentUserId ? (
+                  <span className="text-xs text-gray-400 flex-shrink-0">(You)</span>
+                ) : (
+                  <div className="relative flex-shrink-0">
+                    <button
+                      onClick={() => setMenuOpenId(menuOpenId === user.id ? null : user.id)}
+                      className="p-2 text-gray-500 hover:text-gray-900 rounded-lg hover:bg-gray-100"
+                    >
+                      <DotsThreeVertical size={20} />
+                    </button>
+                    <AnimatePresence>
+                      {menuOpenId === user.id && (
+                        <>
+                          <div
+                            className="fixed inset-0 z-10"
+                            onClick={() => setMenuOpenId(null)}
+                          />
+                          <motion.div
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.95 }}
+                            className="absolute right-0 top-full mt-1 w-40 bg-white border border-gray-200 rounded-lg shadow-lg z-20 py-1"
+                          >
+                            <button
+                              onClick={() => toggleRole(user.id, user.role)}
+                              className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100"
+                            >
+                              {user.role === 'admin' ? 'Demote to User' : 'Promote to Admin'}
+                            </button>
+                            <button
+                              onClick={() => deleteUser(user.id, user.email)}
+                              className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50"
+                            >
+                              Delete User
+                            </button>
+                          </motion.div>
+                        </>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                )}
+              </div>
+            </div>
+          ))
+        )}
+
+        {/* Pagination - Mobile */}
+        {pagination.totalPages > 1 && (
+          <div className="card p-4">
+            <div className="flex items-center justify-between">
+              <button
+                onClick={() => setPagination(p => ({ ...p, page: p.page - 1 }))}
+                disabled={pagination.page === 1}
+                className="btn btn-ghost disabled:opacity-50"
+              >
+                <CaretLeft size={16} />
+                Prev
+              </button>
+              <span className="text-sm text-gray-600">
+                {pagination.page} / {pagination.totalPages}
+              </span>
+              <button
+                onClick={() => setPagination(p => ({ ...p, page: p.page + 1 }))}
+                disabled={pagination.page === pagination.totalPages}
+                className="btn btn-ghost disabled:opacity-50"
+              >
+                Next
                 <CaretRight size={16} />
               </button>
             </div>

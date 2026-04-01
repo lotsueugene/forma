@@ -133,15 +133,21 @@ export const NotificationBell = forwardRef<HTMLDivElement, NotificationBellProps
 
         <AnimatePresence>
           {open && (
-            <motion.div
-              initial={{ opacity: 0, y: -6 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -6 }}
-              transition={{ duration: 0.15 }}
-              className="absolute right-0 top-full mt-2 w-[min(100vw-2rem,22rem)] max-h-[min(70vh,24rem)] flex flex-col rounded-lg border border-gray-200 bg-white shadow-xl z-50 overflow-hidden"
-              role="dialog"
-              aria-label="Notification center"
-            >
+            <>
+              {/* Backdrop for outside click */}
+              <div
+                className="fixed inset-0 z-40"
+                onClick={() => onOpenChange(false)}
+              />
+              <motion.div
+                initial={{ opacity: 0, y: -6 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -6 }}
+                transition={{ duration: 0.15 }}
+                className="absolute right-0 top-full mt-2 w-[min(100vw-2rem,22rem)] max-h-[min(70vh,24rem)] flex flex-col rounded-lg border border-gray-200 bg-white shadow-xl z-50 overflow-hidden"
+                role="dialog"
+                aria-label="Notification center"
+              >
               <div className="px-4 py-3 border-b border-gray-200 shrink-0 flex items-start justify-between gap-3">
                 <div>
                   <p className="font-mono text-[11px] uppercase tracking-wider text-gray-500">
@@ -234,7 +240,8 @@ export const NotificationBell = forwardRef<HTMLDivElement, NotificationBellProps
                   Notification settings
                 </Link>
               </div>
-            </motion.div>
+              </motion.div>
+            </>
           )}
         </AnimatePresence>
       </div>

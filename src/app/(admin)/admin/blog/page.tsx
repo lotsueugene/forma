@@ -14,7 +14,9 @@ import {
   ArrowLeft,
   Star,
   Image as ImageIcon,
+  DotsThreeVertical,
 } from '@phosphor-icons/react';
+import { AnimatePresence, motion } from 'framer-motion';
 
 interface BlogPost {
   id: string;
@@ -40,6 +42,7 @@ export default function AdminBlogPage() {
   const [search, setSearch] = useState('');
   const [editingPost, setEditingPost] = useState<BlogPost | null>(null);
   const [isCreating, setIsCreating] = useState(false);
+  const [menuOpenId, setMenuOpenId] = useState<string | null>(null);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -197,7 +200,7 @@ export default function AdminBlogPage() {
   if (editingPost || isCreating) {
     return (
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <button
               onClick={handleCancel}
@@ -206,18 +209,18 @@ export default function AdminBlogPage() {
               <ArrowLeft size={20} className="text-gray-600" />
             </button>
             <div>
-              <h1 className="text-2xl font-semibold text-gray-900">
+              <h1 className="text-xl sm:text-2xl font-semibold text-gray-900">
                 {isCreating ? 'Create Blog Post' : 'Edit Blog Post'}
               </h1>
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-gray-500 truncate max-w-[200px] sm:max-w-none">
                 {isCreating ? 'Write a new blog post' : `Editing: ${editingPost?.title}`}
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 self-end sm:self-auto">
             <button onClick={handleCancel} className="btn btn-secondary">
               <X size={18} />
-              Cancel
+              <span className="hidden sm:inline">Cancel</span>
             </button>
             <button
               onClick={handleSave}
@@ -225,7 +228,7 @@ export default function AdminBlogPage() {
               className="btn btn-primary"
             >
               <FloppyDisk size={18} />
-              {saving ? 'Saving...' : 'Save Post'}
+              {saving ? 'Saving...' : <><span className="hidden sm:inline">Save Post</span><span className="sm:hidden">Save</span></>}
             </button>
           </div>
         </div>
@@ -386,31 +389,31 @@ export default function AdminBlogPage() {
   // List view
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold text-gray-900">Blog Posts</h1>
+          <h1 className="text-xl sm:text-2xl font-semibold text-gray-900">Blog Posts</h1>
           <p className="text-sm text-gray-500">Manage your blog content</p>
         </div>
-        <button onClick={handleCreate} className="btn btn-primary">
+        <button onClick={handleCreate} className="btn btn-primary w-fit">
           <Plus size={18} />
           Create Post
         </button>
       </div>
 
       {/* Search */}
-      <div className="relative max-w-sm">
+      <div className="relative w-full sm:max-w-sm">
         <MagnifyingGlass size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
         <input
           type="text"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search posts..."
-          className="input input-with-icon"
+          className="input input-with-icon w-full"
         />
       </div>
 
-      {/* Posts List */}
-      <div className="card">
+      {/* Posts List - Desktop */}
+      <div className="card hidden sm:block">
         {loading ? (
           <div className="p-8 text-center text-gray-500">Loading posts...</div>
         ) : filteredPosts.length === 0 ? (
@@ -511,6 +514,116 @@ export default function AdminBlogPage() {
               </div>
             ))}
           </div>
+        )}
+      </div>
+
+      {/* Posts List - Mobile */}
+      <div className="sm:hidden space-y-3">
+        {loading ? (
+          <div className="card p-8 text-center text-gray-500">Loading posts...</div>
+        ) : filteredPosts.length === 0 ? (
+          <div className="card p-8 text-center">
+            <Article size={48} className="mx-auto text-gray-300 mb-3" />
+            <p className="text-gray-500 mb-4">
+              {search ? 'No posts match your search' : 'No blog posts yet'}
+            </p>
+            {!search && (
+              <button onClick={handleCreate} className="btn btn-primary">
+                <Plus size={18} />
+                Create your first post
+              </button>
+            )}
+          </div>
+        ) : (
+          filteredPosts.map((post) => (
+            <div key={post.id} className="card p-4">
+              <div className="flex items-start gap-3">
+                {post.coverImage ? (
+                  <img
+                    src={post.coverImage}
+                    alt={post.title}
+                    className="w-16 h-12 object-cover rounded-lg flex-shrink-0"
+                  />
+                ) : (
+                  <div className="w-16 h-12 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0">
+                    <ImageIcon size={20} className="text-gray-400" />
+                  </div>
+                )}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h3 className="font-medium text-gray-900 truncate">{post.title}</h3>
+                    {post.featured && (
+                      <Star size={14} weight="fill" className="text-yellow-500 flex-shrink-0" />
+                    )}
+                  </div>
+                  <p className="text-xs text-gray-500 truncate">/blog/{post.slug}</p>
+                  <div className="flex items-center gap-2 mt-2">
+                    <span
+                      className={`badge text-xs ${post.published ? 'badge-accent' : 'badge-warning'}`}
+                    >
+                      {post.published ? 'Published' : 'Draft'}
+                    </span>
+                    {post.author && (
+                      <span className="text-xs text-gray-500">by {post.author}</span>
+                    )}
+                  </div>
+                </div>
+                <div className="relative flex-shrink-0">
+                  <button
+                    onClick={() => setMenuOpenId(menuOpenId === post.id ? null : post.id)}
+                    className="p-2 text-gray-500 hover:text-gray-900 rounded-lg hover:bg-gray-100"
+                  >
+                    <DotsThreeVertical size={20} />
+                  </button>
+                  <AnimatePresence>
+                    {menuOpenId === post.id && (
+                      <>
+                        <div
+                          className="fixed inset-0 z-10"
+                          onClick={() => setMenuOpenId(null)}
+                        />
+                        <motion.div
+                          initial={{ opacity: 0, scale: 0.95 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          exit={{ opacity: 0, scale: 0.95 }}
+                          className="absolute right-0 top-full mt-1 w-44 bg-white border border-gray-200 rounded-lg shadow-lg z-20 py-1"
+                        >
+                          <button
+                            onClick={() => { handleEdit(post); setMenuOpenId(null); }}
+                            className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+                          >
+                            <PencilSimple size={16} />
+                            Edit
+                          </button>
+                          <button
+                            onClick={() => { togglePublish(post); setMenuOpenId(null); }}
+                            className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+                          >
+                            {post.published ? <EyeSlash size={16} /> : <Eye size={16} />}
+                            {post.published ? 'Unpublish' : 'Publish'}
+                          </button>
+                          <button
+                            onClick={() => { toggleFeatured(post); setMenuOpenId(null); }}
+                            className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+                          >
+                            <Star size={16} weight={post.featured ? 'fill' : 'regular'} />
+                            {post.featured ? 'Unfeature' : 'Feature'}
+                          </button>
+                          <button
+                            onClick={() => { handleDelete(post.id); setMenuOpenId(null); }}
+                            className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+                          >
+                            <Trash size={16} />
+                            Delete
+                          </button>
+                        </motion.div>
+                      </>
+                    )}
+                  </AnimatePresence>
+                </div>
+              </div>
+            </div>
+          ))
         )}
       </div>
     </div>

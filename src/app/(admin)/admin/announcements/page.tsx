@@ -135,14 +135,14 @@ export default function AdminAnnouncementsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold text-gray-900">Announcements</h1>
-          <p className="text-gray-600">Create in-app announcements for users</p>
+          <h1 className="text-xl sm:text-2xl font-semibold text-gray-900">Announcements</h1>
+          <p className="text-gray-600 text-sm">Create in-app announcements for users</p>
         </div>
         <button
           onClick={() => setShowForm(!showForm)}
-          className="btn btn-primary"
+          className="btn btn-primary w-fit"
         >
           <Plus size={16} />
           New Announcement
@@ -190,7 +190,7 @@ export default function AdminAnnouncementsPage() {
             />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <div>
               <label className="block text-sm text-gray-600 mb-1">Priority (higher = more important)</label>
               <input
@@ -209,7 +209,7 @@ export default function AdminAnnouncementsPage() {
                 className="input w-full"
               />
             </div>
-            <div>
+            <div className="sm:col-span-2 lg:col-span-1">
               <label className="block text-sm text-gray-600 mb-1">Target Plans (if not all)</label>
               <input
                 type="text"
@@ -294,20 +294,20 @@ export default function AdminAnnouncementsPage() {
 
             return (
               <div key={announcement.id} className="bg-white border border-gray-200 rounded-xl p-4">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex items-start gap-3">
-                    <div className={cn('p-2 rounded-lg', typeColor)}>
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-start gap-3 flex-1 min-w-0">
+                    <div className={cn('p-2 rounded-lg flex-shrink-0', typeColor)}>
                       <TypeIcon size={18} />
                     </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <h3 className="font-medium text-gray-900">{announcement.title}</h3>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h3 className="font-medium text-gray-900 truncate">{announcement.title}</h3>
                         {isActive ? (
-                          <span className="text-xs px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300">
+                          <span className="text-xs px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-600 flex-shrink-0">
                             Active
                           </span>
                         ) : (
-                          <span className="text-xs px-2 py-0.5 rounded bg-gray-200 text-gray-600">
+                          <span className="text-xs px-2 py-0.5 rounded bg-gray-200 text-gray-600 flex-shrink-0">
                             Inactive
                           </span>
                         )}
@@ -315,16 +315,16 @@ export default function AdminAnnouncementsPage() {
                       <p className="text-sm text-gray-600 mt-1 line-clamp-2">
                         {announcement.content}
                       </p>
-                      <div className="flex items-center gap-4 mt-2 text-xs text-gray-500">
+                      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2 text-xs text-gray-500">
                         <span>Priority: {announcement.priority}</span>
                         <span>{announcement.showBanner ? 'Banner' : ''} {announcement.showModal ? 'Modal' : ''}</span>
-                        <span>Created: {new Date(announcement.createdAt).toLocaleDateString()}</span>
+                        <span className="hidden sm:inline">Created: {new Date(announcement.createdAt).toLocaleDateString()}</span>
                       </div>
                     </div>
                   </div>
                   <button
                     onClick={() => deleteAnnouncement(announcement.id)}
-                    className="btn btn-ghost text-red-600"
+                    className="btn btn-ghost text-red-600 flex-shrink-0 p-2"
                   >
                     <Trash size={16} />
                   </button>
