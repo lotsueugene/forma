@@ -10,6 +10,7 @@ const navLinks = [
   { href: '#features', label: 'Features' },
   { href: '#pricing', label: 'Pricing' },
   { href: '/docs', label: 'Docs' },
+  { href: '/blog', label: 'Blog' },
 ];
 
 export default function Navigation() {
@@ -17,7 +18,7 @@ export default function Navigation() {
 
   return (
     <header className="fixed inset-x-0 top-0 z-50 px-4 md:border-b-0 lg:px-9 bg-white backdrop-blur-md">
-      <div className="mx-auto flex items-center justify-between py-5 max-w-[1400px]">
+      <div className="mx-auto flex items-center justify-between py-5 max-w-[1400px] relative">
         {/* Logo - Left */}
         <a href="/" className="z-50 flex items-center gap-2">
           <Stack size={24} weight="fill" className="text-gray-900" />
@@ -26,8 +27,8 @@ export default function Navigation() {
           </span>
         </a>
 
-        {/* Center Navigation - Features, Pricing, Docs */}
-        <nav className="hidden lg:flex items-center justify-center flex-1">
+        {/* Center Navigation - Features, Pricing, Docs, Blog */}
+        <nav className="hidden lg:flex items-center justify-center absolute left-1/2 -translate-x-1/2">
           <ul className="group/menu flex items-center space-x-8">
             {navLinks.map((link) => (
               <li
