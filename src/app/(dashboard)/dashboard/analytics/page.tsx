@@ -92,7 +92,7 @@ export default function AnalyticsPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
+      <div className="flex items-center justify-center h-48 sm:h-64">
         <Spinner size={32} className="animate-spin text-gray-500" />
       </div>
     );
@@ -214,7 +214,7 @@ export default function AnalyticsPage() {
             </div>
             <CalendarBlank size={20} className="text-gray-500" />
           </div>
-          <div className="h-64">
+          <div className="h-48 sm:h-64">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={data.timeSeries}>
                 <defs>
@@ -265,7 +265,7 @@ export default function AnalyticsPage() {
             <ChartLineUp size={20} className="text-gray-500" />
           </div>
           {data.submissionsByForm.length > 0 ? (
-            <div className="h-64">
+            <div className="h-48 sm:h-64">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie

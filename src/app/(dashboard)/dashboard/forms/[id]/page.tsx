@@ -257,24 +257,26 @@ export default function FormDetailPage() {
             <p className="text-gray-500">{form.description || 'No description'}</p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           {form.formType === 'builder' && (
             <Link
               href={`/dashboard/forms/${formId}/edit`}
-              className="btn btn-secondary"
+              className="btn btn-secondary text-sm"
             >
               <PencilSimple size={18} />
-              Edit Fields
+              <span className="hidden sm:inline">Edit Fields</span>
+              <span className="sm:hidden">Edit</span>
             </Link>
           )}
           <Link
             href={formPageUrl}
             target="_blank"
-            className="btn btn-secondary"
+            className="btn btn-secondary text-sm"
           >
             <Eye size={18} />
-            View Form
-            <ArrowSquareOut size={14} />
+            <span className="hidden sm:inline">View Form</span>
+            <span className="sm:hidden">View</span>
+            <ArrowSquareOut size={14} className="hidden sm:block" />
           </Link>
         </div>
       </div>
@@ -371,27 +373,28 @@ export default function FormDetailPage() {
       )}
 
       {/* Tabs */}
-      <div className="border-b border-gray-200">
-        <nav className="flex gap-6">
+      <div className="border-b border-gray-200 overflow-x-auto">
+        <nav className="flex gap-4 sm:gap-6 min-w-max">
           {[
             { id: 'submissions', label: 'Submissions', icon: EnvelopeSimple, count: submissions.length },
             { id: 'analytics', label: 'Analytics', icon: ChartLineUp },
-            { id: 'settings', label: 'Embed & Settings', icon: Code },
+            { id: 'settings', label: 'Embed', icon: Code },
           ].map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id as Tab)}
               className={cn(
-                'flex items-center gap-2 py-3 border-b-2 transition-colors',
+                'flex items-center gap-1.5 sm:gap-2 py-3 border-b-2 transition-colors whitespace-nowrap text-sm sm:text-base',
                 activeTab === tab.id
                   ? 'border-safety-orange text-safety-orange'
                   : 'border-transparent text-gray-500 hover:text-gray-700'
               )}
             >
               <tab.icon size={18} />
-              {tab.label}
+              <span className="hidden sm:inline">{tab.label}</span>
+              <span className="sm:hidden">{tab.id === 'settings' ? 'Embed' : tab.label.split(' ')[0]}</span>
               {tab.count !== undefined && (
-                <span className="text-xs bg-gray-100 px-2 py-0.5 rounded-full">
+                <span className="text-xs bg-gray-100 px-1.5 sm:px-2 py-0.5 rounded-full">
                   {tab.count}
                 </span>
               )}
@@ -486,7 +489,7 @@ export default function FormDetailPage() {
                 </div>
               </div>
 
-              {/* Submissions Table with Dynamic Columns */}
+              {/* Submissions - Mobile Cards / Desktop Table */}
               {(() => {
                 // Compute dynamic columns from all submission data
                 const columnSet = new Set<string>();
@@ -532,139 +535,225 @@ export default function FormDetailPage() {
                 };
 
                 return (
-                  <div className="card overflow-x-auto">
-                    <table className="w-full min-w-[600px]">
-                      <thead>
-                        <tr className="border-b border-gray-200 text-left text-sm text-gray-500 bg-gray-50">
-                          <th className="p-4 w-12">
-                            <input
-                              type="checkbox"
-                              checked={selectedSubmissions.length === filteredSubmissions.length && filteredSubmissions.length > 0}
-                              onChange={toggleSelectAll}
-                              className="rounded border-gray-300"
-                            />
-                          </th>
-                          {dynamicColumns.map(col => (
-                            <th key={col} className="p-4 font-medium max-w-[180px]">
-                              <span className="truncate block">{col}</span>
-                            </th>
-                          ))}
-                          <th className="p-4 font-medium w-32">Submitted</th>
-                          <th className="p-4 w-12"></th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-gray-200">
-                        {filteredSubmissions.map((submission, index) => {
-                          const isExpanded = expandedSubmission === submission.id;
-                          const totalColumns = dynamicColumns.length + 3; // checkbox + columns + submitted + arrow
+                  <>
+                    {/* Mobile Card View */}
+                    <div className="md:hidden space-y-3">
+                      {filteredSubmissions.map((submission, index) => {
+                        const isExpanded = expandedSubmission === submission.id;
+                        const firstColumn = dynamicColumns[0];
+                        const firstValue = firstColumn ? formatCellValue(submission.data[firstColumn]) : '-';
 
-                          return (
-                            <React.Fragment key={submission.id}>
-                              <motion.tr
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
-                                transition={{ delay: index * 0.03 }}
+                        return (
+                          <motion.div
+                            key={submission.id}
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            transition={{ delay: index * 0.03 }}
+                            className={cn(
+                              "card p-4 cursor-pointer",
+                              isExpanded && "ring-2 ring-safety-orange/20"
+                            )}
+                            onClick={() => setExpandedSubmission(isExpanded ? null : submission.id)}
+                          >
+                            <div className="flex items-start justify-between gap-3">
+                              <div className="flex items-start gap-3 min-w-0 flex-1">
+                                <input
+                                  type="checkbox"
+                                  checked={selectedSubmissions.includes(submission.id)}
+                                  onChange={() => toggleSubmission(submission.id)}
+                                  onClick={(e) => e.stopPropagation()}
+                                  className="rounded border-gray-300 mt-1"
+                                />
+                                <div className="min-w-0 flex-1">
+                                  <div className="font-medium text-gray-900 truncate">
+                                    {firstValue}
+                                  </div>
+                                  <div className="text-sm text-gray-500 mt-1">
+                                    {getTimeAgo(submission.createdAt)}
+                                  </div>
+                                </div>
+                              </div>
+                              <CaretDown
+                                size={18}
                                 className={cn(
-                                  "hover:bg-gray-50 transition-colors cursor-pointer",
-                                  isExpanded && "bg-gray-50"
+                                  'text-gray-400 transition-transform flex-shrink-0',
+                                  isExpanded && 'rotate-180'
                                 )}
-                                onClick={() =>
-                                  setExpandedSubmission(isExpanded ? null : submission.id)
-                                }
-                              >
-                                <td className="p-4 w-12" onClick={(e) => e.stopPropagation()}>
-                                  <input
-                                    type="checkbox"
-                                    checked={selectedSubmissions.includes(submission.id)}
-                                    onChange={() => toggleSubmission(submission.id)}
-                                    className="rounded border-gray-300"
-                                  />
-                                </td>
-                                {dynamicColumns.map(col => (
-                                  <td key={col} className="p-4 max-w-[180px]">
-                                    <span className="text-gray-700 truncate block">
-                                      {formatCellValue(submission.data[col])}
-                                    </span>
-                                  </td>
-                                ))}
-                                <td className="p-4 w-32 text-sm text-gray-500">
-                                  {getTimeAgo(submission.createdAt)}
-                                </td>
-                                <td className="p-4 w-12">
-                                  <CaretDown
-                                    size={16}
-                                    className={cn(
-                                      'text-gray-500 transition-transform',
-                                      isExpanded && 'rotate-180'
-                                    )}
-                                  />
-                                </td>
-                              </motion.tr>
+                              />
+                            </div>
 
-                              {/* Expanded Details - shown inline below the row */}
-                              <AnimatePresence>
-                                {isExpanded && (
-                                  <motion.tr
-                                    initial={{ opacity: 0 }}
-                                    animate={{ opacity: 1 }}
-                                    exit={{ opacity: 0 }}
-                                  >
-                                    <td colSpan={totalColumns} className="p-0 bg-gray-50 border-t border-gray-100">
-                                      <motion.div
-                                        initial={{ height: 0 }}
-                                        animate={{ height: 'auto' }}
-                                        exit={{ height: 0 }}
-                                        className="overflow-hidden"
-                                      >
-                                        <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-                                          <div className="space-y-4">
-                                            <h4 className="font-medium text-gray-800">
-                                              All Submission Data
-                                            </h4>
-                                            {Object.entries(submission.data).map(([key, value]) => (
-                                              <div key={key}>
-                                                <div className="text-xs text-gray-500 uppercase tracking-wider mb-1">
-                                                  {key}
+                            <AnimatePresence>
+                              {isExpanded && (
+                                <motion.div
+                                  initial={{ height: 0, opacity: 0 }}
+                                  animate={{ height: 'auto', opacity: 1 }}
+                                  exit={{ height: 0, opacity: 0 }}
+                                  className="overflow-hidden"
+                                >
+                                  <div className="pt-4 mt-4 border-t border-gray-100 space-y-3">
+                                    {Object.entries(submission.data).map(([key, value]) => (
+                                      <div key={key}>
+                                        <div className="text-xs text-gray-500 uppercase tracking-wider mb-1">
+                                          {key}
+                                        </div>
+                                        <div className="text-gray-700 text-sm break-words">
+                                          {typeof value === 'string' && isFileData(value)
+                                            ? renderFileDownload(value)
+                                            : formatCellValue(value)}
+                                        </div>
+                                      </div>
+                                    ))}
+                                    <div className="pt-2 border-t border-gray-100">
+                                      <div className="text-xs text-gray-500 uppercase tracking-wider mb-1">
+                                        Submitted At
+                                      </div>
+                                      <div className="text-gray-700 text-sm">
+                                        {new Date(submission.createdAt).toLocaleString()}
+                                      </div>
+                                    </div>
+                                  </div>
+                                </motion.div>
+                              )}
+                            </AnimatePresence>
+                          </motion.div>
+                        );
+                      })}
+                    </div>
+
+                    {/* Desktop Table View */}
+                    <div className="hidden md:block card overflow-x-auto">
+                      <table className="w-full">
+                        <thead>
+                          <tr className="border-b border-gray-200 text-left text-sm text-gray-500 bg-gray-50">
+                            <th className="p-4 w-12">
+                              <input
+                                type="checkbox"
+                                checked={selectedSubmissions.length === filteredSubmissions.length && filteredSubmissions.length > 0}
+                                onChange={toggleSelectAll}
+                                className="rounded border-gray-300"
+                              />
+                            </th>
+                            {dynamicColumns.map(col => (
+                              <th key={col} className="p-4 font-medium max-w-[180px]">
+                                <span className="truncate block">{col}</span>
+                              </th>
+                            ))}
+                            <th className="p-4 font-medium w-32">Submitted</th>
+                            <th className="p-4 w-12"></th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-200">
+                          {filteredSubmissions.map((submission, index) => {
+                            const isExpanded = expandedSubmission === submission.id;
+                            const totalColumns = dynamicColumns.length + 3;
+
+                            return (
+                              <React.Fragment key={submission.id}>
+                                <motion.tr
+                                  initial={{ opacity: 0 }}
+                                  animate={{ opacity: 1 }}
+                                  transition={{ delay: index * 0.03 }}
+                                  className={cn(
+                                    "hover:bg-gray-50 transition-colors cursor-pointer",
+                                    isExpanded && "bg-gray-50"
+                                  )}
+                                  onClick={() =>
+                                    setExpandedSubmission(isExpanded ? null : submission.id)
+                                  }
+                                >
+                                  <td className="p-4 w-12" onClick={(e) => e.stopPropagation()}>
+                                    <input
+                                      type="checkbox"
+                                      checked={selectedSubmissions.includes(submission.id)}
+                                      onChange={() => toggleSubmission(submission.id)}
+                                      className="rounded border-gray-300"
+                                    />
+                                  </td>
+                                  {dynamicColumns.map(col => (
+                                    <td key={col} className="p-4 max-w-[180px]">
+                                      <span className="text-gray-700 truncate block">
+                                        {formatCellValue(submission.data[col])}
+                                      </span>
+                                    </td>
+                                  ))}
+                                  <td className="p-4 w-32 text-sm text-gray-500">
+                                    {getTimeAgo(submission.createdAt)}
+                                  </td>
+                                  <td className="p-4 w-12">
+                                    <CaretDown
+                                      size={16}
+                                      className={cn(
+                                        'text-gray-500 transition-transform',
+                                        isExpanded && 'rotate-180'
+                                      )}
+                                    />
+                                  </td>
+                                </motion.tr>
+
+                                <AnimatePresence>
+                                  {isExpanded && (
+                                    <motion.tr
+                                      initial={{ opacity: 0 }}
+                                      animate={{ opacity: 1 }}
+                                      exit={{ opacity: 0 }}
+                                    >
+                                      <td colSpan={totalColumns} className="p-0 bg-gray-50 border-t border-gray-100">
+                                        <motion.div
+                                          initial={{ height: 0 }}
+                                          animate={{ height: 'auto' }}
+                                          exit={{ height: 0 }}
+                                          className="overflow-hidden"
+                                        >
+                                          <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+                                            <div className="space-y-4">
+                                              <h4 className="font-medium text-gray-800">
+                                                All Submission Data
+                                              </h4>
+                                              {Object.entries(submission.data).map(([key, value]) => (
+                                                <div key={key}>
+                                                  <div className="text-xs text-gray-500 uppercase tracking-wider mb-1">
+                                                    {key}
+                                                  </div>
+                                                  <div className="text-gray-700">
+                                                    {typeof value === 'string' && isFileData(value)
+                                                      ? renderFileDownload(value)
+                                                      : formatCellValue(value)}
+                                                  </div>
                                                 </div>
-                                                <div className="text-gray-700">
-                                                  {typeof value === 'string' && isFileData(value)
-                                                    ? renderFileDownload(value)
-                                                    : formatCellValue(value)}
-                                                </div>
-                                              </div>
-                                            ))}
-                                          </div>
-                                          <div className="space-y-4">
-                                            <h4 className="font-medium text-gray-800">Metadata</h4>
-                                            <div>
-                                              <div className="text-xs text-gray-500 uppercase tracking-wider mb-1">
-                                                Submitted At
-                                              </div>
-                                              <div className="text-gray-700">
-                                                {new Date(submission.createdAt).toLocaleString()}
-                                              </div>
+                                              ))}
                                             </div>
-                                            {submission.metadata?.ip && (
+                                            <div className="space-y-4">
+                                              <h4 className="font-medium text-gray-800">Metadata</h4>
                                               <div>
                                                 <div className="text-xs text-gray-500 uppercase tracking-wider mb-1">
-                                                  IP Address
+                                                  Submitted At
                                                 </div>
-                                                <div className="text-gray-700">{submission.metadata.ip}</div>
+                                                <div className="text-gray-700">
+                                                  {new Date(submission.createdAt).toLocaleString()}
+                                                </div>
                                               </div>
-                                            )}
+                                              {submission.metadata?.ip && (
+                                                <div>
+                                                  <div className="text-xs text-gray-500 uppercase tracking-wider mb-1">
+                                                    IP Address
+                                                  </div>
+                                                  <div className="text-gray-700">{submission.metadata.ip}</div>
+                                                </div>
+                                              )}
+                                            </div>
                                           </div>
-                                        </div>
-                                      </motion.div>
-                                    </td>
-                                  </motion.tr>
-                                )}
-                              </AnimatePresence>
-                            </React.Fragment>
-                          );
-                        })}
-                      </tbody>
-                    </table>
-                  </div>
+                                        </motion.div>
+                                      </td>
+                                    </motion.tr>
+                                  )}
+                                </AnimatePresence>
+                              </React.Fragment>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  </>
                 );
               })()}
             </>

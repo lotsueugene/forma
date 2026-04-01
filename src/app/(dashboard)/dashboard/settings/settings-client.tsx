@@ -517,8 +517,29 @@ export default function SettingsPage() {
       </div>
 
       <div className="flex flex-col lg:flex-row gap-6">
-        {/* Sidebar */}
-        <div className="lg:w-64 space-y-1">
+        {/* Mobile Horizontal Tabs */}
+        <div className="lg:hidden overflow-x-auto -mx-4 px-4 pb-2">
+          <div className="flex gap-2 min-w-max">
+            {tabs.map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id as SettingsTab)}
+                className={cn(
+                  'flex items-center gap-2 px-4 py-2 rounded-full text-sm whitespace-nowrap transition-colors',
+                  activeTab === tab.id
+                    ? 'bg-safety-orange text-white'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                )}
+              >
+                <tab.icon size={16} weight={activeTab === tab.id ? 'fill' : 'regular'} />
+                {tab.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Desktop Sidebar */}
+        <div className="hidden lg:block lg:w-64 space-y-1">
           {tabs.map((tab) => (
             <button
               key={tab.id}
