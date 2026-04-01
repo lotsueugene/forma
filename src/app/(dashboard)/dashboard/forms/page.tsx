@@ -356,8 +356,17 @@ export default function FormsPage() {
                             href={`/dashboard/forms/${form.id}`}
                             className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:text-gray-900 hover:bg-gray-100"
                           >
-                            <PencilSimple size={16} className="text-gray-500" />
-                            Edit
+                            {form.formType === 'endpoint' ? (
+                              <>
+                                <Eye size={16} className="text-gray-500" />
+                                View
+                              </>
+                            ) : (
+                              <>
+                                <PencilSimple size={16} className="text-gray-500" />
+                                Edit
+                              </>
+                            )}
                           </Link>
                           <button
                             onClick={() => handleDelete(form.id)}

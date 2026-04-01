@@ -31,6 +31,7 @@ interface Form {
   name: string;
   description: string | null;
   status: string;
+  formType: string;
   fields: Array<{ id: string; label: string; type: string }>;
   submissions: number;
   views: number;
@@ -305,28 +306,36 @@ export default function FormDetailPage() {
         <div className="card p-6 border-safety-orange/30 bg-safety-orange/5">
           <div className="flex items-center gap-2 mb-4">
             <LinkIcon size={20} className="text-safety-orange" />
-            <h3 className="font-medium text-gray-800">Share Your Form</h3>
+            <h3 className="font-medium text-gray-800">
+              {form.formType === 'endpoint' ? 'API Endpoint' : 'Share Your Form'}
+            </h3>
           </div>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <div>
-              <label className="text-xs text-gray-500 uppercase tracking-wider mb-2 block">
-                Public Form URL
-              </label>
-              <div className="flex gap-2">
-                <code className="input font-mono text-sm text-safety-orange flex-1 truncate">
-                  {formPageUrl}
-                </code>
-                <button
-                  onClick={() => copyToClipboard(formPageUrl, 'formUrl')}
-                  className="btn btn-secondary"
-                >
-                  {copied === 'formUrl' ? <Check size={18} className="text-emerald-600" /> : <Copy size={18} />}
-                </button>
-                <Link href={formPageUrl} target="_blank" className="btn btn-secondary">
-                  <ArrowSquareOut size={18} />
-                </Link>
+          <div className={cn(
+            "grid gap-4",
+            form.formType === 'endpoint' ? 'grid-cols-1' : 'grid-cols-1 lg:grid-cols-2'
+          )}>
+            {/* Only show public URL for builder forms */}
+            {form.formType !== 'endpoint' && (
+              <div>
+                <label className="text-xs text-gray-500 uppercase tracking-wider mb-2 block">
+                  Public Form URL
+                </label>
+                <div className="flex gap-2">
+                  <code className="input font-mono text-sm text-safety-orange flex-1 truncate">
+                    {formPageUrl}
+                  </code>
+                  <button
+                    onClick={() => copyToClipboard(formPageUrl, 'formUrl')}
+                    className="btn btn-secondary"
+                  >
+                    {copied === 'formUrl' ? <Check size={18} className="text-emerald-600" /> : <Copy size={18} />}
+                  </button>
+                  <Link href={formPageUrl} target="_blank" className="btn btn-secondary">
+                    <ArrowSquareOut size={18} />
+                  </Link>
+                </div>
               </div>
-            </div>
+            )}
             <div>
               <label className="text-xs text-gray-500 uppercase tracking-wider mb-2 block">
                 API Endpoint (POST)
@@ -342,6 +351,11 @@ export default function FormDetailPage() {
                   {copied === 'apiUrl' ? <Check size={18} className="text-emerald-600" /> : <Copy size={18} />}
                 </button>
               </div>
+              {form.formType === 'endpoint' && (
+                <p className="text-xs text-gray-500 mt-2">
+                  POST any JSON data to this endpoint. No predefined fields required.
+                </p>
+              )}
             </div>
           </div>
         </div>
@@ -387,14 +401,19 @@ export default function FormDetailPage() {
                 No submissions yet
               </h3>
               <p className="text-gray-500 mb-4">
-                Share your form to start collecting responses
+                {form.formType === 'endpoint'
+                  ? 'POST data to your API endpoint to start collecting submissions'
+                  : 'Share your form to start collecting responses'}
               </p>
               <button
-                onClick={() => copyToClipboard(formPageUrl, 'emptyState')}
+                onClick={() => copyToClipboard(
+                  form.formType === 'endpoint' ? apiEndpoint : formPageUrl,
+                  'emptyState'
+                )}
                 className="btn btn-primary"
               >
                 {copied === 'emptyState' ? <Check size={18} /> : <Copy size={18} />}
-                Copy Form Link
+                {form.formType === 'endpoint' ? 'Copy API Endpoint' : 'Copy Form Link'}
               </button>
             </div>
           ) : (
