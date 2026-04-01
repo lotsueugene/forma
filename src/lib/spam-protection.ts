@@ -92,25 +92,21 @@ export async function checkSpam(params: SpamCheckParams): Promise<SpamCheckResul
     }
   }
 
-  // 3. reCAPTCHA v3 verification
-  if (settings.recaptcha?.enabled && settings.recaptcha.secretKey) {
-    if (!recaptchaToken) {
-      return {
-        allowed: false,
-        reason: 'reCAPTCHA token required',
-        code: 'recaptcha',
-      };
-    }
+  // 3. reCAPTCHA v3 verification (only if token provided)
+  // Hosted form page sends token automatically, API calls don't need it
+  if (recaptchaToken) {
+    const secretKey = settings.recaptcha?.secretKey || process.env.RECAPTCHA_SECRET_KEY;
+    if (secretKey) {
+      const recaptchaResult = await verifyRecaptcha(
+        secretKey,
+        recaptchaToken,
+        ip,
+        settings.recaptcha?.minScore || 0.5
+      );
 
-    const recaptchaResult = await verifyRecaptcha(
-      settings.recaptcha.secretKey,
-      recaptchaToken,
-      ip,
-      settings.recaptcha.minScore || 0.5
-    );
-
-    if (!recaptchaResult.allowed) {
-      return recaptchaResult;
+      if (!recaptchaResult.allowed) {
+        return recaptchaResult;
+      }
     }
   }
 
