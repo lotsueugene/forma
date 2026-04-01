@@ -3,6 +3,11 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
+import { checkRateLimit } from '@/lib/rate-limiter';
+
+// Password requirements
+const MIN_PASSWORD_LENGTH = 8;
+const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
 
 // PUT /api/user/password - Change password
 export async function PUT(request: NextRequest) {
@@ -11,6 +16,15 @@ export async function PUT(request: NextRequest) {
 
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    // Rate limiting by user ID - 5 attempts per 15 minutes
+    const rateLimitResult = checkRateLimit(`password:${session.user.id}`, 5, 15 * 60 * 1000);
+    if (!rateLimitResult.allowed) {
+      return NextResponse.json(
+        { error: 'Too many password change attempts. Please try again later.' },
+        { status: 429 }
+      );
     }
 
     const { currentPassword, newPassword } = await request.json();
@@ -22,9 +36,17 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    if (newPassword.length < 8) {
+    // Validate new password strength
+    if (newPassword.length < MIN_PASSWORD_LENGTH) {
       return NextResponse.json(
-        { error: 'New password must be at least 8 characters' },
+        { error: `New password must be at least ${MIN_PASSWORD_LENGTH} characters` },
+        { status: 400 }
+      );
+    }
+
+    if (!PASSWORD_REGEX.test(newPassword)) {
+      return NextResponse.json(
+        { error: 'Password must contain at least one uppercase letter, one lowercase letter, and one number' },
         { status: 400 }
       );
     }
@@ -48,6 +70,15 @@ export async function PUT(request: NextRequest) {
     if (!isValid) {
       return NextResponse.json(
         { error: 'Current password is incorrect' },
+        { status: 400 }
+      );
+    }
+
+    // Ensure new password is different from current
+    const isSame = await bcrypt.compare(newPassword, user.password);
+    if (isSame) {
+      return NextResponse.json(
+        { error: 'New password must be different from current password' },
         { status: 400 }
       );
     }

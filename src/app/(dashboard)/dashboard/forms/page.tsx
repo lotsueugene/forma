@@ -140,7 +140,10 @@ export default function FormsPage() {
 
   const filteredForms = forms
     .filter((form) => {
-      const matchesSearch = form.name.toLowerCase().includes(search.toLowerCase());
+      const searchLower = search.toLowerCase().trim();
+      const matchesSearch = searchLower === '' ||
+        form.name.toLowerCase().includes(searchLower) ||
+        (form.description && form.description.toLowerCase().includes(searchLower));
       const matchesStatus = statusFilter === 'all' || form.status === statusFilter;
       return matchesSearch && matchesStatus;
     })
