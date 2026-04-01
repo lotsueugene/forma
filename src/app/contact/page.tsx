@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { Stack, EnvelopeSimple, User, PaperPlaneTilt, Check } from '@phosphor-icons/react';
 
-const FORM_API_ENDPOINT = '/api/forms/cmnfs444q0001fywoe18n4r6e/submissions';
+const FORM_API_ENDPOINT = '/api/forms/cmnfn0fk00001fyigqcj9ce4g/submissions';
 
 export default function ContactPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
