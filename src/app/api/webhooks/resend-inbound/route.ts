@@ -53,7 +53,10 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    const payload: ResendWebhookPayload = await request.json();
+    const payload = await request.json();
+
+    // Log full payload for debugging
+    console.log(`[Resend Inbound] Full payload:`, JSON.stringify(payload, null, 2));
 
     if (payload.type !== 'email.received') {
       console.log(`[Resend Inbound] Ignoring event type: ${payload.type}`);
@@ -64,6 +67,8 @@ export async function POST(request: NextRequest) {
     const { email: fromEmail, name: fromName } = parseEmailAddress(email.from);
 
     console.log(`[Resend Inbound] Received email from ${fromEmail}: ${email.subject}`);
+    console.log(`[Resend Inbound] Text content: ${email.text ? email.text.substring(0, 100) : 'NONE'}`);
+    console.log(`[Resend Inbound] HTML content: ${email.html ? 'YES' : 'NONE'}`);
 
     // Try to find the original broadcast by looking at the subject
     // Broadcasts usually have "Re: Original Subject" when replied to

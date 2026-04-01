@@ -524,7 +524,7 @@ The Forma Team"
                             'font-medium',
                             reply.status === 'unread' ? 'text-gray-900' : 'text-gray-700'
                           )}>
-                            {reply.fromName || reply.fromEmail}
+                            {reply.fromName && reply.fromName.length > 2 ? reply.fromName : reply.fromEmail}
                           </h3>
                           <span className={cn('text-xs px-2 py-0.5 rounded', status.color)}>
                             {status.label}
@@ -538,7 +538,7 @@ The Forma Team"
                           <span>{reply.fromEmail}</span>
                           <span>{new Date(reply.receivedAt).toLocaleString()}</span>
                           {reply.broadcast && (
-                            <span className="text-blue-600">Re: {reply.broadcast.subject}</span>
+                            <span className="text-gray-500">Re: {reply.broadcast.subject}</span>
                           )}
                         </div>
                       </div>
@@ -624,8 +624,14 @@ The Forma Team"
               <div className="ml-11 space-y-1">
                 <p className="text-sm text-gray-700">
                   <span className="text-gray-500">From:</span>{' '}
-                  <span className="font-medium">{selectedReply.fromName || 'Unknown'}</span>{' '}
-                  <span className="text-gray-500">&lt;{selectedReply.fromEmail}&gt;</span>
+                  {selectedReply.fromName && selectedReply.fromName.length > 2 ? (
+                    <>
+                      <span className="font-medium">{selectedReply.fromName}</span>{' '}
+                      <span className="text-gray-500">&lt;{selectedReply.fromEmail}&gt;</span>
+                    </>
+                  ) : (
+                    <span className="font-medium">{selectedReply.fromEmail}</span>
+                  )}
                 </p>
                 <p className="text-sm text-gray-500">
                   {new Date(selectedReply.receivedAt).toLocaleString()}
