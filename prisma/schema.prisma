@@ -381,6 +381,45 @@ model EmailBroadcast {
 
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
+
+  replies     BroadcastReply[]
+}
+
+// Replies to email broadcasts (via Resend inbound)
+model BroadcastReply {
+  id           String    @id @default(cuid())
+
+  // Link to original broadcast (if identifiable)
+  broadcastId  String?
+  broadcast    EmailBroadcast? @relation(fields: [broadcastId], references: [id], onDelete: SetNull)
+
+  // Sender info
+  fromEmail    String
+  fromName     String?
+
+  // Email content
+  subject      String
+  textContent  String?   // Plain text body
+  htmlContent  String?   // HTML body
+
+  // Status
+  status       String    @default("unread") // unread, read, replied
+  readAt       DateTime?
+
+  // Admin response
+  repliedAt    DateTime?
+  replyContent String?   // What admin replied with
+  repliedBy    String?   // Admin user ID
+
+  // Resend metadata
+  resendEmailId String?  // Resend's email ID
+
+  receivedAt   DateTime  @default(now())
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@index([status, receivedAt])
+  @@index([fromEmail])
 }
 
 // Pricing plans (admin configurable)
