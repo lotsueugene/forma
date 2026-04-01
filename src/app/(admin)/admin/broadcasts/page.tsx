@@ -532,7 +532,7 @@ The Forma Team"
                         </div>
                         <p className="text-sm text-gray-600 mt-0.5">{reply.subject}</p>
                         <p className="text-sm text-gray-500 mt-1 line-clamp-1">
-                          {reply.textContent?.slice(0, 100) || '(No text content)'}
+                          {reply.textContent?.slice(0, 100) || reply.htmlContent?.replace(/<[^>]*>/g, '').slice(0, 100) || '(Empty message)'}
                         </p>
                         <div className="flex items-center gap-4 mt-2 text-xs text-gray-500">
                           <span>{reply.fromEmail}</span>
@@ -606,54 +606,57 @@ The Forma Team"
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white rounded-xl max-w-2xl w-full mx-4 shadow-xl max-h-[90vh] flex flex-col">
             {/* Header */}
-            <div className="p-4 border-b border-gray-200 flex items-center gap-3">
-              <button
-                onClick={() => setSelectedReply(null)}
-                className="btn btn-ghost p-2"
-              >
-                <ArrowLeft size={18} />
-              </button>
-              <div className="flex-1 min-w-0">
-                <h3 className="font-semibold text-gray-900 truncate">{selectedReply.subject}</h3>
-                <p className="text-sm text-gray-500">
-                  From: {selectedReply.fromName || selectedReply.fromEmail}
-                </p>
+            <div className="p-4 border-b border-gray-200">
+              <div className="flex items-center gap-3 mb-3">
+                <button
+                  onClick={() => setSelectedReply(null)}
+                  className="btn btn-ghost p-2"
+                >
+                  <ArrowLeft size={18} />
+                </button>
+                <h3 className="font-semibold text-gray-900 flex-1">{selectedReply.subject}</h3>
+                {selectedReply.status === 'replied' && (
+                  <span className="text-xs px-2 py-1 bg-emerald-100 text-emerald-600 rounded">
+                    Replied
+                  </span>
+                )}
               </div>
-              {selectedReply.status === 'replied' && (
-                <span className="text-xs px-2 py-1 bg-emerald-100 text-emerald-600 rounded">
-                  Replied
-                </span>
-              )}
+              <div className="ml-11 space-y-1">
+                <p className="text-sm text-gray-700">
+                  <span className="text-gray-500">From:</span>{' '}
+                  <span className="font-medium">{selectedReply.fromName || 'Unknown'}</span>{' '}
+                  <span className="text-gray-500">&lt;{selectedReply.fromEmail}&gt;</span>
+                </p>
+                <p className="text-sm text-gray-500">
+                  {new Date(selectedReply.receivedAt).toLocaleString()}
+                </p>
+                {selectedReply.broadcast && (
+                  <p className="text-sm">
+                    <span className="text-gray-500">Replying to:</span>{' '}
+                    <span className="text-orange-600 font-medium">{selectedReply.broadcast.subject}</span>
+                  </p>
+                )}
+              </div>
             </div>
 
             {/* Content */}
             <div className="p-4 flex-1 overflow-y-auto">
-              <div className="flex items-center gap-2 text-sm text-gray-500 mb-4">
-                <User size={14} />
-                <span>{selectedReply.fromEmail}</span>
-                <span>·</span>
-                <span>{new Date(selectedReply.receivedAt).toLocaleString()}</span>
-              </div>
-
-              {selectedReply.broadcast && (
-                <div className="mb-4 p-3 bg-gray-50 rounded-lg text-sm">
-                  <span className="text-gray-500">In reply to:</span>{' '}
-                  <span className="text-gray-700">{selectedReply.broadcast.subject}</span>
-                </div>
-              )}
-
-              <div className="prose prose-sm max-w-none">
+              <div className="prose prose-sm max-w-none bg-gray-50 rounded-lg p-4">
                 {selectedReply.htmlContent ? (
                   <div dangerouslySetInnerHTML={{ __html: selectedReply.htmlContent }} />
+                ) : selectedReply.textContent ? (
+                  <p className="whitespace-pre-wrap m-0">{selectedReply.textContent}</p>
                 ) : (
-                  <p className="whitespace-pre-wrap">{selectedReply.textContent}</p>
+                  <p className="text-gray-400 italic m-0">No message content</p>
                 )}
               </div>
 
               {selectedReply.replyContent && (
-                <div className="mt-6 pt-4 border-t border-gray-200">
-                  <p className="text-sm text-gray-500 mb-2">Your response ({new Date(selectedReply.repliedAt!).toLocaleString()}):</p>
-                  <div className="p-3 bg-emerald-50 rounded-lg text-sm whitespace-pre-wrap">
+                <div className="mt-4 pt-4 border-t border-gray-200">
+                  <p className="text-sm text-gray-500 mb-2">
+                    Your response · {new Date(selectedReply.repliedAt!).toLocaleString()}
+                  </p>
+                  <div className="p-4 bg-emerald-50 rounded-lg text-sm whitespace-pre-wrap">
                     {selectedReply.replyContent}
                   </div>
                 </div>

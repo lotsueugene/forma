@@ -104,13 +104,15 @@ export async function POST(
       : `Re: ${reply.subject}`;
 
     // Send the response email
-    await resend.emails.send({
+    console.log(`[Reply] Sending response to ${reply.fromEmail} from ${EMAIL_FROM}`);
+    const emailResult = await resend.emails.send({
       from: EMAIL_FROM,
       to: reply.fromEmail,
       subject,
       html,
       text: content,
     });
+    console.log(`[Reply] Email sent:`, emailResult);
 
     // Update reply record
     await prisma.broadcastReply.update({
