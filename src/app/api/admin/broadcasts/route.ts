@@ -152,7 +152,7 @@ async function sendBroadcastEmails(
     const planFilter = targetPlans?.split(',').map(p => p.trim()) || null;
 
     // Get all users with email addresses
-    // Marketing emails go to all users (they can unsubscribe via settings)
+    // Admin broadcasts go to all users (platform communications)
     const users = await prisma.user.findMany({
       where: {
         email: { not: null },
@@ -161,9 +161,6 @@ async function sendBroadcastEmails(
         id: true,
         email: true,
         name: true,
-        settings: {
-          select: { notifyMarketing: true },
-        },
         workspaceMembers: {
           select: {
             workspace: {
@@ -178,13 +175,10 @@ async function sendBroadcastEmails(
       },
     });
 
-    // Filter out users who explicitly opted out of marketing
-    const eligibleUsers = users.filter(user => {
-      // If user has no settings, they haven't opted out (default behavior)
-      if (!user.settings) return true;
-      // If user has settings, check if they've opted out
-      return user.settings.notifyMarketing !== false;
-    });
+    // All users are eligible for admin broadcasts (platform updates)
+    const eligibleUsers = users;
+
+    console.log(`[Broadcast] Found ${eligibleUsers.length} eligible users`);
 
     // Filter by plan if needed
     const targetUsers = targetAll
@@ -198,6 +192,8 @@ async function sendBroadcastEmails(
 
     let sentCount = 0;
     let failedCount = 0;
+
+    console.log(`[Broadcast] Sending to ${targetUsers.length} users`);
 
     // Send emails in batches
     const batchSize = 50;
