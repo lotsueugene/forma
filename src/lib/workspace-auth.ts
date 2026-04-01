@@ -1,11 +1,11 @@
 import { prisma } from './prisma';
 import type { WorkspaceMember, Form, Workspace } from '@prisma/client';
 
-export type Role = 'owner' | 'admin' | 'editor' | 'viewer';
+export type Role = 'owner' | 'manager' | 'editor' | 'viewer';
 
 const roleHierarchy: Record<Role, number> = {
   owner: 4,
-  admin: 3,
+  manager: 3,
   editor: 2,
   viewer: 1,
 };
@@ -197,7 +197,7 @@ export function hasPermission(userRole: string, minimumRole: Role): boolean {
 export function getRoleDisplayName(role: string): string {
   const names: Record<string, string> = {
     owner: 'Owner',
-    admin: 'Admin',
+    manager: 'Manager',
     editor: 'Editor',
     viewer: 'Viewer',
   };

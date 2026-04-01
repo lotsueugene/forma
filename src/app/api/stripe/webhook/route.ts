@@ -64,7 +64,7 @@ export async function POST(request: NextRequest) {
           // In-app notification to admins/owners
           try {
             const members = await prisma.workspaceMember.findMany({
-              where: { workspaceId, role: { in: ['owner', 'admin'] } },
+              where: { workspaceId, role: { in: ['owner', 'manager'] } },
               select: {
                 userId: true,
                 user: {
@@ -117,7 +117,7 @@ export async function POST(request: NextRequest) {
 
             try {
               const members = await prisma.workspaceMember.findMany({
-                where: { workspaceId, role: { in: ['owner', 'admin'] } },
+                where: { workspaceId, role: { in: ['owner', 'manager'] } },
                 select: {
                   userId: true,
                   user: {
@@ -161,7 +161,7 @@ export async function POST(request: NextRequest) {
 
           try {
             const members = await prisma.workspaceMember.findMany({
-              where: { workspaceId, role: { in: ['owner', 'admin'] } },
+              where: { workspaceId, role: { in: ['owner', 'manager'] } },
               select: {
                 userId: true,
                 user: {

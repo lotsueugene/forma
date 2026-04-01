@@ -128,8 +128,8 @@ export async function DELETE(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Verify user has admin access to delete this form
-    const access = await verifyFormAccess(session.user.id, id, 'admin');
+    // Verify user has manager access to delete this form
+    const access = await verifyFormAccess(session.user.id, id, 'manager');
     if (!access.allowed) {
       return NextResponse.json({ error: access.error }, { status: access.error === 'Form not found' ? 404 : 403 });
     }

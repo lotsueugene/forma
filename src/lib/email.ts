@@ -20,7 +20,7 @@ function getResend(): Resend | null {
   return resendClient;
 }
 
-const EMAIL_FROM = process.env.EMAIL_FROM || 'Forma <notifications@forma.app>';
+const EMAIL_FROM = process.env.EMAIL_FROM || 'Forma <notifications@withforma.io>';
 
 export interface SubmissionEmailData {
   formName: string;
@@ -56,8 +56,8 @@ export async function sendSubmissionNotification(
         : String(value);
       return `
         <tr>
-          <td style="padding: 8px 12px; border-bottom: 1px solid #e5e7eb; font-weight: 500; color: #374151;">${escapeHtml(key)}</td>
-          <td style="padding: 8px 12px; border-bottom: 1px solid #e5e7eb; color: #6b7280;">${escapeHtml(displayValue)}</td>
+          <td style="padding: 12px 16px; border-bottom: 1px solid #e5e5e5; font-weight: 500; color: #1f2937;">${escapeHtml(key)}</td>
+          <td style="padding: 12px 16px; border-bottom: 1px solid #e5e5e5; color: #6b7280;">${escapeHtml(displayValue)}</td>
         </tr>
       `;
     })
@@ -70,16 +70,26 @@ export async function sendSubmissionNotification(
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
-<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #1f2937; margin: 0; padding: 0; background-color: #f3f4f6;">
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #1f2937; margin: 0; padding: 0; background-color: #f5f5f4;">
   <div style="max-width: 600px; margin: 0 auto; padding: 40px 20px;">
-    <div style="background: white; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); overflow: hidden;">
-      <!-- Header -->
-      <div style="background: linear-gradient(135deg, #1f2937 0%, #374151 100%); padding: 24px 32px;">
-        <h1 style="margin: 0; color: white; font-size: 20px; font-weight: 600;">
+    <div style="background: #ffffff; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); overflow: hidden;">
+      <!-- Header with Forma Logo -->
+      <div style="padding: 24px 32px; border-bottom: 1px solid #e5e5e5;">
+        <table cellpadding="0" cellspacing="0" border="0">
+          <tr>
+            <td style="width: 32px; height: 32px; background: linear-gradient(135deg, #f97316 0%, #ea580c 100%); border-radius: 8px;"></td>
+            <td style="padding-left: 12px; font-size: 20px; font-weight: 700; color: #1f2937;">Forma</td>
+          </tr>
+        </table>
+      </div>
+
+      <!-- Title -->
+      <div style="padding: 32px 32px 0;">
+        <h1 style="margin: 0 0 8px; color: #1f2937; font-size: 24px; font-weight: 600;">
           New Form Submission
         </h1>
-        <p style="margin: 8px 0 0; color: #9ca3af; font-size: 14px;">
-          ${escapeHtml(formName)}${workspaceName ? ` • ${escapeHtml(workspaceName)}` : ''}
+        <p style="margin: 0; color: #6b7280; font-size: 14px;">
+          ${escapeHtml(formName)}${workspaceName ? ` · ${escapeHtml(workspaceName)}` : ''}
         </p>
       </div>
 
@@ -96,25 +106,25 @@ export async function sendSubmissionNotification(
           })}
         </p>
 
-        <table style="width: 100%; border-collapse: collapse; background: #f9fafb; border-radius: 6px; overflow: hidden;">
+        <table style="width: 100%; border-collapse: collapse; background: #fafaf9; border-radius: 8px; overflow: hidden; border: 1px solid #e5e5e5;">
           <tbody>
             ${dataRows}
           </tbody>
         </table>
 
         <div style="margin-top: 32px; text-align: center;">
-          <a href="${process.env.NEXTAUTH_URL || 'https://forma.app'}/dashboard/forms/${formId}"
-             style="display: inline-block; padding: 12px 24px; background: #1f2937; color: white; text-decoration: none; border-radius: 6px; font-weight: 500; font-size: 14px;">
+          <a href="${process.env.NEXTAUTH_URL || 'https://withforma.io'}/dashboard/forms/${formId}"
+             style="display: inline-block; padding: 12px 28px; background: linear-gradient(135deg, #f97316 0%, #ea580c 100%); color: white; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 14px;">
             View in Dashboard
           </a>
         </div>
       </div>
 
       <!-- Footer -->
-      <div style="padding: 24px 32px; background: #f9fafb; border-top: 1px solid #e5e7eb;">
-        <p style="margin: 0; color: #9ca3af; font-size: 12px; text-align: center;">
+      <div style="padding: 24px 32px; background: #fafaf9; border-top: 1px solid #e5e5e5;">
+        <p style="margin: 0; color: #6b7280; font-size: 12px; text-align: center;">
           Submission ID: ${submissionId}<br>
-          Sent by <a href="https://forma.app" style="color: #6b7280;">Forma</a>
+          <a href="https://withforma.io" style="color: #f97316; text-decoration: none;">Forma</a> — The modern way to build forms
         </p>
       </div>
     </div>
@@ -131,10 +141,12 @@ Received: ${submittedAt}
 
 ${Object.entries(data).map(([k, v]) => `${k}: ${v}`).join('\n')}
 
-View in Dashboard: ${process.env.NEXTAUTH_URL || 'https://forma.app'}/dashboard/forms/${formId}
+View in Dashboard: ${process.env.NEXTAUTH_URL || 'https://withforma.io'}/dashboard/forms/${formId}
 
 ---
 Submission ID: ${submissionId}
+Sent by Forma — The modern way to build forms
+https://withforma.io
   `.trim();
 
   try {
@@ -216,46 +228,56 @@ export async function sendInvitationEmail(
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
-<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #1f2937; margin: 0; padding: 0; background-color: #f3f4f6;">
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #1f2937; margin: 0; padding: 0; background-color: #f5f5f4;">
   <div style="max-width: 600px; margin: 0 auto; padding: 40px 20px;">
-    <div style="background: white; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); overflow: hidden;">
-      <!-- Header -->
-      <div style="background: linear-gradient(135deg, #1f2937 0%, #374151 100%); padding: 24px 32px;">
-        <h1 style="margin: 0; color: white; font-size: 20px; font-weight: 600;">
+    <div style="background: #ffffff; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); overflow: hidden;">
+      <!-- Header with Forma Logo -->
+      <div style="padding: 24px 32px; border-bottom: 1px solid #e5e5e5;">
+        <table cellpadding="0" cellspacing="0" border="0">
+          <tr>
+            <td style="width: 32px; height: 32px; background: linear-gradient(135deg, #f97316 0%, #ea580c 100%); border-radius: 8px;"></td>
+            <td style="padding-left: 12px; font-size: 20px; font-weight: 700; color: #1f2937;">Forma</td>
+          </tr>
+        </table>
+      </div>
+
+      <!-- Title -->
+      <div style="padding: 32px 32px 0;">
+        <h1 style="margin: 0; color: #1f2937; font-size: 24px; font-weight: 600;">
           You're Invited to Join a Workspace
         </h1>
       </div>
 
       <!-- Content -->
       <div style="padding: 32px;">
-        <p style="margin: 0 0 16px; font-size: 16px;">
-          <strong>${escapeHtml(invitedByName)}</strong> has invited you to join <strong>${escapeHtml(workspaceName)}</strong> on Forma.
+        <p style="margin: 0 0 24px; font-size: 16px; color: #374151;">
+          <strong style="color: #1f2937;">${escapeHtml(invitedByName)}</strong> has invited you to join <strong style="color: #1f2937;">${escapeHtml(workspaceName)}</strong> on Forma.
         </p>
 
-        <div style="background: #f9fafb; border-radius: 6px; padding: 16px; margin: 24px 0;">
+        <div style="background: #fafaf9; border-radius: 8px; padding: 20px; margin: 24px 0; border: 1px solid #e5e5e5;">
           <p style="margin: 0; color: #6b7280; font-size: 14px;">
-            <strong>Role:</strong> ${escapeHtml(roleDisplay)}<br>
-            <strong>Workspace:</strong> ${escapeHtml(workspaceName)}
+            <span style="color: #9ca3af;">Role:</span> <span style="color: #1f2937; font-weight: 500;">${escapeHtml(roleDisplay)}</span><br>
+            <span style="color: #9ca3af;">Workspace:</span> <span style="color: #1f2937; font-weight: 500;">${escapeHtml(workspaceName)}</span>
           </p>
         </div>
 
         <div style="text-align: center; margin: 32px 0;">
           <a href="${acceptUrl}"
-             style="display: inline-block; padding: 14px 32px; background: #1f2937; color: white; text-decoration: none; border-radius: 6px; font-weight: 500; font-size: 16px;">
+             style="display: inline-block; padding: 14px 36px; background: linear-gradient(135deg, #f97316 0%, #ea580c 100%); color: white; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px;">
             Accept Invitation
           </a>
         </div>
 
-        <p style="margin: 24px 0 0; color: #9ca3af; font-size: 13px; text-align: center;">
+        <p style="margin: 24px 0 0; color: #6b7280; font-size: 13px; text-align: center;">
           This invitation expires on ${expiresFormatted}.<br>
           If you didn't expect this invitation, you can ignore this email.
         </p>
       </div>
 
       <!-- Footer -->
-      <div style="padding: 24px 32px; background: #f9fafb; border-top: 1px solid #e5e7eb;">
-        <p style="margin: 0; color: #9ca3af; font-size: 12px; text-align: center;">
-          Sent by <a href="https://withforma.io" style="color: #6b7280;">Forma</a> — The developer-first form builder
+      <div style="padding: 24px 32px; background: #fafaf9; border-top: 1px solid #e5e5e5;">
+        <p style="margin: 0; color: #6b7280; font-size: 12px; text-align: center;">
+          <a href="https://withforma.io" style="color: #f97316; text-decoration: none;">Forma</a> — The modern way to build forms
         </p>
       </div>
     </div>
@@ -277,7 +299,7 @@ Accept the invitation: ${acceptUrl}
 This invitation expires on ${expiresFormatted}.
 
 ---
-Sent by Forma — The developer-first form builder
+Sent by Forma — The modern way to build forms
 https://withforma.io
   `.trim();
 

@@ -27,8 +27,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Workspace ID required' }, { status: 400 });
     }
 
-    // Verify user has admin access
-    const access = await verifyWorkspaceAccess(session.user.id, workspaceId, 'admin');
+    // Verify user has manager access
+    const access = await verifyWorkspaceAccess(session.user.id, workspaceId, 'manager');
     if (!access.allowed) {
       return NextResponse.json({ error: access.error }, { status: 403 });
     }

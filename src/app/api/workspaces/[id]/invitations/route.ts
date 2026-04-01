@@ -20,7 +20,7 @@ export async function GET(
     }
 
     const { id } = await params;
-    const access = await verifyWorkspaceAccess(session.user.id, id, 'admin');
+    const access = await verifyWorkspaceAccess(session.user.id, id, 'manager');
 
     if (!access.allowed) {
       return NextResponse.json({ error: access.error }, { status: 403 });
@@ -71,7 +71,7 @@ export async function POST(
     }
 
     const { id } = await params;
-    const access = await verifyWorkspaceAccess(session.user.id, id, 'admin');
+    const access = await verifyWorkspaceAccess(session.user.id, id, 'manager');
 
     if (!access.allowed) {
       return NextResponse.json({ error: access.error }, { status: 403 });
@@ -95,9 +95,9 @@ export async function POST(
       );
     }
 
-    if (!['admin', 'editor', 'viewer'].includes(role)) {
+    if (!['manager', 'editor', 'viewer'].includes(role)) {
       return NextResponse.json(
-        { error: 'Invalid role. Must be admin, editor, or viewer.' },
+        { error: 'Invalid role. Must be manager, editor, or viewer.' },
         { status: 400 }
       );
     }
@@ -172,7 +172,7 @@ export async function POST(
       const recipients = await prisma.workspaceMember.findMany({
         where: {
           workspaceId: id,
-          role: { in: ['owner', 'admin'] },
+          role: { in: ['owner', 'manager'] },
         },
         select: {
           userId: true,

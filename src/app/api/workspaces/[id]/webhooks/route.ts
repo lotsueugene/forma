@@ -18,7 +18,7 @@ export async function GET(
     }
 
     const { id } = await params;
-    const access = await verifyWorkspaceAccess(session.user.id, id, 'admin');
+    const access = await verifyWorkspaceAccess(session.user.id, id, 'manager');
     if (!access.allowed) {
       return NextResponse.json({ error: access.error }, { status: 403 });
     }
@@ -70,7 +70,7 @@ export async function POST(
     }
 
     const { id } = await params;
-    const access = await verifyWorkspaceAccess(session.user.id, id, 'admin');
+    const access = await verifyWorkspaceAccess(session.user.id, id, 'manager');
     if (!access.allowed) {
       return NextResponse.json({ error: access.error }, { status: 403 });
     }

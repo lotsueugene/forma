@@ -71,8 +71,8 @@ export async function POST(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Verify workspace access (admin or higher)
-    const access = await verifyWorkspaceAccess(session.user.id, workspaceId, 'admin');
+    // Verify workspace access (manager or higher)
+    const access = await verifyWorkspaceAccess(session.user.id, workspaceId, 'manager');
     if (!access.allowed) {
       return NextResponse.json({ error: access.error }, { status: 403 });
     }

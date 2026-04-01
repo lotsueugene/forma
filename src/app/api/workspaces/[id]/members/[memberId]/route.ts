@@ -17,7 +17,7 @@ export async function PUT(
     }
 
     const { id, memberId } = await params;
-    const access = await verifyWorkspaceAccess(session.user.id, id, 'admin');
+    const access = await verifyWorkspaceAccess(session.user.id, id, 'manager');
 
     if (!access.allowed) {
       return NextResponse.json({ error: access.error }, { status: 403 });
@@ -25,9 +25,9 @@ export async function PUT(
 
     const { role } = await request.json();
 
-    if (!['admin', 'editor', 'viewer'].includes(role)) {
+    if (!['manager', 'editor', 'viewer'].includes(role)) {
       return NextResponse.json(
-        { error: 'Invalid role. Must be admin, editor, or viewer.' },
+        { error: 'Invalid role. Must be manager, editor, or viewer.' },
         { status: 400 }
       );
     }
@@ -49,10 +49,10 @@ export async function PUT(
       );
     }
 
-    // Only owner can change admin roles
-    if (targetMember.role === 'admin' && access.membership?.role !== 'owner') {
+    // Only owner can change manager roles
+    if (targetMember.role === 'manager' && access.membership?.role !== 'owner') {
       return NextResponse.json(
-        { error: 'Only owner can change admin roles' },
+        { error: 'Only owner can change manager roles' },
         { status: 403 }
       );
     }
@@ -90,7 +90,7 @@ export async function DELETE(
     }
 
     const { id, memberId } = await params;
-    const access = await verifyWorkspaceAccess(session.user.id, id, 'admin');
+    const access = await verifyWorkspaceAccess(session.user.id, id, 'manager');
 
     if (!access.allowed) {
       return NextResponse.json({ error: access.error }, { status: 403 });
@@ -113,10 +113,10 @@ export async function DELETE(
       );
     }
 
-    // Only owner can remove admins
-    if (targetMember.role === 'admin' && access.membership?.role !== 'owner') {
+    // Only owner can remove managers
+    if (targetMember.role === 'manager' && access.membership?.role !== 'owner') {
       return NextResponse.json(
-        { error: 'Only owner can remove admins' },
+        { error: 'Only owner can remove managers' },
         { status: 403 }
       );
     }

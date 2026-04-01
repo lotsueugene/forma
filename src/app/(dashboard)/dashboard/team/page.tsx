@@ -46,14 +46,14 @@ interface WorkspaceSubscriptionSummary {
 
 const roleIcons = {
   owner: Crown,
-  admin: ShieldCheck,
+  manager: ShieldCheck,
   editor: PencilSimple,
   viewer: Eye,
 };
 
 const roleColors = {
   owner: 'text-yellow-700 bg-yellow-100',
-  admin: 'text-purple-400 bg-purple-400/10',
+  manager: 'text-purple-400 bg-purple-400/10',
   editor: 'text-blue-400 bg-blue-400/10',
   viewer: 'text-gray-700 bg-neutral-400/10',
 };
@@ -290,7 +290,7 @@ export default function TeamPage() {
   );
 
   const canManageTeam =
-    currentWorkspace?.role === 'owner' || currentWorkspace?.role === 'admin';
+    currentWorkspace?.role === 'owner' || currentWorkspace?.role === 'manager';
 
   const inviteBlockedByPlan =
     canManageTeam &&
@@ -499,7 +499,7 @@ export default function TeamPage() {
                                   </p>
                                 </div>
                                 <div className="p-2">
-                                  {['admin', 'editor', 'viewer'].map((role) => (
+                                  {['manager', 'editor', 'viewer'].map((role) => (
                                     <button
                                       key={role}
                                       onClick={() => handleChangeRole(member.id, role)}
@@ -599,7 +599,7 @@ export default function TeamPage() {
               description: 'Full access to all features, billing, and team management',
             },
             {
-              role: 'admin',
+              role: 'manager',
               description: 'Manage forms, submissions, integrations, and team members',
             },
             {
@@ -707,7 +707,7 @@ export default function TeamPage() {
                   >
                     <option value="viewer">Viewer</option>
                     <option value="editor">Editor</option>
-                    <option value="admin">Admin</option>
+                    <option value="manager">Manager</option>
                   </select>
                 </div>
               </div>
