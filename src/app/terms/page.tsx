@@ -190,10 +190,8 @@ export default function TermsPage() {
           <section className="mb-8">
             <h2 className="text-xl font-semibold text-gray-900 mb-4">15. Contact Us</h2>
             <p className="text-gray-600 mb-4">
-              If you have any questions about these Terms, please contact us at:
-            </p>
-            <p className="text-gray-600">
-              Email: <a href="mailto:legal@withforma.io" className="text-safety-orange hover:underline">legal@withforma.io</a>
+              If you have any questions about these Terms, please{' '}
+              <Link href="/contact" className="text-safety-orange hover:underline">contact us</Link>.
             </p>
           </section>
         </div>

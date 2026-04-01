@@ -111,10 +111,10 @@ export default function SecurityPage() {
               Report a Security Issue
             </h2>
             <p className="text-gray-600 mb-4">
-              If you've discovered a security vulnerability, please report it responsibly.
-              We appreciate your help in keeping Forma secure.
+              If you've discovered a security vulnerability, please report it responsibly
+              through our contact form. We appreciate your help in keeping Forma secure.
             </p>
-            <Link href="mailto:security@withforma.io" className="btn btn-primary">
+            <Link href="/contact" className="btn btn-primary">
               Report Vulnerability
             </Link>
           </section>

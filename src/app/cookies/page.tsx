@@ -99,10 +99,10 @@ export default function CookiePolicyPage() {
             <section className="mb-8">
               <h2 className="text-xl font-semibold text-gray-900 mb-4">Contact Us</h2>
               <p className="text-gray-600 mb-4">
-                If you have questions about our use of cookies, please contact us at{' '}
-                <a href="mailto:privacy@withforma.io" className="text-safety-orange hover:underline">
-                  privacy@withforma.io
-                </a>.
+                If you have questions about our use of cookies, please{' '}
+                <Link href="/contact" className="text-safety-orange hover:underline">
+                  contact us
+                </Link>.
               </p>
             </section>
           </div>

@@ -161,10 +161,10 @@ export default function PrivacyPage() {
               <li><strong>Withdraw Consent:</strong> Withdraw consent at any time</li>
             </ul>
             <p className="text-gray-600 mb-4">
-              To exercise these rights, contact us at{' '}
-              <a href="mailto:privacy@withforma.io" className="text-safety-orange hover:underline">
-                privacy@withforma.io
-              </a>.
+              To exercise these rights,{' '}
+              <Link href="/contact" className="text-safety-orange hover:underline">
+                contact us
+              </Link>.
             </p>
           </section>
 
@@ -224,22 +224,16 @@ export default function PrivacyPage() {
           <section className="mb-8">
             <h2 className="text-xl font-semibold text-gray-900 mb-4">13. Contact Us</h2>
             <p className="text-gray-600 mb-4">
-              If you have questions about this Privacy Policy or our data practices, please contact us:
+              If you have questions about this Privacy Policy or our data practices, please{' '}
+              <Link href="/contact" className="text-safety-orange hover:underline">contact us</Link>.
             </p>
-            <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 text-gray-600">
-              <p className="mb-2"><strong>Forma</strong></p>
-              <p>Email: <a href="mailto:privacy@withforma.io" className="text-safety-orange hover:underline">privacy@withforma.io</a></p>
-            </div>
           </section>
 
           <section className="mb-8">
             <h2 className="text-xl font-semibold text-gray-900 mb-4">14. Data Processing Agreement</h2>
             <p className="text-gray-600 mb-4">
-              For customers who require a Data Processing Agreement (DPA) for GDPR compliance, please
-              contact us at{' '}
-              <a href="mailto:legal@withforma.io" className="text-safety-orange hover:underline">
-                legal@withforma.io
-              </a>.
+              For customers who require a Data Processing Agreement (DPA) for GDPR compliance, please{' '}
+              <Link href="/contact" className="text-safety-orange hover:underline">contact us</Link>.
             </p>
           </section>
         </div>

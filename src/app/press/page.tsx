@@ -1,6 +1,6 @@
 import { Metadata } from 'next';
 import Link from 'next/link';
-import { Stack, Newspaper, Download, EnvelopeSimple } from '@phosphor-icons/react/dist/ssr';
+import { Stack, ChatsCircle } from '@phosphor-icons/react/dist/ssr';
 
 export const metadata: Metadata = {
   title: 'Press | Forma',
@@ -84,21 +84,21 @@ export default function PressPage() {
           <section className="p-8 bg-gray-50 rounded-xl">
             <div className="flex items-start gap-4">
               <div className="w-12 h-12 rounded-lg bg-safety-orange/10 flex items-center justify-center flex-shrink-0">
-                <EnvelopeSimple size={24} className="text-safety-orange" />
+                <ChatsCircle size={24} className="text-safety-orange" />
               </div>
               <div>
                 <h2 className="text-xl font-semibold text-gray-900 mb-2">
                   Media Contact
                 </h2>
                 <p className="text-gray-600 mb-4">
-                  For press inquiries, interview requests, or media resources, please contact:
+                  For press inquiries, interview requests, or media resources, please reach out through our contact form.
                 </p>
-                <a
-                  href="mailto:press@withforma.io"
-                  className="text-safety-orange hover:underline font-medium"
+                <Link
+                  href="/contact"
+                  className="btn btn-primary inline-flex"
                 >
-                  press@withforma.io
-                </a>
+                  Contact Us
+                </Link>
               </div>
             </div>
           </section>
