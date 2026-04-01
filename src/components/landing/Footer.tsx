@@ -124,7 +124,7 @@ export default function Footer() {
       {/* Bottom Bar */}
       <div className="mx-auto max-w-7xl mt-16 pt-8 border-t border-gray-200 flex flex-col md:flex-row items-center justify-between gap-4">
         <p className="font-mono text-xs text-gray-600 uppercase tracking-widest">
-          2024 Forma. All rights reserved.
+          {new Date().getFullYear()} Forma. All rights reserved.
         </p>
         <div className="flex items-center gap-2">
           <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse drop-shadow-[0_0_4px_rgba(39,201,63,0.8)]" />
