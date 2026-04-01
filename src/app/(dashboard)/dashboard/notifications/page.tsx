@@ -126,9 +126,9 @@ export default function NotificationsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-start justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold text-gray-900 flex items-center gap-2">
+          <h1 className="text-xl sm:text-2xl font-semibold text-gray-900 flex items-center gap-2">
             <Bell size={22} className="text-accent-200" />
             Notifications
           </h1>
@@ -136,23 +136,35 @@ export default function NotificationsPage() {
             {unreadCount > 0 ? `${unreadCount} unread` : 'All caught up'} · {scopeLabel}
           </p>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <button
-            type="button"
-            onClick={markAllRead}
-            disabled={unreadCount === 0}
-            className="btn btn-secondary disabled:opacity-50"
-          >
-            <Check size={18} />
-            Mark all read
-          </button>
-        </div>
+        <button
+          type="button"
+          onClick={markAllRead}
+          disabled={unreadCount === 0}
+          className="btn btn-secondary disabled:opacity-50 self-start"
+        >
+          <Check size={18} />
+          <span className="hidden sm:inline">Mark all read</span>
+          <span className="sm:hidden">Mark read</span>
+        </button>
       </div>
 
-      <div className="card p-4 flex flex-col md:flex-row md:items-center gap-3 md:gap-4">
-        <div className="flex items-center gap-2 text-sm text-gray-700">
-          <FunnelSimple size={16} />
-          Filters
+      <div className="card p-4 space-y-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2 text-sm text-gray-700">
+            <FunnelSimple size={16} />
+            Filters
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-gray-600 hidden sm:inline">Workspace:</span>
+            <select
+              className="input h-9 py-0 text-sm"
+              value={workspaceScope}
+              onChange={(e) => setWorkspaceScope(e.target.value)}
+            >
+              <option value="current">Current</option>
+              <option value="all">All</option>
+            </select>
+          </div>
         </div>
 
         <div className="flex flex-wrap gap-2">
@@ -164,25 +176,13 @@ export default function NotificationsPage() {
               className={cn(
                 'px-3 py-1.5 rounded-lg text-sm border',
                 filter === k
-                  ? 'border-accent-100 bg-accent-100/15 text-accent-300'
+                  ? 'border-safety-orange bg-safety-orange/10 text-safety-orange'
                   : 'border-gray-200 bg-white text-gray-700 hover:bg-gray-100'
               )}
             >
               {k === 'all' ? 'All' : 'Unread'}
             </button>
           ))}
-        </div>
-
-        <div className="md:ml-auto flex items-center gap-2">
-          <span className="text-sm text-gray-600">Workspace</span>
-          <select
-            className="input h-9 py-0"
-            value={workspaceScope}
-            onChange={(e) => setWorkspaceScope(e.target.value)}
-          >
-            <option value="current">Current</option>
-            <option value="all">All</option>
-          </select>
         </div>
       </div>
 
@@ -216,48 +216,47 @@ export default function NotificationsPage() {
                 animate={{ opacity: 1 }}
                 transition={{ delay: Math.min(0.2, index * 0.01) }}
                 className={cn(
-                  'p-4 flex gap-4 items-start hover:bg-gray-50 transition-colors',
+                  'p-3 sm:p-4 hover:bg-gray-50 transition-colors',
                   !n.read && 'bg-accent-100/8'
                 )}
               >
-                <div className="mt-1 w-2 h-2 rounded-full shrink-0">
-                  {!n.read && (
-                    <div className="w-2 h-2 rounded-full bg-safety-orange shadow-[0_0_6px_rgba(255,77,0,0.7)]" />
-                  )}
-                </div>
+                <div className="flex gap-3 items-start">
+                  <div className="mt-1.5 w-2 h-2 rounded-full shrink-0">
+                    {!n.read && (
+                      <div className="w-2 h-2 rounded-full bg-safety-orange shadow-[0_0_6px_rgba(255,77,0,0.7)]" />
+                    )}
+                  </div>
 
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      {n.href ? (
-                        <Link href={n.href} className="text-gray-900 font-medium hover:underline">
-                          {n.title}
-                        </Link>
-                      ) : (
-                        <div className="text-gray-900 font-medium">{n.title}</div>
-                      )}
-                      {n.body && <div className="text-sm text-gray-600 mt-1 truncate">{n.body}</div>}
-                      <div className="text-xs text-gray-500 mt-2">
-                        {new Date(n.createdAt).toLocaleString()}
-                        {n.type ? ` · ${n.type}` : ''}
-                      </div>
+                  <div className="flex-1 min-w-0">
+                    {n.href ? (
+                      <Link href={n.href} className="text-gray-900 font-medium hover:underline text-sm sm:text-base">
+                        {n.title}
+                      </Link>
+                    ) : (
+                      <div className="text-gray-900 font-medium text-sm sm:text-base">{n.title}</div>
+                    )}
+                    {n.body && <div className="text-sm text-gray-600 mt-1 line-clamp-2">{n.body}</div>}
+                    <div className="text-xs text-gray-500 mt-2">
+                      {new Date(n.createdAt).toLocaleString()}
+                      {n.type ? ` · ${n.type}` : ''}
                     </div>
 
-                    <div className="flex items-center gap-2 shrink-0">
+                    <div className="flex items-center gap-2 mt-3">
                       <button
                         type="button"
                         onClick={() => toggleRead(n.id, !n.read)}
-                        className="btn btn-ghost text-sm"
+                        className="text-xs sm:text-sm text-gray-600 hover:text-gray-900"
                       >
                         {n.read ? 'Mark unread' : 'Mark read'}
                       </button>
+                      <span className="text-gray-300">·</span>
                       <button
                         type="button"
                         onClick={() => remove(n.id)}
-                        className="btn btn-ghost text-red-600 hover:text-red-600 text-sm"
+                        className="text-xs sm:text-sm text-red-600 hover:text-red-700"
                         aria-label="Delete notification"
                       >
-                        <Trash size={16} />
+                        Delete
                       </button>
                     </div>
                   </div>
