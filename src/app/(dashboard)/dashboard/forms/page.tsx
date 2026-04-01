@@ -217,17 +217,17 @@ export default function FormsPage() {
       {/* Filters Bar */}
       <div className="flex flex-col md:flex-row gap-4">
         {/* Search */}
-        <div className="flex-1 relative">
+        <div className="flex-1 relative min-w-0 md:min-w-[280px] lg:min-w-[320px]">
           <MagnifyingGlass
-            size={18}
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500"
+            size={20}
+            className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500"
           />
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search forms..."
-            className="input input-with-icon"
+            className="input pl-12 py-3 text-base"
           />
         </div>
 
