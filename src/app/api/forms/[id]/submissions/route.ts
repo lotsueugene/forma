@@ -245,13 +245,24 @@ export async function POST(
     if (isEmailConfigured()) {
       (async () => {
         try {
-          // Get workspace with notification email
+          // Get workspace with notification email and owner's email as fallback
           const workspace = await prisma.workspace.findUnique({
             where: { id: form.workspaceId },
-            select: { notificationEmail: true, name: true },
+            select: {
+              notificationEmail: true,
+              name: true,
+              members: {
+                where: { role: 'owner' },
+                select: { user: { select: { email: true } } },
+                take: 1,
+              },
+            },
           });
 
-          const emailTo = workspace?.notificationEmail;
+          // Use notificationEmail if set, otherwise fall back to owner's email
+          const ownerEmail = workspace?.members?.[0]?.user?.email;
+          const emailTo = workspace?.notificationEmail || ownerEmail;
+
           if (emailTo) {
             await sendSubmissionNotification(emailTo, {
               formName: form.name,
