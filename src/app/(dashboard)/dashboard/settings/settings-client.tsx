@@ -26,14 +26,17 @@ import {
 } from '@phosphor-icons/react';
 import { cn } from '@/lib/utils';
 import { useWorkspace } from '@/contexts/workspace-context';
-import {
-  CTA_UPGRADE_PRO_MONTHLY,
-  PRO_MONTHLY_PRICE_LABEL,
-  PRO_YEARLY_EQUIV_LABEL,
-  PRO_YEARLY_PRICE_LABEL,
-  PRO_YEARLY_SAVINGS_LABEL,
-  getPlanComparisonRows,
-} from '@/lib/plan-catalog';
+import { getPlanComparisonRows } from '@/lib/plan-catalog';
+
+interface PricingPlan {
+  id: string;
+  name: string;
+  slug: string;
+  description: string;
+  monthlyPrice: number | null;
+  yearlyPrice: number | null;
+  features: { text: string; included: boolean }[];
+}
 
 type SettingsTab = 'profile' | 'workspace' | 'notifications' | 'api' | 'billing' | 'security';
 
@@ -137,6 +140,17 @@ export default function SettingsPage() {
   const [isLoadingSubscription, setIsLoadingSubscription] = useState(true);
   const [upgradingPriceType, setUpgradingPriceType] = useState<'monthly' | 'yearly' | null>(null);
 
+  // Pricing plans from database
+  const [pricingPlans, setPricingPlans] = useState<PricingPlan[]>([]);
+  const [isLoadingPricing, setIsLoadingPricing] = useState(true);
+
+  // Get Pro plan pricing from database
+  const proPlan = pricingPlans.find(p => p.slug === 'pro');
+  const starterPlan = pricingPlans.find(p => p.slug === 'starter');
+  const monthlyPrice = proPlan?.monthlyPrice ?? 15;
+  const yearlyPrice = proPlan?.yearlyPrice ?? 12.50;
+  const yearlyTotal = Math.round(yearlyPrice * 12);
+
   const user = session?.user;
   const userInitials = user?.name
     ? user.name
@@ -229,6 +243,20 @@ export default function SettingsPage() {
     fetchSubscription();
   }, [currentWorkspace, fetchSubscription]);
 
+  // Fetch pricing plans from database
+  useEffect(() => {
+    setIsLoadingPricing(true);
+    fetch('/api/pricing')
+      .then(res => res.json())
+      .then(data => {
+        if (data.plans) {
+          setPricingPlans(data.plans);
+        }
+      })
+      .catch(console.error)
+      .finally(() => setIsLoadingPricing(false));
+  }, []);
+
   // Fetch workspace settings when workspace changes
   useEffect(() => {
     if (!currentWorkspace) return;
@@ -242,7 +270,7 @@ export default function SettingsPage() {
       .catch(console.error);
   }, [currentWorkspace]);
 
-  const billingContentLoading = workspaceLoading || (!!currentWorkspace && isLoadingSubscription);
+  const billingContentLoading = workspaceLoading || (!!currentWorkspace && isLoadingSubscription) || isLoadingPricing;
 
   const scrollBillingToHash = useCallback(() => {
     if (typeof window === 'undefined' || activeTab !== 'billing') return;
@@ -982,7 +1010,7 @@ export default function SettingsPage() {
                           Pro
                         </div>
                         <div className="text-2xl font-semibold text-gray-900 mb-1">
-                          {PRO_MONTHLY_PRICE_LABEL}
+                          ${monthlyPrice}/mo
                         </div>
                         <div className="text-sm text-gray-500 mb-4">Billed monthly · cancel anytime</div>
                         <ul className="text-sm text-gray-600 space-y-2 mb-6 flex-1">
@@ -1023,7 +1051,7 @@ export default function SettingsPage() {
                                 Processing...
                               </>
                             ) : (
-                              CTA_UPGRADE_PRO_MONTHLY
+                              `Upgrade to Pro — $${monthlyPrice}/mo`
                             )}
                           </button>
                         )}
@@ -1043,13 +1071,13 @@ export default function SettingsPage() {
                           Pro
                         </div>
                         <div className="text-2xl font-semibold text-gray-900 mb-1">
-                          {PRO_YEARLY_PRICE_LABEL}
+                          ${yearlyTotal}/yr
                         </div>
                         <div className="text-sm text-gray-500 mb-1">
-                          {PRO_YEARLY_EQUIV_LABEL} billed annually
+                          ~${yearlyPrice}/mo billed annually
                         </div>
                         <div className="text-xs font-medium text-emerald-600/90 mb-4">
-                          {PRO_YEARLY_SAVINGS_LABEL}
+                          Save vs monthly
                         </div>
                         <ul className="text-sm text-gray-600 space-y-2 mb-6 flex-1">
                           <li>Same features as Pro monthly</li>
@@ -1088,7 +1116,7 @@ export default function SettingsPage() {
                                 Processing...
                               </>
                             ) : (
-                              `Upgrade Pro — ${PRO_YEARLY_PRICE_LABEL}`
+                              `Upgrade Pro — $${yearlyTotal}/yr`
                             )}
                           </button>
                         )}
@@ -1183,7 +1211,7 @@ export default function SettingsPage() {
                                 Processing...
                               </>
                             ) : (
-                              CTA_UPGRADE_PRO_MONTHLY
+                              `Upgrade to Pro — $${monthlyPrice}/mo`
                             )}
                           </button>
                         </>
@@ -1202,7 +1230,7 @@ export default function SettingsPage() {
                                 Processing...
                               </>
                             ) : (
-                              CTA_UPGRADE_PRO_MONTHLY
+                              `Upgrade to Pro — $${monthlyPrice}/mo`
                             )}
                           </button>
                           <button
@@ -1217,7 +1245,7 @@ export default function SettingsPage() {
                                 Processing...
                               </>
                             ) : (
-                              `Pro annual — ${PRO_YEARLY_PRICE_LABEL}`
+                              `Pro annual — $${yearlyTotal}/yr`
                             )}
                           </button>
                         </>
