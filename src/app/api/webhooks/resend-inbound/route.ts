@@ -1,18 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { Resend } from 'resend';
+
+const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 
 // Resend inbound email webhook
 // Docs: https://resend.com/docs/dashboard/webhooks/inbound-emails
 
 interface ResendInboundEmail {
   from: string;
-  to: string;
+  to: string | string[];
   subject: string;
   text?: string;
   html?: string;
+  email_id?: string;
   reply_to?: string;
-  cc?: string;
-  bcc?: string;
+  cc?: string | string[];
+  bcc?: string | string[];
   headers?: Record<string, string>;
   attachments?: Array<{
     filename: string;
@@ -67,8 +71,28 @@ export async function POST(request: NextRequest) {
     const { email: fromEmail, name: fromName } = parseEmailAddress(email.from);
 
     console.log(`[Resend Inbound] Received email from ${fromEmail}: ${email.subject}`);
-    console.log(`[Resend Inbound] Text content: ${email.text ? email.text.substring(0, 100) : 'NONE'}`);
-    console.log(`[Resend Inbound] HTML content: ${email.html ? 'YES' : 'NONE'}`);
+    console.log(`[Resend Inbound] Email ID: ${email.email_id}`);
+
+    // Try to fetch full email content using Resend API
+    let textContent: string | null = email.text || null;
+    let htmlContent: string | null = email.html || null;
+
+    if (resend && email.email_id && !textContent && !htmlContent) {
+      try {
+        console.log(`[Resend Inbound] Fetching email content for ${email.email_id}`);
+        const fullEmail = await resend.emails.get(email.email_id);
+        console.log(`[Resend Inbound] Full email data:`, JSON.stringify(fullEmail, null, 2));
+        if (fullEmail.data) {
+          textContent = (fullEmail.data as { text?: string }).text || null;
+          htmlContent = (fullEmail.data as { html?: string }).html || null;
+        }
+      } catch (fetchError) {
+        console.error(`[Resend Inbound] Failed to fetch email content:`, fetchError);
+      }
+    }
+
+    console.log(`[Resend Inbound] Text content: ${textContent ? textContent.substring(0, 100) : 'NONE'}`);
+    console.log(`[Resend Inbound] HTML content: ${htmlContent ? 'YES' : 'NONE'}`);
 
     // Try to find the original broadcast by looking at the subject
     // Broadcasts usually have "Re: Original Subject" when replied to
@@ -95,8 +119,9 @@ export async function POST(request: NextRequest) {
         fromEmail,
         fromName,
         subject: email.subject,
-        textContent: email.text || null,
-        htmlContent: email.html || null,
+        textContent,
+        htmlContent,
+        resendEmailId: email.email_id || null,
         status: 'unread',
         receivedAt: new Date(payload.created_at),
       },
