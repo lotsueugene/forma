@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useState } from 'react';
+import { useSession } from 'next-auth/react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Stack, X } from '@phosphor-icons/react';
 import Magnetic from '@/components/animations/Magnetic';
@@ -15,6 +16,8 @@ const navLinks = [
 
 export default function Navigation() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { data: session, status } = useSession();
+  const isAuthenticated = status === 'authenticated' && session?.user;
 
   return (
     <header className="fixed inset-x-0 top-0 z-50 px-4 md:border-b-0 lg:px-9 bg-white backdrop-blur-md">
@@ -48,32 +51,49 @@ export default function Navigation() {
           </ul>
         </nav>
 
-        {/* Right - Sign In & Get Started Buttons */}
+        {/* Right - Auth Buttons */}
         <div className="hidden lg:flex items-center gap-3">
-          <Magnetic pull={0.1}>
-            <Link
-              href="/login"
-              className="group relative w-max cursor-pointer items-center justify-center border transition-colors duration-150 will-change-transform bg-transparent hover:bg-gray-100 text-gray-700 overflow-clip rounded-sm border-gray-300 h-[32px] px-4 flex"
-            >
-              <span className="relative z-10 flex items-center uppercase">
-                <p className="text-pretty font-mono text-[12px] leading-[100%] tracking-[-0.015rem] uppercase">
-                  Sign In
-                </p>
-              </span>
-            </Link>
-          </Magnetic>
-          <Magnetic pull={0.1}>
-            <Link
-              href="/signup"
-              className="group relative w-max cursor-pointer items-center justify-center border transition-colors duration-150 will-change-transform bg-[#ef6f2e] hover:bg-[#ee6018] text-white overflow-clip rounded-sm border-transparent h-[32px] px-4 flex"
-            >
-              <span className="relative z-10 flex items-center uppercase">
-                <p className="text-pretty font-mono text-[12px] leading-[100%] tracking-[-0.015rem] uppercase">
-                  Get Started
-                </p>
-              </span>
-            </Link>
-          </Magnetic>
+          {isAuthenticated ? (
+            <Magnetic pull={0.1}>
+              <Link
+                href="/dashboard"
+                className="group relative w-max cursor-pointer items-center justify-center border transition-colors duration-150 will-change-transform bg-[#ef6f2e] hover:bg-[#ee6018] text-white overflow-clip rounded-sm border-transparent h-[32px] px-4 flex"
+              >
+                <span className="relative z-10 flex items-center uppercase">
+                  <p className="text-pretty font-mono text-[12px] leading-[100%] tracking-[-0.015rem] uppercase">
+                    Dashboard
+                  </p>
+                </span>
+              </Link>
+            </Magnetic>
+          ) : (
+            <>
+              <Magnetic pull={0.1}>
+                <Link
+                  href="/login"
+                  className="group relative w-max cursor-pointer items-center justify-center border transition-colors duration-150 will-change-transform bg-transparent hover:bg-gray-100 text-gray-700 overflow-clip rounded-sm border-gray-300 h-[32px] px-4 flex"
+                >
+                  <span className="relative z-10 flex items-center uppercase">
+                    <p className="text-pretty font-mono text-[12px] leading-[100%] tracking-[-0.015rem] uppercase">
+                      Sign In
+                    </p>
+                  </span>
+                </Link>
+              </Magnetic>
+              <Magnetic pull={0.1}>
+                <Link
+                  href="/signup"
+                  className="group relative w-max cursor-pointer items-center justify-center border transition-colors duration-150 will-change-transform bg-[#ef6f2e] hover:bg-[#ee6018] text-white overflow-clip rounded-sm border-transparent h-[32px] px-4 flex"
+                >
+                  <span className="relative z-10 flex items-center uppercase">
+                    <p className="text-pretty font-mono text-[12px] leading-[100%] tracking-[-0.015rem] uppercase">
+                      Get Started
+                    </p>
+                  </span>
+                </Link>
+              </Magnetic>
+            </>
+          )}
         </div>
 
         {/* Mobile Menu Button */}
@@ -133,20 +153,32 @@ export default function Navigation() {
                 transition={{ delay: navLinks.length * 0.05 }}
                 className="mt-6 flex flex-col gap-3"
               >
-                <Link
-                  href="/login"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="block w-full py-3 text-center font-mono text-[13px] uppercase tracking-[-0.015rem] text-gray-700 hover:text-gray-900"
-                >
-                  Sign In
-                </Link>
-                <Link
-                  href="/signup"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="block w-full py-3 text-center font-mono text-[13px] uppercase tracking-[-0.015rem] bg-[#ef6f2e] text-white rounded-sm"
-                >
-                  Get Started
-                </Link>
+                {isAuthenticated ? (
+                  <Link
+                    href="/dashboard"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="block w-full py-3 text-center font-mono text-[13px] uppercase tracking-[-0.015rem] bg-[#ef6f2e] text-white rounded-sm"
+                  >
+                    Dashboard
+                  </Link>
+                ) : (
+                  <>
+                    <Link
+                      href="/login"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="block w-full py-3 text-center font-mono text-[13px] uppercase tracking-[-0.015rem] text-gray-700 hover:text-gray-900"
+                    >
+                      Sign In
+                    </Link>
+                    <Link
+                      href="/signup"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="block w-full py-3 text-center font-mono text-[13px] uppercase tracking-[-0.015rem] bg-[#ef6f2e] text-white rounded-sm"
+                    >
+                      Get Started
+                    </Link>
+                  </>
+                )}
               </motion.div>
             </nav>
           </motion.div>
