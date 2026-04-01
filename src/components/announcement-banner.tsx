@@ -71,7 +71,7 @@ export function AnnouncementBanner() {
             <Icon size={20} className={cn('flex-shrink-0 mt-0.5', config.text)} />
             <div className="flex-1 min-w-0">
               <div className={cn('font-medium', config.text)}>{announcement.title}</div>
-              <div className="text-sm text-neutral-300 mt-0.5">{announcement.content}</div>
+              <div className="text-sm text-neutral-700 mt-0.5">{announcement.content}</div>
             </div>
             {announcement.dismissible && (
               <button
