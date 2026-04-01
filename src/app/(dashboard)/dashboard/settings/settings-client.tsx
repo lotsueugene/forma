@@ -22,7 +22,6 @@ import {
   Warning,
   CaretDown,
   Buildings,
-  Image,
 } from '@phosphor-icons/react';
 import { cn } from '@/lib/utils';
 import { useWorkspace } from '@/contexts/workspace-context';
@@ -119,7 +118,6 @@ export default function SettingsPage() {
 
   // Workspace settings state
   const [workspaceName, setWorkspaceName] = useState('');
-  const [workspaceLogoUrl, setWorkspaceLogoUrl] = useState('');
   const [workspaceNotificationEmail, setWorkspaceNotificationEmail] = useState('');
   const [isSavingWorkspace, setIsSavingWorkspace] = useState(false);
   const [isSavingWorkspaceName, setIsSavingWorkspaceName] = useState(false);
@@ -264,7 +262,6 @@ export default function SettingsPage() {
       .then(res => res.json())
       .then(data => {
         setWorkspaceName(data.workspace?.name || '');
-        setWorkspaceLogoUrl(data.workspace?.logoUrl || '');
         setWorkspaceNotificationEmail(data.workspace?.notificationEmail || '');
       })
       .catch(console.error);
@@ -510,7 +507,6 @@ export default function SettingsPage() {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          logoUrl: workspaceLogoUrl || null,
           notificationEmail: workspaceNotificationEmail || null,
         }),
       });
@@ -725,52 +721,22 @@ export default function SettingsPage() {
                 </div>
               </div>
 
-              {/* Workspace Branding */}
+              {/* Workspace Settings */}
               <div className="card p-6">
-                <h2 className="font-semibold text-gray-900 mb-6">Workspace Branding</h2>
+                <h2 className="font-semibold text-gray-900 mb-6">Workspace Settings</h2>
 
-                <div className="space-y-4">
-                  <div className="form-field">
-                    <label className="form-label">Logo URL</label>
-                    <div className="flex gap-3">
-                      <input
-                        type="url"
-                        value={workspaceLogoUrl}
-                        onChange={(e) => setWorkspaceLogoUrl(e.target.value)}
-                        placeholder="https://yoursite.com/logo.png"
-                        className="input flex-1"
-                      />
-                      {workspaceLogoUrl && (
-                        <div className="w-12 h-12 rounded-lg bg-gray-100 border border-gray-200 flex items-center justify-center overflow-hidden">
-                          <img
-                            src={workspaceLogoUrl}
-                            alt="Logo preview"
-                            className="max-w-full max-h-full object-contain"
-                            onError={(e) => {
-                              (e.target as HTMLImageElement).style.display = 'none';
-                            }}
-                          />
-                        </div>
-                      )}
-                    </div>
-                    <p className="text-xs text-gray-500 mt-1">
-                      Used in email broadcasts. Must be a publicly accessible URL.
-                    </p>
-                  </div>
-
-                  <div className="form-field">
-                    <label className="form-label">Notification Email</label>
-                    <input
-                      type="email"
-                      value={workspaceNotificationEmail}
-                      onChange={(e) => setWorkspaceNotificationEmail(e.target.value)}
-                      placeholder="notifications@yourcompany.com"
-                      className="input"
-                    />
-                    <p className="text-xs text-gray-500 mt-1">
-                      Receive form submission notifications at this email instead of your account email.
-                    </p>
-                  </div>
+                <div className="form-field">
+                  <label className="form-label">Notification Email</label>
+                  <input
+                    type="email"
+                    value={workspaceNotificationEmail}
+                    onChange={(e) => setWorkspaceNotificationEmail(e.target.value)}
+                    placeholder="notifications@yourcompany.com"
+                    className="input"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Receive form submission notifications at this email instead of your account email.
+                  </p>
                 </div>
 
                 <div className="mt-6 flex justify-end">

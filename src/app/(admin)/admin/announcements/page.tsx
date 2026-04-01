@@ -37,10 +37,10 @@ const typeIcons = {
 };
 
 const typeColors = {
-  info: 'bg-blue-500/10 text-blue-600',
+  info: 'bg-safety-orange/10 text-safety-orange',
   warning: 'bg-amber-500/10 text-amber-600',
   success: 'bg-emerald-500/10 text-emerald-600',
-  update: 'bg-purple-500/10 text-purple-600',
+  update: 'bg-safety-orange/10 text-safety-orange',
 };
 
 export default function AdminAnnouncementsPage() {

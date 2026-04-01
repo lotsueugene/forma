@@ -245,25 +245,43 @@ export async function POST(
     if (isEmailConfigured()) {
       (async () => {
         try {
-          // Get workspace with notification email and owner's email as fallback
+          // Get workspace with notification email and all members' emails as fallback
           const workspace = await prisma.workspace.findUnique({
             where: { id: form.workspaceId },
             select: {
               notificationEmail: true,
               name: true,
               members: {
-                where: { role: 'owner' },
-                select: { user: { select: { email: true } } },
-                take: 1,
+                select: {
+                  user: {
+                    select: {
+                      email: true,
+                      settings: {
+                        select: { notifyNewSubmissions: true },
+                      },
+                    },
+                  },
+                },
               },
             },
           });
 
-          // Use notificationEmail if set, otherwise fall back to owner's email
-          const ownerEmail = workspace?.members?.[0]?.user?.email;
-          const emailTo = workspace?.notificationEmail || ownerEmail;
+          // Determine email recipients
+          let emailRecipients: string[] = [];
 
-          if (emailTo) {
+          if (workspace?.notificationEmail) {
+            // If workspace notification email is set, use only that
+            emailRecipients = [workspace.notificationEmail];
+          } else {
+            // Otherwise, send to all team members who have notifications enabled
+            emailRecipients = (workspace?.members || [])
+              .filter((m) => m.user.settings?.notifyNewSubmissions !== false)
+              .map((m) => m.user.email)
+              .filter((email): email is string => !!email);
+          }
+
+          // Send to all recipients
+          for (const emailTo of emailRecipients) {
             await sendSubmissionNotification(emailTo, {
               formName: form.name,
               formId: form.id,

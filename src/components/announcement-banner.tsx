@@ -15,10 +15,10 @@ interface Announcement {
 }
 
 const typeConfig = {
-  info: { icon: Info, bg: 'bg-blue-500/10 border-blue-500/20', text: 'text-blue-300' },
-  warning: { icon: Warning, bg: 'bg-amber-500/10 border-amber-500/20', text: 'text-amber-300' },
-  success: { icon: CheckCircle, bg: 'bg-emerald-500/10 border-emerald-500/20', text: 'text-emerald-300' },
-  update: { icon: Star, bg: 'bg-purple-500/10 border-purple-500/20', text: 'text-purple-300' },
+  info: { icon: Info, bg: 'bg-safety-orange/10 border-safety-orange/20', text: 'text-safety-orange' },
+  warning: { icon: Warning, bg: 'bg-amber-500/10 border-amber-500/20', text: 'text-amber-500' },
+  success: { icon: CheckCircle, bg: 'bg-emerald-500/10 border-emerald-500/20', text: 'text-emerald-500' },
+  update: { icon: Star, bg: 'bg-safety-orange/10 border-safety-orange/20', text: 'text-safety-orange' },
 };
 
 export function AnnouncementBanner() {
