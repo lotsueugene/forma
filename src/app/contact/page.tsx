@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { Stack, EnvelopeSimple, User, PaperPlaneTilt, Check } from '@phosphor-icons/react';
 
-const FORM_API_ENDPOINT = '/api/public/forms/cmnfn0fk00001fyigqcj9ce4g';
+const FORM_API_ENDPOINT = '/api/forms/cmnfs444q0001fywoe18n4r6e/submissions';
 
 export default function ContactPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -26,7 +26,7 @@ export default function ContactPage() {
       const response = await fetch(FORM_API_ENDPOINT, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ data: formData }),
+        body: JSON.stringify(formData),
       });
 
       if (response.ok) {
