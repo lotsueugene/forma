@@ -356,18 +356,18 @@ export default function FormsPage() {
                             href={`/dashboard/forms/${form.id}`}
                             className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:text-gray-900 hover:bg-gray-100"
                           >
-                            {form.formType === 'endpoint' ? (
-                              <>
-                                <Eye size={16} className="text-gray-500" />
-                                View
-                              </>
-                            ) : (
-                              <>
-                                <PencilSimple size={16} className="text-gray-500" />
-                                Edit
-                              </>
-                            )}
+                            <Eye size={16} className="text-gray-500" />
+                            View
                           </Link>
+                          {form.formType === 'builder' && (
+                            <Link
+                              href={`/dashboard/forms/${form.id}/edit`}
+                              className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:text-gray-900 hover:bg-gray-100"
+                            >
+                              <PencilSimple size={16} className="text-gray-500" />
+                              Edit Fields
+                            </Link>
+                          )}
                           <button
                             onClick={() => handleDelete(form.id)}
                             disabled={deletingId === form.id}
@@ -493,6 +493,45 @@ export default function FormsPage() {
                       >
                         <DotsThree size={20} weight="bold" />
                       </button>
+                      <AnimatePresence>
+                        {menuOpenId === form.id && (
+                          <motion.div
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.95 }}
+                            className="absolute right-0 mt-1 w-40 bg-white border border-gray-300 rounded-lg shadow-lg overflow-hidden z-10"
+                          >
+                            <Link
+                              href={`/dashboard/forms/${form.id}`}
+                              className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:text-gray-900 hover:bg-gray-100"
+                            >
+                              <Eye size={16} className="text-gray-500" />
+                              View
+                            </Link>
+                            {form.formType === 'builder' && (
+                              <Link
+                                href={`/dashboard/forms/${form.id}/edit`}
+                                className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:text-gray-900 hover:bg-gray-100"
+                              >
+                                <PencilSimple size={16} className="text-gray-500" />
+                                Edit Fields
+                              </Link>
+                            )}
+                            <button
+                              onClick={() => handleDelete(form.id)}
+                              disabled={deletingId === form.id}
+                              className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:text-red-700 hover:bg-red-50 disabled:opacity-50"
+                            >
+                              {deletingId === form.id ? (
+                                <Spinner size={16} className="animate-spin" />
+                              ) : (
+                                <Trash size={16} />
+                              )}
+                              Delete
+                            </button>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
                     </div>
                   </td>
                 </motion.tr>

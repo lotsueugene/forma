@@ -14,7 +14,6 @@ import {
   Gear,
   Users,
   Bell,
-  MagnifyingGlass,
   CaretDown,
   CaretUpDown,
   SignOut,
@@ -420,19 +419,6 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
             >
               <List size={24} />
             </button>
-
-            {/* Search */}
-            <div className="hidden md:flex items-center gap-2 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg w-64 lg:w-80">
-              <MagnifyingGlass size={18} className="text-gray-500" />
-              <input
-                type="text"
-                placeholder="Search forms..."
-                className="flex-1 bg-transparent font-mono text-sm text-gray-900 placeholder:text-gray-500 outline-none"
-              />
-              <kbd className="px-2 py-0.5 font-mono text-[10px] text-gray-500 bg-gray-200 rounded uppercase">
-                /
-              </kbd>
-            </div>
           </div>
 
           <div className="flex items-center gap-3">

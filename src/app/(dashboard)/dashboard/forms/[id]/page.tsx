@@ -258,6 +258,15 @@ export default function FormDetailPage() {
           </div>
         </div>
         <div className="flex items-center gap-2">
+          {form.formType === 'builder' && (
+            <Link
+              href={`/dashboard/forms/${formId}/edit`}
+              className="btn btn-secondary"
+            >
+              <PencilSimple size={18} />
+              Edit Fields
+            </Link>
+          )}
           <Link
             href={formPageUrl}
             target="_blank"
