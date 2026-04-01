@@ -33,14 +33,25 @@ interface ResendWebhookPayload {
 
 // Extract name and email from "Name <email@example.com>" format
 function parseEmailAddress(address: string): { email: string; name: string | null } {
-  const match = address.match(/^(?:(.+?)\s*)?<?([^\s<>]+@[^\s<>]+)>?$/);
-  if (match) {
+  // Format: "Name <email@example.com>" or just "email@example.com"
+  const bracketMatch = address.match(/^(.+?)\s*<([^<>]+@[^<>]+)>$/);
+  if (bracketMatch) {
     return {
-      name: match[1]?.trim() || null,
-      email: match[2].toLowerCase(),
+      name: bracketMatch[1].trim() || null,
+      email: bracketMatch[2].toLowerCase().trim(),
     };
   }
-  return { email: address.toLowerCase(), name: null };
+
+  // Just an email address without brackets
+  const emailOnly = address.match(/^([^\s<>]+@[^\s<>]+)$/);
+  if (emailOnly) {
+    return {
+      name: null,
+      email: emailOnly[1].toLowerCase().trim(),
+    };
+  }
+
+  return { email: address.toLowerCase().trim(), name: null };
 }
 
 export async function POST(request: NextRequest) {
