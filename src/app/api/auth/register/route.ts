@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
                request.headers.get('x-real-ip') ||
                'unknown';
 
-    const rateLimitResult = checkRateLimit(`register:${ip}`, 5, 60 * 60 * 1000); // 5 attempts per hour
+    const rateLimitResult = checkRateLimit(`register:${ip}`, { maxPerMinute: 3, maxPerHour: 5 });
     if (!rateLimitResult.allowed) {
       return NextResponse.json(
         { error: 'Too many registration attempts. Please try again later.' },

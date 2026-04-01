@@ -18,8 +18,8 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Rate limiting by user ID - 5 attempts per 15 minutes
-    const rateLimitResult = checkRateLimit(`password:${session.user.id}`, 5, 15 * 60 * 1000);
+    // Rate limiting by user ID
+    const rateLimitResult = checkRateLimit(`password:${session.user.id}`, { maxPerMinute: 3, maxPerHour: 5 });
     if (!rateLimitResult.allowed) {
       return NextResponse.json(
         { error: 'Too many password change attempts. Please try again later.' },
