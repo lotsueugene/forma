@@ -591,6 +591,15 @@ export default function FormDetailPage() {
 
               {/* Submissions - Mobile Cards / Desktop Table */}
               {(() => {
+                // Create a map of field IDs to labels
+                const fieldLabels = new Map<string, string>();
+                form.fields.forEach(field => {
+                  fieldLabels.set(field.id, field.label);
+                });
+
+                // Helper to get label for a field ID
+                const getFieldLabel = (fieldId: string) => fieldLabels.get(fieldId) || fieldId;
+
                 // Compute dynamic columns from all submission data
                 const columnSet = new Set<string>();
                 filteredSubmissions.forEach(sub => {
@@ -694,7 +703,7 @@ export default function FormDetailPage() {
                                     {Object.entries(submission.data).map(([key, value]) => (
                                       <div key={key}>
                                         <div className="text-xs text-gray-500 uppercase tracking-wider mb-1">
-                                          {key}
+                                          {getFieldLabel(key)}
                                         </div>
                                         <div className="text-gray-700 text-sm break-words">
                                           {typeof value === 'string' && isFileData(value)
@@ -735,7 +744,7 @@ export default function FormDetailPage() {
                             </th>
                             {dynamicColumns.map(col => (
                               <th key={col} className="p-4 font-medium max-w-[180px]">
-                                <span className="truncate block">{col}</span>
+                                <span className="truncate block">{getFieldLabel(col)}</span>
                               </th>
                             ))}
                             <th className="p-4 font-medium w-32">Submitted</th>
@@ -812,7 +821,7 @@ export default function FormDetailPage() {
                                               {Object.entries(submission.data).map(([key, value]) => (
                                                 <div key={key}>
                                                   <div className="text-xs text-gray-500 uppercase tracking-wider mb-1">
-                                                    {key}
+                                                    {getFieldLabel(key)}
                                                   </div>
                                                   <div className="text-gray-700">
                                                     {typeof value === 'string' && isFileData(value)
