@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { Stack, EnvelopeSimple, User, ChatText, PaperPlaneTilt, Check } from '@phosphor-icons/react';
+import { Stack, EnvelopeSimple, User, PaperPlaneTilt, Check } from '@phosphor-icons/react';
 
 const FORM_API_ENDPOINT = '/api/public/forms/cmnfn0fk00001fyigqcj9ce4g';
 
@@ -139,18 +139,15 @@ export default function ContactPage() {
 
                   <div className="form-field">
                     <label htmlFor="message" className="form-label">Message</label>
-                    <div className="relative">
-                      <ChatText size={18} className="absolute left-3 top-4 text-gray-500" />
-                      <textarea
-                        id="message"
-                        value={formData.message}
-                        onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                        placeholder="How can we help you?"
-                        rows={5}
-                        className="input pl-10 resize-none"
-                        required
-                      />
-                    </div>
+                    <textarea
+                      id="message"
+                      value={formData.message}
+                      onChange={(e) => setFormData({ ...formData, message: e.target.value })}
+                      placeholder="How can we help you?"
+                      rows={5}
+                      className="input resize-none"
+                      required
+                    />
                   </div>
 
                   <button

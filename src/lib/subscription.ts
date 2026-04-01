@@ -1,6 +1,20 @@
 import { prisma } from './prisma';
 import { PLAN_LIMITS, PlanType, PlanFeatures } from './stripe';
 
+/**
+ * Check if workspace has an admin owner (admins get Pro features automatically)
+ */
+async function hasAdminOwner(workspaceId: string): Promise<boolean> {
+  const adminOwner = await prisma.workspaceMember.findFirst({
+    where: {
+      workspaceId,
+      role: 'owner',
+      user: { role: 'admin' },
+    },
+  });
+  return !!adminOwner;
+}
+
 export interface SubscriptionInfo {
   plan: PlanType;
   status: string;
@@ -99,12 +113,13 @@ export async function getSubscriptionInfo(workspaceId: string): Promise<Subscrip
   const usage = await getCurrentUsage(workspaceId);
 
   // Get actual counts (pending invites count toward seat usage for team invites)
-  const [formsCount, membersCount, pendingInviteCount] = await Promise.all([
+  const [formsCount, membersCount, pendingInviteCount, isAdminWorkspace] = await Promise.all([
     prisma.form.count({ where: { workspaceId } }),
     prisma.workspaceMember.count({ where: { workspaceId } }),
     prisma.invitation.count({
       where: { workspaceId, expiresAt: { gt: new Date() } },
     }),
+    hasAdminOwner(workspaceId),
   ]);
 
   const plan = subscription.plan as PlanType;
@@ -115,8 +130,11 @@ export async function getSubscriptionInfo(workspaceId: string): Promise<Subscrip
     subscription.trialEndsAt != null &&
     new Date() < subscription.trialEndsAt;
 
-  // If trial expired, treat as free
-  const effectivePlan: PlanType = (subscription.plan === 'trial' && !isTrialing) ? 'free' : plan;
+  // If trial expired, treat as free; admins always get Pro features
+  let effectivePlan: PlanType = (subscription.plan === 'trial' && !isTrialing) ? 'free' : plan;
+  if (isAdminWorkspace) {
+    effectivePlan = 'pro'; // Admins always get Pro features
+  }
   const effectiveConfig = PLAN_LIMITS[effectivePlan];
 
   const limits = {

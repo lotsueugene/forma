@@ -65,12 +65,30 @@ export async function isAdmin(userId: string): Promise<boolean> {
 
 /**
  * Promote a user to admin (use with caution!)
+ * Also upgrades all their workspaces to Pro plan
  */
 export async function promoteToAdmin(userId: string): Promise<void> {
+  // Update user role to admin
   await prisma.user.update({
     where: { id: userId },
     data: { role: 'admin' },
   });
+
+  // Get all workspaces where user is owner
+  const memberships = await prisma.workspaceMember.findMany({
+    where: { userId, role: 'owner' },
+    select: { workspaceId: true },
+  });
+
+  // Upgrade all owned workspaces to Pro plan
+  if (memberships.length > 0) {
+    await prisma.subscription.updateMany({
+      where: {
+        workspaceId: { in: memberships.map(m => m.workspaceId) },
+      },
+      data: { plan: 'pro', status: 'active' },
+    });
+  }
 }
 
 /**
