@@ -1,10 +1,10 @@
 import { PLAN_LIMITS } from './stripe';
 
 /** Marketing copy — keep in sync with Stripe prices you configure */
-export const PRO_MONTHLY_PRICE_LABEL = '$29/mo';
-export const PRO_YEARLY_TOTAL = 290;
+export const PRO_MONTHLY_PRICE_LABEL = '$15/mo';
+export const PRO_YEARLY_TOTAL = 150;
 export const PRO_YEARLY_PRICE_LABEL = `$${PRO_YEARLY_TOTAL}/yr`;
-export const PRO_YEARLY_EQUIV_LABEL = '~$24/mo';
+export const PRO_YEARLY_EQUIV_LABEL = '~$12.50/mo';
 export const PRO_YEARLY_SAVINGS_LABEL = 'Save vs monthly';
 
 export const CTA_VIEW_PLANS = 'View plans';

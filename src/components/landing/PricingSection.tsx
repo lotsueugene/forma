@@ -59,8 +59,8 @@ const defaultPlans: PricingPlan[] = [
     name: 'Pro',
     slug: 'pro',
     description: 'For growing teams and businesses',
-    monthlyPrice: 29,
-    yearlyPrice: 24,
+    monthlyPrice: 15,
+    yearlyPrice: 12.50,
     icon: 'Crown',
     features: [
       { text: 'Unlimited forms', included: true },

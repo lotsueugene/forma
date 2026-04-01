@@ -41,7 +41,7 @@ export async function GET() {
 
     // Calculate MRR (Monthly Recurring Revenue)
     const proCount = subscriptionStats.find(s => s.plan === 'pro')?._count.plan || 0;
-    const mrr = proCount * 29; // $29/month per pro user
+    const mrr = proCount * 15; // $15/month per pro user
 
     // Get signups over last 30 days
     const thirtyDaysAgo = new Date();
