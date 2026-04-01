@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { verifyAdmin } from '@/lib/admin-auth';
+import { STRIPE_PRICES } from '@/lib/stripe';
 
 // GET /api/admin - Get platform overview stats
 export async function GET() {
@@ -39,9 +40,24 @@ export async function GET() {
       }),
     ]);
 
-    // Calculate MRR (Monthly Recurring Revenue)
-    const proCount = subscriptionStats.find(s => s.plan === 'pro')?._count.plan || 0;
-    const mrr = proCount * 15; // $15/month per pro user
+    // Calculate MRR (Monthly Recurring Revenue) - only count actual paying customers
+    const payingSubscriptions = await prisma.subscription.findMany({
+      where: {
+        plan: 'pro',
+        stripeSubscriptionId: { not: null }, // Only actual Stripe customers, not admin freebies
+      },
+      select: { stripePriceId: true },
+    });
+
+    let mrr = 0;
+    for (const sub of payingSubscriptions) {
+      if (sub.stripePriceId === STRIPE_PRICES.pro_yearly) {
+        mrr += 12.5; // $150/year = $12.50/month
+      } else {
+        mrr += 15; // $15/month
+      }
+    }
+    mrr = Math.round(mrr * 100) / 100; // Round to 2 decimal places
 
     // Get signups over last 30 days
     const thirtyDaysAgo = new Date();
@@ -54,10 +70,12 @@ export async function GET() {
     });
 
     // Format subscription stats
+    const proCount = subscriptionStats.find(s => s.plan === 'pro')?._count.plan || 0;
     const planBreakdown = {
       free: subscriptionStats.find(s => s.plan === 'free')?._count.plan || 0,
       trial: subscriptionStats.find(s => s.plan === 'trial')?._count.plan || 0,
       pro: proCount,
+      proPaying: payingSubscriptions.length, // Actual paying customers
     };
 
     return NextResponse.json({
