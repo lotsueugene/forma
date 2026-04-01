@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { Stack, ArrowLeft, MapPin, Clock, Briefcase, EnvelopeSimple, ArrowSquareOut } from '@phosphor-icons/react/dist/ssr';
 import { prisma } from '@/lib/prisma';
+import { markdownToSafeHtml } from '@/lib/sanitize';
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -109,7 +110,7 @@ export default async function JobPostingPage({ params }: Props) {
               <section className="mb-8">
                 <h2 className="text-xl font-semibold text-gray-900 mb-4">About This Role</h2>
                 <div className="prose prose-gray max-w-none">
-                  <div dangerouslySetInnerHTML={{ __html: formatContent(job.description) }} />
+                  <div dangerouslySetInnerHTML={{ __html: markdownToSafeHtml(job.description) }} />
                 </div>
               </section>
 
@@ -118,7 +119,7 @@ export default async function JobPostingPage({ params }: Props) {
                 <section className="mb-8">
                   <h2 className="text-xl font-semibold text-gray-900 mb-4">Requirements</h2>
                   <div className="prose prose-gray max-w-none">
-                    <div dangerouslySetInnerHTML={{ __html: formatContent(job.requirements) }} />
+                    <div dangerouslySetInnerHTML={{ __html: markdownToSafeHtml(job.requirements) }} />
                   </div>
                 </section>
               )}
@@ -128,7 +129,7 @@ export default async function JobPostingPage({ params }: Props) {
                 <section className="mb-8">
                   <h2 className="text-xl font-semibold text-gray-900 mb-4">Benefits</h2>
                   <div className="prose prose-gray max-w-none">
-                    <div dangerouslySetInnerHTML={{ __html: formatContent(job.benefits) }} />
+                    <div dangerouslySetInnerHTML={{ __html: markdownToSafeHtml(job.benefits) }} />
                   </div>
                 </section>
               )}
@@ -198,30 +199,4 @@ function ApplyButton({ job, title }: { job: { applyFormId: string | null; applyU
   }
 
   return null;
-}
-
-// Simple markdown-to-HTML conversion
-function formatContent(content: string): string {
-  return content
-    // Headers
-    .replace(/^### (.*$)/gim, '<h3>$1</h3>')
-    .replace(/^## (.*$)/gim, '<h2>$1</h2>')
-    .replace(/^# (.*$)/gim, '<h1>$1</h1>')
-    // Bold
-    .replace(/\*\*(.*?)\*\*/gim, '<strong>$1</strong>')
-    // Italic
-    .replace(/\*(.*?)\*/gim, '<em>$1</em>')
-    // Links
-    .replace(/\[(.*?)\]\((.*?)\)/gim, '<a href="$2" target="_blank" rel="noopener">$1</a>')
-    // Lists
-    .replace(/^\- (.*$)/gim, '<li>$1</li>')
-    // Paragraphs
-    .replace(/\n\n/g, '</p><p>')
-    // Line breaks
-    .replace(/\n/g, '<br>')
-    // Wrap in paragraph
-    .replace(/^(.+)$/gim, (match) => {
-      if (match.startsWith('<')) return match;
-      return `<p>${match}</p>`;
-    });
 }

@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { Stack, ArrowLeft, Calendar, User } from '@phosphor-icons/react/dist/ssr';
 import { prisma } from '@/lib/prisma';
+import { markdownToSafeHtml } from '@/lib/sanitize';
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -120,7 +121,7 @@ export default async function BlogPostPage({ params }: Props) {
 
           {/* Content */}
           <article className="prose prose-gray prose-lg max-w-none prose-headings:font-semibold prose-a:text-safety-orange prose-a:no-underline hover:prose-a:underline">
-            <div dangerouslySetInnerHTML={{ __html: formatContent(post.content) }} />
+            <div dangerouslySetInnerHTML={{ __html: markdownToSafeHtml(post.content) }} />
           </article>
         </div>
       </main>
@@ -133,32 +134,4 @@ export default async function BlogPostPage({ params }: Props) {
       </footer>
     </div>
   );
-}
-
-// Simple markdown-to-HTML conversion
-function formatContent(content: string): string {
-  return content
-    // Headers
-    .replace(/^### (.*$)/gim, '<h3>$1</h3>')
-    .replace(/^## (.*$)/gim, '<h2>$1</h2>')
-    .replace(/^# (.*$)/gim, '<h1>$1</h1>')
-    // Bold
-    .replace(/\*\*(.*?)\*\*/gim, '<strong>$1</strong>')
-    // Italic
-    .replace(/\*(.*?)\*/gim, '<em>$1</em>')
-    // Links
-    .replace(/\[(.*?)\]\((.*?)\)/gim, '<a href="$2" target="_blank" rel="noopener">$1</a>')
-    // Code blocks
-    .replace(/```([\s\S]*?)```/gim, '<pre><code>$1</code></pre>')
-    // Inline code
-    .replace(/`(.*?)`/gim, '<code>$1</code>')
-    // Lists
-    .replace(/^\- (.*$)/gim, '<li>$1</li>')
-    // Paragraphs
-    .replace(/\n\n/g, '</p><p>')
-    // Wrap in paragraph
-    .replace(/^(.+)$/gim, (match) => {
-      if (match.startsWith('<')) return match;
-      return `<p>${match}</p>`;
-    });
 }
