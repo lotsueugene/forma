@@ -655,7 +655,7 @@ The Forma Team"
                 ) : (
                   <p className="text-gray-500 m-0">
                     Search for <span className="font-medium text-gray-700">{selectedReply.fromEmail}</span> on{' '}
-                    <a href="https://resend.com/emails" target="_blank" rel="noopener noreferrer" className="text-orange-600 hover:underline">
+                    <a href="https://resend.com/emails/receiving" target="_blank" rel="noopener noreferrer" className="text-orange-600 hover:underline">
                       Resend
                     </a>{' '}
                     to view the message content.
