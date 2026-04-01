@@ -68,12 +68,12 @@ export default function AdminOverviewPage() {
   }
 
   const statCards = [
-    { label: 'Total Users', value: stats.totalUsers, icon: Users, color: 'text-blue-500', bgColor: 'bg-blue-500/10' },
-    { label: 'Workspaces', value: stats.totalWorkspaces, icon: Briefcase, color: 'text-purple-500', bgColor: 'bg-purple-500/10' },
-    { label: 'Forms', value: stats.totalForms, icon: FileText, color: 'text-emerald-500', bgColor: 'bg-emerald-500/10' },
-    { label: 'Submissions', value: stats.totalSubmissions, icon: EnvelopeSimple, color: 'text-[#ef6f2e]', bgColor: 'bg-[#ef6f2e]/10' },
-    { label: 'MRR', value: `$${stats.mrr}`, icon: CurrencyDollar, color: 'text-green-500', bgColor: 'bg-green-500/10' },
-    { label: 'Signups (30d)', value: stats.recentSignups, icon: TrendUp, color: 'text-cyan-500', bgColor: 'bg-cyan-500/10' },
+    { label: 'Total Users', value: stats.totalUsers, icon: Users },
+    { label: 'Workspaces', value: stats.totalWorkspaces, icon: Briefcase },
+    { label: 'Forms', value: stats.totalForms, icon: FileText },
+    { label: 'Submissions', value: stats.totalSubmissions, icon: EnvelopeSimple },
+    { label: 'MRR', value: `$${stats.mrr}`, icon: CurrencyDollar },
+    { label: 'Signups (30d)', value: stats.recentSignups, icon: TrendUp },
   ];
 
   return (
@@ -93,8 +93,8 @@ export default function AdminOverviewPage() {
             transition={{ delay: index * 0.05 }}
             className="bg-white border border-gray-200 rounded-xl p-4"
           >
-            <div className={cn('p-2 rounded-lg w-fit mb-3', stat.bgColor)}>
-              <stat.icon size={18} className={stat.color} />
+            <div className="p-2 rounded-lg w-fit mb-3 bg-gray-100">
+              <stat.icon size={18} className="text-gray-600" />
             </div>
             <div className="text-2xl font-semibold text-gray-900">
               {typeof stat.value === 'number' ? stat.value.toLocaleString() : stat.value}
@@ -111,8 +111,8 @@ export default function AdminOverviewPage() {
           <div className="space-y-3">
             {[
               { plan: 'Free', count: stats.planBreakdown.free, color: 'bg-gray-400' },
-              { plan: 'Trial', count: stats.planBreakdown.trial, color: 'bg-blue-500' },
-              { plan: 'Pro', count: stats.planBreakdown.pro, color: 'bg-emerald-500' },
+              { plan: 'Trial', count: stats.planBreakdown.trial, color: 'bg-gray-400' },
+              { plan: 'Pro', count: stats.planBreakdown.pro, color: 'bg-safety-orange' },
             ].map((item) => {
               const total = stats.planBreakdown.free + stats.planBreakdown.trial + stats.planBreakdown.pro;
               const percentage = total > 0 ? (item.count / total) * 100 : 0;

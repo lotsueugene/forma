@@ -190,7 +190,7 @@ export default function AdminUsersPage() {
                       <span className={cn(
                         'inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium',
                         user.role === 'admin'
-                          ? 'bg-purple-100 text-purple-700'
+                          ? 'bg-safety-orange/10 text-safety-orange'
                           : 'bg-gray-100 text-gray-600'
                       )}>
                         {user.role === 'admin' ? <Shield size={12} /> : <UserIcon size={12} />}
