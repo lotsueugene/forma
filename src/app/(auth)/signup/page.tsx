@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { signIn } from 'next-auth/react';
@@ -23,7 +23,7 @@ const features = [
   'Cancel anytime',
 ];
 
-export default function SignupPage() {
+function SignupForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get('callbackUrl') || '/dashboard';
@@ -240,5 +240,13 @@ export default function SignupPage() {
         </Link>
       </p>
     </motion.div>
+  );
+}
+
+export default function SignupPage() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center min-h-[400px]"><div className="w-8 h-8 border-2 border-gray-300 border-t-safety-orange rounded-full animate-spin" /></div>}>
+      <SignupForm />
+    </Suspense>
   );
 }

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { signIn } from 'next-auth/react';
@@ -8,7 +8,7 @@ import { motion } from 'framer-motion';
 import { Stack, EnvelopeSimple, Lock, ArrowRight, GithubLogo, GoogleLogo } from '@phosphor-icons/react';
 import { cn } from '@/lib/utils';
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get('callbackUrl') || '/dashboard';
@@ -170,5 +170,13 @@ export default function LoginPage() {
         </Link>
       </p>
     </motion.div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center min-h-[400px]"><div className="w-8 h-8 border-2 border-gray-300 border-t-safety-orange rounded-full animate-spin" /></div>}>
+      <LoginForm />
+    </Suspense>
   );
 }
