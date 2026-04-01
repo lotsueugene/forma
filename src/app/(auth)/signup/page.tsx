@@ -129,7 +129,11 @@ function SignupForm() {
           <GithubLogo size={20} weight="fill" />
           GitHub
         </button>
-        <button className="flex-1 btn btn-secondary justify-center" disabled>
+        <button
+          type="button"
+          onClick={() => signIn('google', { callbackUrl })}
+          className="flex-1 btn btn-secondary justify-center"
+        >
           <GoogleLogo size={20} weight="fill" />
           Google
         </button>
