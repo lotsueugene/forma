@@ -110,8 +110,8 @@ export default async function Footer() {
           </div>
 
           <p className="font-mono text-xs text-gray-600 uppercase tracking-wider max-w-xs mt-4">
-            The modern form builder for developers. Build, collect, and integrate with
-            ease.
+            The modern way to build and manage forms. Collect, automate, and integrate
+            with ease.
           </p>
         </div>
 

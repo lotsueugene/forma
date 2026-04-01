@@ -44,13 +44,13 @@ export default function PressPage() {
           <section className="mb-12">
             <h2 className="text-2xl font-semibold text-gray-900 mb-4">About Forma</h2>
             <p className="text-gray-600 mb-4">
-              Forma is a modern form builder designed for developers. We provide powerful APIs,
-              webhooks, and integrations that make it easy to collect and manage form submissions
-              at any scale.
+              Forma is a modern form builder designed for teams of all sizes. We provide powerful
+              tools, automation, and integrations that make it easy to collect and manage form
+              submissions at any scale.
             </p>
             <p className="text-gray-600">
-              Founded to solve the frustrations developers face with existing form solutions,
-              Forma offers a developer-first approach with clean APIs, robust documentation,
+              Founded to solve the frustrations teams face with existing form solutions,
+              Forma offers a streamlined approach with intuitive design, powerful features,
               and enterprise-grade security.
             </p>
           </section>

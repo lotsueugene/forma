@@ -77,10 +77,10 @@ export default function HeroSection() {
             {/* Description */}
             <motion.div variants={staggerVariants} className="space-y-4 max-w-xl">
               <p className="font-mono text-lg lg:text-xl text-gray-700 leading-relaxed">
-                Build powerful forms with a developer-first API.
+                The modern way to build and manage forms.
               </p>
               <p className="font-mono text-lg lg:text-xl text-gray-700 leading-relaxed">
-                Collect submissions, process webhooks, and integrate with your
+                Collect submissions, automate workflows, and integrate with your
                 favorite tools. Enterprise-grade security included.
               </p>
             </motion.div>

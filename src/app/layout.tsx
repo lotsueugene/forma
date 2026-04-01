@@ -14,21 +14,21 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'Forma - Modern Form Builder for Developers',
-  description: 'Build powerful forms, collect submissions, and integrate with your favorite tools. Developer-first API with enterprise-grade security.',
-  keywords: ['form builder', 'forms', 'api', 'webhooks', 'developer tools', 'saas'],
+  title: 'Forma - The Modern Form Builder',
+  description: 'Build powerful forms, collect submissions, and integrate with your favorite tools. Enterprise-grade security included.',
+  keywords: ['form builder', 'forms', 'online forms', 'surveys', 'integrations', 'saas'],
   authors: [{ name: 'Forma' }],
   openGraph: {
     type: 'website',
     locale: 'en_US',
-    url: 'https://forma.dev',
-    title: 'Forma - Modern Form Builder for Developers',
+    url: 'https://withforma.io',
+    title: 'Forma - The Modern Form Builder',
     description: 'Build powerful forms, collect submissions, and integrate with your favorite tools.',
     siteName: 'Forma',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Forma - Modern Form Builder for Developers',
+    title: 'Forma - The Modern Form Builder',
     description: 'Build powerful forms, collect submissions, and integrate with your favorite tools.',
   },
 };
