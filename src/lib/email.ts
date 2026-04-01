@@ -76,7 +76,9 @@ export async function sendSubmissionNotification(
     <div style="padding: 0 0 24px;">
       <table cellpadding="0" cellspacing="0" border="0">
         <tr>
-          <td style="width: 32px; height: 32px; background: #ef6f2e; border-radius: 8px;"></td>
+          <td style="width: 32px; height: 32px;">
+            <img src="https://withforma.io/icon.svg" alt="Forma" width="32" height="32" style="display: block;" />
+          </td>
           <td style="padding-left: 12px; font-size: 20px; font-weight: 700; color: #1f2937;">Forma</td>
         </tr>
       </table>
@@ -232,7 +234,9 @@ export async function sendInvitationEmail(
     <div style="padding: 0 0 24px;">
       <table cellpadding="0" cellspacing="0" border="0">
         <tr>
-          <td style="width: 32px; height: 32px; background: #ef6f2e; border-radius: 8px;"></td>
+          <td style="width: 32px; height: 32px;">
+            <img src="https://withforma.io/icon.svg" alt="Forma" width="32" height="32" style="display: block;" />
+          </td>
           <td style="padding-left: 12px; font-size: 20px; font-weight: 700; color: #1f2937;">Forma</td>
         </tr>
       </table>
