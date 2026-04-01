@@ -57,7 +57,7 @@ const statusConfig = {
 };
 
 const replyStatusConfig = {
-  unread: { color: 'bg-blue-100 text-blue-600', label: 'New' },
+  unread: { color: 'bg-orange-100 text-orange-600', label: 'New' },
   read: { color: 'bg-gray-100 text-gray-600', label: 'Read' },
   replied: { color: 'bg-emerald-100 text-emerald-600', label: 'Replied' },
 };
@@ -503,17 +503,17 @@ The Forma Team"
                   onClick={() => openReply(reply)}
                   className={cn(
                     'bg-white border border-gray-200 rounded-xl p-4 cursor-pointer hover:border-gray-300 transition-colors',
-                    reply.status === 'unread' && 'border-blue-200 bg-blue-50/30'
+                    reply.status === 'unread' && 'border-orange-200 bg-orange-50/30'
                   )}
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex items-start gap-3 flex-1 min-w-0">
                       <div className={cn(
                         'p-2 rounded-lg flex-shrink-0',
-                        reply.status === 'unread' ? 'bg-blue-100' : 'bg-gray-100'
+                        reply.status === 'unread' ? 'bg-orange-100' : 'bg-gray-100'
                       )}>
                         {reply.status === 'unread' ? (
-                          <EnvelopeSimple size={18} className="text-blue-600" />
+                          <EnvelopeSimple size={18} className="text-orange-600" />
                         ) : (
                           <EnvelopeOpen size={18} className="text-gray-500" />
                         )}
