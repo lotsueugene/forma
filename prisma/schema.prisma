@@ -391,8 +391,8 @@ model PricingPlan {
   description    String   // Short description
 
   // Pricing
-  monthlyPrice   Int?     // Price in cents (null for "Contact Sales")
-  yearlyPrice    Int?     // Price in cents per month when billed yearly
+  monthlyPrice   Float?   // Price in dollars (null for "Contact Sales")
+  yearlyPrice    Float?   // Price in dollars per month when billed yearly
 
   // Display
   icon           String   @default("Lightning") // Phosphor icon name

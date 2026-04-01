@@ -420,10 +420,10 @@ export default function TeamPage() {
                   </div>
 
                   <div className="flex items-center gap-2 sm:gap-6 flex-shrink-0">
-                    <div className="flex items-center gap-2">
+                    <div className="w-20 sm:w-24 flex justify-end">
                       <div
                         className={cn(
-                          'flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-1 rounded-full text-[10px] sm:text-xs font-medium capitalize',
+                          'inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-1 rounded-full text-[10px] sm:text-xs font-medium capitalize',
                           roleColor
                         )}
                       >

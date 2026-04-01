@@ -28,7 +28,7 @@ interface PricingPlan {
   active: boolean;
 }
 
-// Default plans as fallback
+// Default plans as fallback (should match database seed)
 const defaultPlans: PricingPlan[] = [
   {
     id: 'starter',
@@ -97,7 +97,7 @@ const defaultPlans: PricingPlan[] = [
       { text: 'Custom integrations', included: true },
     ],
     ctaText: 'Contact Sales',
-    ctaLink: null,
+    ctaLink: '/contact',
     popular: false,
     sortOrder: 2,
     active: true,
