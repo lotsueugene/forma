@@ -54,7 +54,6 @@ interface NotificationSettings {
   notifyFormErrors: boolean;
   notifyTeamInvites: boolean;
   notifyBilling: boolean;
-  notifyMarketing: boolean;
 }
 
 const tabs = [
@@ -94,7 +93,6 @@ export default function SettingsPage() {
     notifyFormErrors: true,
     notifyTeamInvites: true,
     notifyBilling: true,
-    notifyMarketing: false,
   });
   const [isLoadingNotifications, setIsLoadingNotifications] = useState(true);
 
@@ -779,7 +777,6 @@ export default function SettingsPage() {
                       { key: 'notifyFormErrors', label: 'Form errors', description: 'Get alerted when form submissions fail' },
                       { key: 'notifyTeamInvites', label: 'Team invites', description: 'Get notified when invites are sent or accepted' },
                       { key: 'notifyBilling', label: 'Billing', description: 'Upgrades, cancellations, and payment issues' },
-                      { key: 'notifyMarketing', label: 'Marketing updates', description: 'Product updates and feature announcements' },
                     ].map((item) => (
                       <div key={item.key} className="flex items-center justify-between py-3 border-b border-gray-200 last:border-0">
                         <div>
