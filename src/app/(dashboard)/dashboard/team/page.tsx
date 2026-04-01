@@ -450,27 +450,34 @@ export default function TeamPage() {
 
                         <AnimatePresence>
                           {menuOpenId === member.id && (
-                            <motion.div
-                              initial={{ opacity: 0, scale: 0.95 }}
-                              animate={{ opacity: 1, scale: 1 }}
-                              exit={{ opacity: 0, scale: 0.95 }}
-                              className="absolute right-0 mt-1 w-48 bg-white border border-gray-300 rounded-lg shadow-lg overflow-hidden z-10"
-                            >
-                              <button
-                                onClick={() => setShowRoleModal(member.id)}
-                                className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:text-gray-900 hover:bg-gray-100"
+                            <>
+                              {/* Backdrop to close menu when clicking outside */}
+                              <div
+                                className="fixed inset-0 z-10"
+                                onClick={() => setMenuOpenId(null)}
+                              />
+                              <motion.div
+                                initial={{ opacity: 0, scale: 0.95 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                exit={{ opacity: 0, scale: 0.95 }}
+                                className="absolute right-0 mt-1 w-48 bg-white border border-gray-300 rounded-lg shadow-lg overflow-hidden z-20"
                               >
-                                <PencilSimple size={16} />
-                                Change Role
-                              </button>
-                              <button
-                                onClick={() => handleRemoveMember(member.id)}
-                                className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:text-red-700 hover:bg-gray-100"
-                              >
-                                <Trash size={16} />
-                                Remove Member
-                              </button>
-                            </motion.div>
+                                <button
+                                  onClick={() => setShowRoleModal(member.id)}
+                                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:text-gray-900 hover:bg-gray-100"
+                                >
+                                  <PencilSimple size={16} />
+                                  Change Role
+                                </button>
+                                <button
+                                  onClick={() => handleRemoveMember(member.id)}
+                                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:text-red-700 hover:bg-gray-100"
+                                >
+                                  <Trash size={16} />
+                                  Remove Member
+                                </button>
+                              </motion.div>
+                            </>
                           )}
                         </AnimatePresence>
 

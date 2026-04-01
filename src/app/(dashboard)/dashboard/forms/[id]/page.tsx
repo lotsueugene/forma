@@ -462,27 +462,30 @@ export default function FormDetailPage() {
                     </button>
                     <AnimatePresence>
                       {showExportMenu && (
-                        <motion.div
-                          initial={{ opacity: 0, y: 8 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0, y: 8 }}
-                          className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden z-20"
-                        >
-                          <button
-                            onClick={exportToCSV}
-                            className="w-full px-4 py-3 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                        <>
+                          <div className="fixed inset-0 z-10" onClick={() => setShowExportMenu(false)} />
+                          <motion.div
+                            initial={{ opacity: 0, y: 8 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: 8 }}
+                            className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden z-20"
                           >
-                            <span className="w-8 h-8 rounded bg-safety-orange/10 flex items-center justify-center text-safety-orange text-xs font-bold">CSV</span>
-                            Export as CSV
-                          </button>
-                          <button
-                            onClick={exportToJSON}
-                            className="w-full px-4 py-3 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2 border-t border-gray-100"
-                          >
-                            <span className="w-8 h-8 rounded bg-gray-100 flex items-center justify-center text-gray-600 text-xs font-bold">JSON</span>
-                            Export as JSON
-                          </button>
-                        </motion.div>
+                            <button
+                              onClick={exportToCSV}
+                              className="w-full px-4 py-3 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                            >
+                              <span className="w-8 h-8 rounded bg-safety-orange/10 flex items-center justify-center text-safety-orange text-xs font-bold">CSV</span>
+                              Export as CSV
+                            </button>
+                            <button
+                              onClick={exportToJSON}
+                              className="w-full px-4 py-3 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2 border-t border-gray-100"
+                            >
+                              <span className="w-8 h-8 rounded bg-gray-100 flex items-center justify-center text-gray-600 text-xs font-bold">JSON</span>
+                              Export as JSON
+                            </button>
+                          </motion.div>
+                        </>
                       )}
                     </AnimatePresence>
                   </div>

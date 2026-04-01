@@ -28,6 +28,7 @@ import { cn } from '@/lib/utils';
 import { WorkspaceProvider, useWorkspace } from '@/contexts/workspace-context';
 import { NotificationBell } from '@/components/dashboard/NotificationBell';
 import { AnnouncementBanner } from '@/components/announcement-banner';
+import { UpgradeBanner } from '@/components/dashboard/UpgradeBanner';
 
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: House },
@@ -428,17 +429,13 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
               onOpenChange={setNotificationsOpen}
               onRequestCloseOtherMenus={() => setUserMenuOpen(false)}
             />
-
-            {/* Mobile User Avatar */}
-            <div className="lg:hidden w-9 h-9 rounded-full bg-gradient-to-br from-safety-orange to-[#d15010] flex items-center justify-center text-white font-semibold text-sm">
-              {userInitials}
-            </div>
           </div>
         </header>
 
         {/* Page Content */}
         <main className="flex-1 p-4 lg:p-6">
           <AnnouncementBanner />
+          <UpgradeBanner />
           {children}
         </main>
       </div>
