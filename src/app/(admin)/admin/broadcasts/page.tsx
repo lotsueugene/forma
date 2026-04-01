@@ -39,6 +39,11 @@ export default function AdminBroadcastsPage() {
   const [showForm, setShowForm] = useState(false);
   const [saving, setSaving] = useState(false);
 
+  // Delete modal state
+  const [deleteModal, setDeleteModal] = useState<{ id: string; subject: string } | null>(null);
+  const [deleteConfirmation, setDeleteConfirmation] = useState('');
+  const [deleting, setDeleting] = useState(false);
+
   const [formData, setFormData] = useState({
     subject: '',
     content: '',
@@ -104,28 +109,34 @@ export default function AdminBroadcastsPage() {
     }
   };
 
-  const deleteBroadcast = async (id: string, subject: string) => {
-    const confirmation = prompt(
-      `Are you sure you want to delete "${subject}"?\n\nType DELETE to confirm:`
-    );
+  const openDeleteModal = (id: string, subject: string) => {
+    setDeleteModal({ id, subject });
+    setDeleteConfirmation('');
+  };
 
-    if (confirmation !== 'DELETE') {
-      if (confirmation !== null) {
-        alert('Deletion cancelled. You must type DELETE to confirm.');
-      }
-      return;
-    }
+  const closeDeleteModal = () => {
+    setDeleteModal(null);
+    setDeleteConfirmation('');
+    setDeleting(false);
+  };
 
+  const confirmDelete = async () => {
+    if (!deleteModal || deleteConfirmation !== 'DELETE') return;
+
+    setDeleting(true);
     try {
-      const res = await fetch(`/api/admin/broadcasts/${id}`, {
+      const res = await fetch(`/api/admin/broadcasts/${deleteModal.id}`, {
         method: 'DELETE',
       });
 
       if (res.ok) {
-        setBroadcasts(broadcasts.filter(b => b.id !== id));
+        setBroadcasts(broadcasts.filter(b => b.id !== deleteModal.id));
+        closeDeleteModal();
       }
     } catch (error) {
       console.error('Failed to delete broadcast:', error);
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -294,7 +305,7 @@ The Forma Team"
                     </div>
                   </div>
                   <button
-                    onClick={() => deleteBroadcast(broadcast.id, broadcast.subject)}
+                    onClick={() => openDeleteModal(broadcast.id, broadcast.subject)}
                     className="btn btn-ghost text-red-500 hover:text-red-700 hover:bg-red-50 flex-shrink-0 p-2"
                     title="Delete broadcast"
                   >
@@ -306,6 +317,46 @@ The Forma Team"
           })
         )}
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {deleteModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl p-6 max-w-md w-full mx-4 shadow-xl">
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Delete Broadcast</h3>
+            <p className="text-gray-600 mb-4">
+              Are you sure you want to delete &quot;{deleteModal.subject}&quot;?
+            </p>
+            <p className="text-sm text-gray-600 mb-4">
+              Type <span className="font-bold text-red-600">DELETE</span> to confirm:
+            </p>
+            <input
+              type="text"
+              value={deleteConfirmation}
+              onChange={(e) => setDeleteConfirmation(e.target.value)}
+              className="input w-full mb-4"
+              placeholder="Type DELETE here"
+              autoFocus
+            />
+            <div className="flex gap-2 justify-end">
+              <button
+                onClick={closeDeleteModal}
+                className="btn btn-ghost"
+                disabled={deleting}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmDelete}
+                disabled={deleteConfirmation !== 'DELETE' || deleting}
+                className="btn bg-red-500 hover:bg-red-600 text-white disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {deleting ? <Spinner size={16} className="animate-spin" /> : <Trash size={16} />}
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
