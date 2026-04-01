@@ -76,7 +76,11 @@ function LoginForm() {
 
       {/* Social Login */}
       <div className="flex gap-3 mb-6">
-        <button className="flex-1 btn btn-secondary justify-center" disabled>
+        <button
+          type="button"
+          onClick={() => signIn('github', { callbackUrl })}
+          className="flex-1 btn btn-secondary justify-center"
+        >
           <GithubLogo size={20} weight="fill" />
           GitHub
         </button>
