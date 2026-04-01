@@ -206,7 +206,7 @@ function WorkspaceSwitcher() {
 
 function DashboardContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
@@ -245,14 +245,17 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
   // react-hooks/set-state-in-effect (menus close on click-outside / next interaction).
 
   const user = session?.user;
-  const userInitials = user?.name
-    ? user.name
-        .split(' ')
-        .map((n) => n[0])
-        .join('')
-        .toUpperCase()
-        .slice(0, 2)
-    : user?.email?.slice(0, 2).toUpperCase() || 'U';
+  const isSessionLoading = status === 'loading';
+  const userInitials = isSessionLoading
+    ? '...'
+    : user?.name
+      ? user.name
+          .split(' ')
+          .map((n) => n[0])
+          .join('')
+          .toUpperCase()
+          .slice(0, 2)
+      : user?.email?.slice(0, 2).toUpperCase() || '?';
 
   return (
     <div className="min-h-screen bg-white flex">
