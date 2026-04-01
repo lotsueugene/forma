@@ -121,7 +121,7 @@ export default function HeroSection() {
             <motion.div variants={staggerVariants} className="flex flex-wrap items-center gap-4">
               <Magnetic pull={0.1}>
                 <Link href="/signup" className="btn btn-primary">
-                  Start Building Free
+                  Get Started Free
                   <ArrowRight size={16} weight="bold" />
                 </Link>
               </Magnetic>
