@@ -532,7 +532,7 @@ The Forma Team"
                         </div>
                         <p className="text-sm text-gray-600 mt-0.5">{reply.subject}</p>
                         <p className="text-sm text-gray-500 mt-1 line-clamp-1">
-                          {reply.textContent?.slice(0, 100) || reply.htmlContent?.replace(/<[^>]*>/g, '').slice(0, 100) || '(Empty message)'}
+                          {reply.textContent?.slice(0, 100) || reply.htmlContent?.replace(/<[^>]*>/g, '').slice(0, 100) || 'View on Resend to see content'}
                         </p>
                         <div className="flex items-center gap-4 mt-2 text-xs text-gray-500">
                           <span>{reply.fromEmail}</span>
@@ -653,7 +653,13 @@ The Forma Team"
                 ) : selectedReply.textContent ? (
                   <p className="whitespace-pre-wrap m-0">{selectedReply.textContent}</p>
                 ) : (
-                  <p className="text-gray-400 italic m-0">No message content</p>
+                  <p className="text-gray-500 m-0">
+                    Search for <span className="font-medium text-gray-700">{selectedReply.fromEmail}</span> on{' '}
+                    <a href="https://resend.com/emails" target="_blank" rel="noopener noreferrer" className="text-orange-600 hover:underline">
+                      Resend
+                    </a>{' '}
+                    to view the message content.
+                  </p>
                 )}
               </div>
 
