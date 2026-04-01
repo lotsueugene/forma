@@ -9,6 +9,7 @@ import {
   CheckCircle,
   XCircle,
   Clock,
+  Trash,
 } from '@phosphor-icons/react';
 import { cn } from '@/lib/utils';
 
@@ -100,6 +101,31 @@ export default function AdminBroadcastsPage() {
       console.error('Failed to create broadcast:', error);
     } finally {
       setSaving(false);
+    }
+  };
+
+  const deleteBroadcast = async (id: string, subject: string) => {
+    const confirmation = prompt(
+      `Are you sure you want to delete "${subject}"?\n\nType DELETE to confirm:`
+    );
+
+    if (confirmation !== 'DELETE') {
+      if (confirmation !== null) {
+        alert('Deletion cancelled. You must type DELETE to confirm.');
+      }
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/admin/broadcasts/${id}`, {
+        method: 'DELETE',
+      });
+
+      if (res.ok) {
+        setBroadcasts(broadcasts.filter(b => b.id !== id));
+      }
+    } catch (error) {
+      console.error('Failed to delete broadcast:', error);
     }
   };
 
@@ -237,16 +263,16 @@ The Forma Team"
             return (
               <div key={broadcast.id} className="bg-white border border-gray-200 rounded-xl p-4">
                 <div className="flex items-start justify-between gap-4">
-                  <div className="flex items-start gap-3">
-                    <div className="p-2 rounded-lg bg-gray-100">
+                  <div className="flex items-start gap-3 flex-1 min-w-0">
+                    <div className="p-2 rounded-lg bg-gray-100 flex-shrink-0">
                       <EnvelopeSimple size={18} className="text-gray-500" />
                     </div>
-                    <div>
+                    <div className="min-w-0">
                       <h3 className="font-medium text-gray-900">{broadcast.subject}</h3>
                       <p className="text-sm text-gray-500 mt-1 line-clamp-1">
                         {broadcast.content.replace(/<[^>]*>/g, '').slice(0, 100)}...
                       </p>
-                      <div className="flex items-center gap-4 mt-2 text-xs text-gray-500">
+                      <div className="flex items-center gap-4 mt-2 text-xs text-gray-500 flex-wrap">
                         <span className={cn('inline-flex items-center gap-1 px-2 py-0.5 rounded', status.color)}>
                           <StatusIcon size={12} className={broadcast.status === 'sending' ? 'animate-spin' : ''} />
                           {status.label}
@@ -267,6 +293,13 @@ The Forma Team"
                       </div>
                     </div>
                   </div>
+                  <button
+                    onClick={() => deleteBroadcast(broadcast.id, broadcast.subject)}
+                    className="btn btn-ghost text-red-500 hover:text-red-700 hover:bg-red-50 flex-shrink-0 p-2"
+                    title="Delete broadcast"
+                  >
+                    <Trash size={18} />
+                  </button>
                 </div>
               </div>
             );
