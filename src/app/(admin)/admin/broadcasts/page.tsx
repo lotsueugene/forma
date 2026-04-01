@@ -137,43 +137,26 @@ export default function AdminBroadcastsPage() {
           </div>
 
           <div>
-            <div className="flex items-center justify-between mb-1">
-              <label className="text-sm text-gray-600">
-                Content (HTML supported, use {'{{name}}'} for personalization)
-              </label>
-              <button
-                type="button"
-                onClick={() => setFormData({
-                  ...formData,
-                  content: `<div style="max-width: 600px; margin: 0 auto; font-family: sans-serif;">
-  <img src="https://yoursite.com/logo.png" alt="Forma" style="height: 32px; margin-bottom: 24px;">
-
-  <p>Hi {{name}},</p>
-
-  <p>We wanted to share some exciting news with you!</p>
-
-  <p>[Your message here]</p>
-
-  <p>If you have any questions, just reply to this email.</p>
-
-  <p style="margin-top: 32px;">Best,<br>The Forma Team</p>
-
-  <hr style="border: none; border-top: 1px solid #e5e5e5; margin: 32px 0;">
-  <p style="font-size: 12px; color: #666;">You're receiving this because you signed up for Forma.</p>
-</div>`
-                })}
-                className="text-xs text-gray-500 hover:text-gray-700"
-              >
-                Insert template
-              </button>
-            </div>
+            <label className="block text-sm text-gray-600 mb-1">
+              Message (use {"{{name}}"} to personalize with user's name)
+            </label>
             <textarea
               value={formData.content}
               onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-              className="input w-full h-48 font-mono text-sm"
-              placeholder="<p>Hi {{name}},</p><p>Your email content here...</p>"
+              className="input w-full h-48"
+              placeholder="Hi {{name}},
+
+We're excited to share some updates with you!
+
+Your message here...
+
+Best,
+The Forma Team"
               required
             />
+            <p className="text-xs text-gray-500 mt-1">
+              Just type your message. It will be automatically styled with the Forma email template.
+            </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

@@ -6,6 +6,56 @@ import { Resend } from 'resend';
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 const EMAIL_FROM = process.env.EMAIL_FROM || 'Forma <updates@forma.app>';
 
+/**
+ * Generate broadcast email HTML with Forma branding
+ */
+function generateBroadcastHtml(content: string, userName: string): string {
+  // Convert plain text to HTML paragraphs
+  const htmlContent = content
+    .replace(/{{name}}/g, userName)
+    .split(/\n\n+/)
+    .map(para => `<p style="margin: 0 0 16px; color: #374151; font-size: 16px; line-height: 1.6;">${para.replace(/\n/g, '<br>')}</p>`)
+    .join('');
+
+  return `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #1f2937; margin: 0; padding: 0; background-color: #ffffff;">
+  <div style="max-width: 600px; margin: 0 auto; padding: 40px 20px;">
+    <!-- Header with Forma Logo -->
+    <div style="padding: 0 0 32px;">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td style="width: 32px; height: 32px;">
+            <img src="https://withforma.io/icon.svg" alt="Forma" width="32" height="32" style="display: block;" />
+          </td>
+          <td style="padding-left: 12px; font-size: 20px; font-weight: 700; color: #1f2937;">Forma</td>
+        </tr>
+      </table>
+    </div>
+
+    <!-- Content -->
+    <div style="padding: 0 0 32px;">
+      ${htmlContent}
+    </div>
+
+    <!-- Footer -->
+    <div style="padding: 24px 0 0; border-top: 1px solid #e5e5e5;">
+      <p style="margin: 0; color: #9ca3af; font-size: 12px; text-align: center;">
+        <a href="https://withforma.io" style="color: #ef6f2e; text-decoration: none;">Forma</a> — The modern way to build forms<br>
+        <span style="color: #d1d5db;">You're receiving this because you signed up for Forma.</span>
+      </p>
+    </div>
+  </div>
+</body>
+</html>
+  `.trim();
+}
+
 // GET /api/admin/broadcasts - List all broadcasts
 export async function GET() {
   try {
@@ -154,11 +204,13 @@ async function sendBroadcastEmails(
           if (!user.email) return;
 
           try {
+            const userName = user.name || 'there';
+            const html = generateBroadcastHtml(content, userName);
             await resend.emails.send({
               from: EMAIL_FROM,
               to: user.email,
               subject,
-              html: content.replace('{{name}}', user.name || 'there'),
+              html,
             });
             sentCount++;
           } catch (err) {
