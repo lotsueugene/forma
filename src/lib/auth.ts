@@ -4,7 +4,7 @@ import CredentialsProvider from 'next-auth/providers/credentials';
 import GoogleProvider from 'next-auth/providers/google';
 import bcrypt from 'bcryptjs';
 import { prisma } from './prisma';
-import { getDefaultWorkspace } from './workspace-auth';
+import { getDefaultWorkspace, createPersonalWorkspace } from './workspace-auth';
 
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma) as NextAuthOptions['adapter'],
@@ -52,6 +52,14 @@ export const authOptions: NextAuthOptions = {
   pages: {
     signIn: '/login',
     newUser: '/signup',
+  },
+  events: {
+    // Create workspace for OAuth users (credentials users get it in /api/auth/register)
+    async createUser({ user }) {
+      if (user.id && user.email) {
+        await createPersonalWorkspace(user.id, user.name || undefined, user.email);
+      }
+    },
   },
   callbacks: {
     async jwt({ token, user, trigger }) {
