@@ -215,19 +215,19 @@ export default function FormsPage() {
       )}
 
       {/* Filters Bar */}
-      <div className="flex flex-col md:flex-row gap-4">
+      <div className="flex flex-col md:flex-row gap-3">
         {/* Search */}
-        <div className="flex-1 relative min-w-0 md:min-w-[280px] lg:min-w-[320px]">
+        <div className="flex-1 relative min-w-0 md:min-w-[240px] lg:min-w-[300px]">
           <MagnifyingGlass
-            size={20}
-            className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500"
+            size={18}
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
           />
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search forms..."
-            className="input pl-12 py-3 text-base"
+            className="w-full h-10 pl-10 pr-4 text-sm bg-white border border-gray-300 rounded-lg outline-none focus:border-safety-orange focus:ring-1 focus:ring-safety-orange"
           />
         </div>
 
@@ -235,7 +235,7 @@ export default function FormsPage() {
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value as typeof statusFilter)}
-          className="input w-auto min-w-[140px]"
+          className="h-10 px-3 text-sm bg-white border border-gray-300 rounded-lg outline-none focus:border-safety-orange min-w-[120px]"
         >
           <option value="all">All Status</option>
           <option value="active">Active</option>
@@ -246,7 +246,7 @@ export default function FormsPage() {
         <select
           value={sortBy}
           onChange={(e) => setSortBy(e.target.value as SortOption)}
-          className="input w-auto min-w-[160px]"
+          className="h-10 px-3 text-sm bg-white border border-gray-300 rounded-lg outline-none focus:border-safety-orange min-w-[150px]"
         >
           <option value="newest">Newest First</option>
           <option value="oldest">Oldest First</option>
@@ -255,14 +255,15 @@ export default function FormsPage() {
         </select>
 
         {/* View Toggle */}
-        <div className="flex rounded-lg border border-gray-200 overflow-hidden">
+        <div className="flex h-10 rounded-lg border border-gray-300 overflow-hidden bg-white">
           <button
             onClick={() => setViewMode('grid')}
+            title="Grid view"
             className={cn(
-              'px-3 py-2 transition-colors',
+              'px-3 flex items-center justify-center transition-colors',
               viewMode === 'grid'
-                ? 'bg-gray-100 text-gray-900'
-                : 'text-gray-500 hover:text-gray-900'
+                ? 'bg-safety-orange text-white'
+                : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'
             )}
           >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
@@ -274,11 +275,12 @@ export default function FormsPage() {
           </button>
           <button
             onClick={() => setViewMode('list')}
+            title="List view"
             className={cn(
-              'px-3 py-2 transition-colors',
+              'px-3 flex items-center justify-center transition-colors',
               viewMode === 'list'
-                ? 'bg-gray-100 text-gray-900'
-                : 'text-gray-500 hover:text-gray-900'
+                ? 'bg-safety-orange text-white'
+                : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'
             )}
           >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
