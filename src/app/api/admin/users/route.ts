@@ -33,7 +33,10 @@ export async function GET(request: NextRequest) {
         where,
         skip,
         take: limit,
-        orderBy: { createdAt: 'desc' },
+        orderBy: [
+          { role: 'asc' }, // 'admin' comes before 'user' alphabetically
+          { createdAt: 'desc' },
+        ],
         select: {
           id: true,
           name: true,
