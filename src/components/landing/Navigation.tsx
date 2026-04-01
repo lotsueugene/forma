@@ -26,7 +26,7 @@ export default function Navigation() {
           </span>
         </a>
 
-        {/* Center Navigation - Features, Pricing, Docs, Sign In */}
+        {/* Center Navigation - Features, Pricing, Docs */}
         <nav className="hidden lg:flex items-center justify-center flex-1">
           <ul className="group/menu flex items-center space-x-8">
             {navLinks.map((link) => (
@@ -44,25 +44,27 @@ export default function Navigation() {
                 </Magnetic>
               </li>
             ))}
-            <li className="relative opacity-100 transition-opacity duration-250 group-hover/menu:opacity-60 hover:!opacity-100">
-              <Magnetic pull={0.1}>
-                <Link
-                  href="/login"
-                  className="text-pretty font-mono text-[12px] leading-[100%] tracking-[-0.015rem] uppercase relative flex w-fit items-center transition-colors duration-200 hover:text-safety-orange group after:absolute after:-bottom-px after:left-0 after:h-px after:w-0 after:bg-current after:transition-all after:duration-300 after:ease-in-out hover:after:w-full text-gray-700"
-                >
-                  Sign In
-                </Link>
-              </Magnetic>
-            </li>
           </ul>
         </nav>
 
-        {/* Right - Get Started Button */}
-        <div className="flex items-center gap-3">
+        {/* Right - Sign In & Get Started Buttons */}
+        <div className="hidden lg:flex items-center gap-3">
+          <Magnetic pull={0.1}>
+            <Link
+              href="/login"
+              className="group relative w-max cursor-pointer items-center justify-center border transition-colors duration-150 will-change-transform bg-transparent hover:bg-gray-100 text-gray-700 overflow-clip rounded-sm border-gray-300 h-[32px] px-4 flex"
+            >
+              <span className="relative z-10 flex items-center uppercase">
+                <p className="text-pretty font-mono text-[12px] leading-[100%] tracking-[-0.015rem] uppercase">
+                  Sign In
+                </p>
+              </span>
+            </Link>
+          </Magnetic>
           <Magnetic pull={0.1}>
             <Link
               href="/signup"
-              className="group relative w-max cursor-pointer items-center justify-center border transition-colors duration-150 will-change-transform bg-[#ef6f2e] hover:bg-[#ee6018] text-white overflow-clip rounded-sm border-transparent h-[32px] px-4 hidden lg:flex"
+              className="group relative w-max cursor-pointer items-center justify-center border transition-colors duration-150 will-change-transform bg-[#ef6f2e] hover:bg-[#ee6018] text-white overflow-clip rounded-sm border-transparent h-[32px] px-4 flex"
             >
               <span className="relative z-10 flex items-center uppercase">
                 <p className="text-pretty font-mono text-[12px] leading-[100%] tracking-[-0.015rem] uppercase">
@@ -71,30 +73,30 @@ export default function Navigation() {
               </span>
             </Link>
           </Magnetic>
-
-          {/* Mobile Menu Button */}
-          <button
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="relative -m-1 flex cursor-pointer items-center justify-center p-1 text-gray-700 hover:text-gray-900 lg:hidden"
-            aria-label="Toggle menu"
-          >
-            {mobileMenuOpen ? (
-              <X size={24} weight="bold" />
-            ) : (
-              <svg
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path d="M3 6H21V8H3V6Z" fill="currentColor" />
-                <path d="M3 11H21V13H3V11Z" fill="currentColor" />
-                <path d="M3 16H21V18H3V16Z" fill="currentColor" />
-              </svg>
-            )}
-          </button>
         </div>
+
+        {/* Mobile Menu Button */}
+        <button
+          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          className="relative -m-1 flex cursor-pointer items-center justify-center p-1 text-gray-700 hover:text-gray-900 lg:hidden"
+          aria-label="Toggle menu"
+        >
+          {mobileMenuOpen ? (
+            <X size={24} weight="bold" />
+          ) : (
+            <svg
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path d="M3 6H21V8H3V6Z" fill="currentColor" />
+              <path d="M3 11H21V13H3V11Z" fill="currentColor" />
+              <path d="M3 16H21V18H3V16Z" fill="currentColor" />
+            </svg>
+          )}
+        </button>
       </div>
 
       {/* Mobile Menu */}
