@@ -280,6 +280,9 @@ export async function POST(
               .filter((email): email is string => !!email);
           }
 
+          // Parse form fields to get labels
+          const formFields = form.fields ? JSON.parse(form.fields) : [];
+
           // Send to all recipients
           for (const emailTo of emailRecipients) {
             await sendSubmissionNotification(emailTo, {
@@ -289,6 +292,7 @@ export async function POST(
               submittedAt: submission.createdAt.toISOString(),
               data: cleanedData as Record<string, unknown>,
               workspaceName: workspace?.name,
+              fields: formFields,
             });
           }
         } catch (emailErr) {

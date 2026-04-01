@@ -22,6 +22,12 @@ function getResend(): Resend | null {
 
 const EMAIL_FROM = process.env.EMAIL_FROM || 'Forma <notifications@withforma.io>';
 
+export interface FormField {
+  id: string;
+  label: string;
+  type: string;
+}
+
 export interface SubmissionEmailData {
   formName: string;
   formId: string;
@@ -29,6 +35,7 @@ export interface SubmissionEmailData {
   submittedAt: string;
   data: Record<string, unknown>;
   workspaceName?: string;
+  fields?: FormField[];
 }
 
 /**
@@ -46,17 +53,27 @@ export async function sendSubmissionNotification(
   }
 
   console.log(`[Email] Preparing submission notification for form ${submission.formName}`);
-  const { formName, formId, submissionId, submittedAt, data, workspaceName } = submission;
+  const { formName, formId, submissionId, submittedAt, data, workspaceName, fields } = submission;
+
+  // Create a map of field IDs to labels
+  const fieldLabels = new Map<string, string>();
+  if (fields) {
+    fields.forEach(field => {
+      fieldLabels.set(field.id, field.label);
+    });
+  }
 
   // Format submission data as HTML table
   const dataRows = Object.entries(data)
     .map(([key, value]) => {
+      // Use field label if available, otherwise use the key
+      const displayKey = fieldLabels.get(key) || key;
       const displayValue = typeof value === 'object'
         ? JSON.stringify(value, null, 2)
         : String(value);
       return `
         <tr>
-          <td style="padding: 12px 16px; border-bottom: 1px solid #e5e5e5; font-weight: 500; color: #1f2937;">${escapeHtml(key)}</td>
+          <td style="padding: 12px 16px; border-bottom: 1px solid #e5e5e5; font-weight: 500; color: #1f2937;">${escapeHtml(displayKey)}</td>
           <td style="padding: 12px 16px; border-bottom: 1px solid #e5e5e5; color: #6b7280;">${escapeHtml(displayValue)}</td>
         </tr>
       `;
@@ -139,7 +156,7 @@ New Form Submission - ${formName}
 
 Received: ${submittedAt}
 
-${Object.entries(data).map(([k, v]) => `${k}: ${v}`).join('\n')}
+${Object.entries(data).map(([k, v]) => `${fieldLabels.get(k) || k}: ${v}`).join('\n')}
 
 View in Dashboard: ${process.env.NEXTAUTH_URL || 'https://withforma.io'}/dashboard/forms/${formId}
 
