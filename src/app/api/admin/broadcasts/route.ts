@@ -151,22 +151,19 @@ async function sendBroadcastEmails(
     // Build user query
     const planFilter = targetPlans?.split(',').map(p => p.trim()) || null;
 
-    // Get all users with their subscription plans
-    // Only exclude users who explicitly opted out of marketing
+    // Get all users with email addresses
+    // Marketing emails go to all users (they can unsubscribe via settings)
     const users = await prisma.user.findMany({
       where: {
         email: { not: null },
-        OR: [
-          // User has settings and hasn't opted out
-          { settings: { notifyMarketing: true } },
-          // User has no settings record (default is to receive)
-          { settings: null },
-        ],
       },
       select: {
         id: true,
         email: true,
         name: true,
+        settings: {
+          select: { notifyMarketing: true },
+        },
         workspaceMembers: {
           select: {
             workspace: {
@@ -181,10 +178,18 @@ async function sendBroadcastEmails(
       },
     });
 
+    // Filter out users who explicitly opted out of marketing
+    const eligibleUsers = users.filter(user => {
+      // If user has no settings, they haven't opted out (default behavior)
+      if (!user.settings) return true;
+      // If user has settings, check if they've opted out
+      return user.settings.notifyMarketing !== false;
+    });
+
     // Filter by plan if needed
     const targetUsers = targetAll
-      ? users
-      : users.filter(user => {
+      ? eligibleUsers
+      : eligibleUsers.filter(user => {
           const userPlans = user.workspaceMembers
             .map(wm => wm.workspace.subscription?.plan)
             .filter(Boolean);

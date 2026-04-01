@@ -117,8 +117,17 @@ export default function AdminAnnouncementsPage() {
     }
   };
 
-  const deleteAnnouncement = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this announcement?')) return;
+  const deleteAnnouncement = async (id: string, title: string) => {
+    const confirmation = prompt(
+      `Are you sure you want to delete "${title}"?\n\nType DELETE to confirm:`
+    );
+
+    if (confirmation !== 'DELETE') {
+      if (confirmation !== null) {
+        alert('Deletion cancelled. You must type DELETE to confirm.');
+      }
+      return;
+    }
 
     try {
       const res = await fetch(`/api/admin/announcements/${id}`, {
@@ -323,10 +332,11 @@ export default function AdminAnnouncementsPage() {
                     </div>
                   </div>
                   <button
-                    onClick={() => deleteAnnouncement(announcement.id)}
-                    className="btn btn-ghost text-red-600 flex-shrink-0 p-2"
+                    onClick={() => deleteAnnouncement(announcement.id, announcement.title)}
+                    className="btn btn-ghost text-red-500 hover:text-red-700 hover:bg-red-50 flex-shrink-0 p-2"
+                    title="Delete announcement"
                   >
-                    <Trash size={16} />
+                    <Trash size={18} />
                   </button>
                 </div>
               </div>
