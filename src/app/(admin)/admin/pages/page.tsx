@@ -356,7 +356,7 @@ export default function AdminPagesPage() {
                 </div>
                 <div className="flex items-center gap-2">
                   <span
-                    className={`badge ${page.published ? 'badge-success' : 'badge-warning'}`}
+                    className={`badge ${page.published ? 'badge-accent' : 'badge-warning'}`}
                   >
                     {page.published ? 'Published' : 'Draft'}
                   </span>

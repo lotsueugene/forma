@@ -15,6 +15,7 @@ import {
   FileText,
   Article,
   Link as LinkIcon,
+  Briefcase,
 } from '@phosphor-icons/react';
 import { cn } from '@/lib/utils';
 
@@ -24,6 +25,7 @@ const navItems = [
   { href: '/admin/pricing', label: 'Pricing', icon: CurrencyDollar },
   { href: '/admin/pages', label: 'Static Pages', icon: FileText },
   { href: '/admin/blog', label: 'Blog Posts', icon: Article },
+  { href: '/admin/careers', label: 'Careers', icon: Briefcase },
   { href: '/admin/footer', label: 'Footer Links', icon: LinkIcon },
   { href: '/admin/announcements', label: 'Announcements', icon: Megaphone },
   { href: '/admin/broadcasts', label: 'Email Broadcasts', icon: EnvelopeSimple },

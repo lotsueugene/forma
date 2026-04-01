@@ -13,12 +13,20 @@ const footerLinks = {
     { label: 'API Reference', href: '/docs/api' },
     { label: 'SDKs', href: '/docs/sdks' },
     { label: 'Webhooks', href: '/docs/webhooks' },
+    { label: 'Changelog', href: '/changelog' },
   ],
   company: [
     { label: 'About', href: '/about' },
     { label: 'Blog', href: '/blog' },
     { label: 'Careers', href: '/careers' },
     { label: 'Contact', href: '/contact' },
+    { label: 'Press', href: '/press' },
+  ],
+  legal: [
+    { label: 'Privacy Policy', href: '/privacy' },
+    { label: 'Terms of Service', href: '/terms' },
+    { label: 'Security', href: '/security' },
+    { label: 'Cookie Policy', href: '/cookies' },
   ],
 };
 
@@ -99,24 +107,15 @@ export default function Footer() {
 
           <div className="flex flex-col gap-5 font-mono text-xs uppercase tracking-widest">
             <span className="text-gray-900 font-bold">Legal</span>
-            <Link
-              href="/privacy"
-              className="text-gray-600 hover:text-safety-orange transition-none"
-            >
-              Privacy
-            </Link>
-            <Link
-              href="/terms"
-              className="text-gray-600 hover:text-safety-orange transition-none"
-            >
-              Terms
-            </Link>
-            <Link
-              href="/security"
-              className="text-gray-600 hover:text-safety-orange transition-none"
-            >
-              Security
-            </Link>
+            {footerLinks.legal.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className="text-gray-600 hover:text-safety-orange transition-none"
+              >
+                {link.label}
+              </Link>
+            ))}
           </div>
         </div>
       </div>

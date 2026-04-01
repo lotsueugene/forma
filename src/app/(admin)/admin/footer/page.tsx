@@ -350,9 +350,9 @@ export default function AdminFooterPage() {
       )}
 
       {/* Best Practices Info */}
-      <div className="bg-blue-50 border border-blue-200 rounded-xl p-5">
-        <h3 className="font-semibold text-blue-900 mb-2">Best Practices</h3>
-        <ul className="text-sm text-blue-800 space-y-1">
+      <div className="bg-safety-orange/5 border border-safety-orange/20 rounded-xl p-5">
+        <h3 className="font-semibold text-gray-900 mb-2">Best Practices</h3>
+        <ul className="text-sm text-gray-700 space-y-1">
           <li><strong>Product:</strong> Features, Pricing, Templates, Integrations</li>
           <li><strong>Developers:</strong> Documentation, API Reference, SDKs, Webhooks, Changelog</li>
           <li><strong>Company:</strong> About, Blog, Careers, Contact, Press</li>

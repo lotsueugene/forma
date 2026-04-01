@@ -476,3 +476,28 @@ model BlogPost {
   @@index([published, publishedAt])
   @@index([featured, published])
 }
+
+// Job postings for careers page
+model JobPosting {
+  id          String    @id @default(cuid())
+  slug        String    @unique
+  title       String
+  department  String    // e.g., "Engineering", "Design", "Marketing"
+  location    String    // e.g., "Remote", "San Francisco, CA"
+  type        String    // e.g., "Full-time", "Part-time", "Contract"
+  description String    // Full job description (Markdown)
+  requirements String?  // Requirements/qualifications
+  benefits    String?   // Benefits and perks
+  salary      String?   // Salary range (optional)
+  applyUrl    String?   // External application URL
+  applyEmail  String?   // Email to apply
+  published   Boolean   @default(false)
+  publishedAt DateTime?
+  featured    Boolean   @default(false)
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([published, publishedAt])
+  @@index([department, published])
+}

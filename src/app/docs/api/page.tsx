@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import {
+  Stack,
   ArrowLeft,
   Copy,
   Check,
@@ -70,15 +71,22 @@ export default function ApiDocsPage() {
   return (
     <div className="min-h-screen bg-white">
       {/* Header */}
-      <header className="border-b border-gray-200 bg-gray-50">
-        <div className="max-w-5xl mx-auto px-6 py-4">
-          <Link
-            href="/dashboard/settings?tab=api"
-            className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
-          >
-            <ArrowLeft size={18} />
-            Back to Settings
+      <header className="border-b border-gray-200">
+        <div className="mx-auto max-w-5xl px-6 h-16 flex items-center justify-between">
+          <Link href="/" className="flex items-center gap-2">
+            <Stack size={24} weight="fill" className="text-safety-orange" />
+            <span className="font-sans text-xl font-medium tracking-tight text-gray-900">
+              Forma
+            </span>
           </Link>
+          <div className="flex items-center gap-4">
+            <Link href="/docs" className="text-sm text-gray-600 hover:text-gray-900">
+              Docs
+            </Link>
+            <Link href="/login" className="btn btn-secondary">
+              Sign In
+            </Link>
+          </div>
         </div>
       </header>
 
@@ -86,12 +94,21 @@ export default function ApiDocsPage() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="space-y-12"
+          className="space-y-10"
         >
+          {/* Back link */}
+          <Link
+            href="/docs"
+            className="inline-flex items-center gap-2 text-sm text-gray-600 hover:text-safety-orange transition-colors"
+          >
+            <ArrowLeft size={16} />
+            Back to Documentation
+          </Link>
+
           {/* Title */}
           <div>
-            <h1 className="text-3xl font-semibold text-gray-900 mb-4">
-              API Documentation
+            <h1 className="text-3xl font-semibold text-gray-900 mb-3">
+              API Reference
             </h1>
             <p className="text-lg text-gray-600 max-w-2xl">
               Integrate Forma into your applications. Submit form data from anywhere using our simple REST API.
@@ -235,11 +252,11 @@ export default function ApiDocsPage() {
                 </code>
               </div>
               <Link
-                href="/dashboard/settings?tab=api"
-                className="btn btn-secondary inline-flex"
+                href="/signup"
+                className="btn btn-primary inline-flex"
               >
                 <Key size={18} />
-                Manage API Keys
+                Get Your API Key
               </Link>
             </div>
           </section>
@@ -273,7 +290,7 @@ export default function ApiDocsPage() {
             </p>
             <div className="flex gap-3">
               <a
-                href="mailto:support@forma.app"
+                href="mailto:support@withforma.io"
                 className="btn btn-secondary"
               >
                 Contact Support

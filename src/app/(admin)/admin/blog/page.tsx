@@ -469,7 +469,7 @@ export default function AdminBlogPage() {
                 </div>
                 <div className="flex items-center gap-2">
                   <span
-                    className={`badge ${post.published ? 'badge-success' : 'badge-warning'}`}
+                    className={`badge ${post.published ? 'badge-accent' : 'badge-warning'}`}
                   >
                     {post.published ? 'Published' : 'Draft'}
                   </span>
