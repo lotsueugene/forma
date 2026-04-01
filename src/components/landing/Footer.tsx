@@ -1,36 +1,87 @@
 import { Stack } from '@phosphor-icons/react/dist/ssr';
 import Link from 'next/link';
+import { prisma } from '@/lib/prisma';
 
-const footerLinks = {
+// Fallback links if database fetch fails
+const fallbackLinks = {
   product: [
-    { label: 'Features', href: '#features' },
-    { label: 'Pricing', href: '#pricing' },
-    { label: 'Templates', href: '/templates' },
-    { label: 'Integrations', href: '/integrations' },
+    { label: 'Features', href: '#features', external: false },
+    { label: 'Pricing', href: '#pricing', external: false },
   ],
   developers: [
-    { label: 'Documentation', href: '/docs' },
-    { label: 'API Reference', href: '/docs/api' },
-    { label: 'SDKs', href: '/docs/sdks' },
-    { label: 'Webhooks', href: '/docs/webhooks' },
-    { label: 'Changelog', href: '/changelog' },
+    { label: 'Documentation', href: '/docs', external: false },
   ],
   company: [
-    { label: 'About', href: '/about' },
-    { label: 'Blog', href: '/blog' },
-    { label: 'Careers', href: '/careers' },
-    { label: 'Contact', href: '/contact' },
-    { label: 'Press', href: '/press' },
+    { label: 'Contact', href: '/contact', external: false },
   ],
   legal: [
-    { label: 'Privacy Policy', href: '/privacy' },
-    { label: 'Terms of Service', href: '/terms' },
-    { label: 'Security', href: '/security' },
-    { label: 'Cookie Policy', href: '/cookies' },
+    { label: 'Privacy', href: '/privacy', external: false },
+    { label: 'Terms', href: '/terms', external: false },
   ],
 };
 
-export default function Footer() {
+type FooterLink = {
+  label: string;
+  href: string;
+  external: boolean;
+};
+
+type FooterLinks = Record<string, FooterLink[]>;
+
+async function getFooterLinks(): Promise<FooterLinks> {
+  try {
+    const links = await prisma.footerLink.findMany({
+      where: { active: true },
+      orderBy: [{ section: 'asc' }, { sortOrder: 'asc' }],
+      select: {
+        section: true,
+        label: true,
+        href: true,
+        external: true,
+      },
+    });
+
+    // Group by section
+    const grouped: FooterLinks = {};
+    links.forEach((link) => {
+      if (!grouped[link.section]) {
+        grouped[link.section] = [];
+      }
+      grouped[link.section].push({
+        label: link.label,
+        href: link.href,
+        external: link.external,
+      });
+    });
+
+    // Return fallback if no links in database
+    if (Object.keys(grouped).length === 0) {
+      return fallbackLinks;
+    }
+
+    return grouped;
+  } catch (error) {
+    console.error('Error fetching footer links:', error);
+    return fallbackLinks;
+  }
+}
+
+// Section display order and titles
+const sectionConfig: Record<string, string> = {
+  product: 'Product',
+  developers: 'Developers',
+  company: 'Company',
+  legal: 'Legal',
+};
+
+export default async function Footer() {
+  const footerLinks = await getFooterLinks();
+
+  // Order sections as defined in sectionConfig
+  const orderedSections = Object.keys(sectionConfig).filter(
+    (section) => footerLinks[section] && footerLinks[section].length > 0
+  );
+
   return (
     <footer className="bg-gray-50 py-24 px-6 relative z-10">
       <div className="mx-auto max-w-7xl flex flex-col md:flex-row justify-between gap-16">
@@ -66,57 +117,21 @@ export default function Footer() {
 
         {/* Right: Sitemap */}
         <div className="flex flex-wrap gap-16">
-          <div className="flex flex-col gap-5 font-mono text-xs uppercase tracking-widest">
-            <span className="text-gray-900 font-bold">Product</span>
-            {footerLinks.product.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className="text-gray-600 hover:text-safety-orange transition-none"
-              >
-                {link.label}
-              </Link>
-            ))}
-          </div>
-
-          <div className="flex flex-col gap-5 font-mono text-xs uppercase tracking-widest">
-            <span className="text-gray-900 font-bold">Developers</span>
-            {footerLinks.developers.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className="text-gray-600 hover:text-safety-orange transition-none"
-              >
-                {link.label}
-              </Link>
-            ))}
-          </div>
-
-          <div className="flex flex-col gap-5 font-mono text-xs uppercase tracking-widest">
-            <span className="text-gray-900 font-bold">Company</span>
-            {footerLinks.company.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className="text-gray-600 hover:text-safety-orange transition-none"
-              >
-                {link.label}
-              </Link>
-            ))}
-          </div>
-
-          <div className="flex flex-col gap-5 font-mono text-xs uppercase tracking-widest">
-            <span className="text-gray-900 font-bold">Legal</span>
-            {footerLinks.legal.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className="text-gray-600 hover:text-safety-orange transition-none"
-              >
-                {link.label}
-              </Link>
-            ))}
-          </div>
+          {orderedSections.map((section) => (
+            <div key={section} className="flex flex-col gap-5 font-mono text-xs uppercase tracking-widest">
+              <span className="text-gray-900 font-bold">{sectionConfig[section]}</span>
+              {footerLinks[section].map((link) => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  {...(link.external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+                  className="text-gray-600 hover:text-safety-orange transition-none"
+                >
+                  {link.label}
+                </Link>
+              ))}
+            </div>
+          ))}
         </div>
       </div>
 
