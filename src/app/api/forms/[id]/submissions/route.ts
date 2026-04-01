@@ -100,14 +100,22 @@ export async function POST(
     let data: Record<string, unknown>;
 
     if (contentType.includes('application/json')) {
-      data = await request.json();
+      const rawData = await request.json();
+      // Support both { data: {...} } and flat {...} formats
+      data = rawData.data && typeof rawData.data === 'object' && !Array.isArray(rawData.data)
+        ? rawData.data
+        : rawData;
     } else if (contentType.includes('application/x-www-form-urlencoded') || contentType.includes('multipart/form-data')) {
       const formData = await request.formData();
       data = Object.fromEntries(formData.entries()) as Record<string, unknown>;
     } else {
       // Default to trying JSON for backwards compatibility
       try {
-        data = await request.json();
+        const rawData = await request.json();
+        // Support both { data: {...} } and flat {...} formats
+        data = rawData.data && typeof rawData.data === 'object' && !Array.isArray(rawData.data)
+          ? rawData.data
+          : rawData;
       } catch {
         return NextResponse.json(
           { error: 'Unsupported content type. Use application/json or application/x-www-form-urlencoded' },
