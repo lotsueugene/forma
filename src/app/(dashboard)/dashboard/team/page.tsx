@@ -403,23 +403,23 @@ export default function TeamPage() {
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: index * 0.05 }}
-                  className="p-4 flex items-center justify-between hover:bg-gray-100 transition-colors"
+                  className="p-3 sm:p-4 flex items-center justify-between gap-3 hover:bg-gray-100 transition-colors"
                 >
-                  <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 rounded-full bg-linear-to-br from-accent-100 to-accent-200 flex items-center justify-center text-gray-900 font-semibold">
+                  <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
+                    <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-linear-to-br from-accent-100 to-accent-200 flex items-center justify-center text-gray-900 font-semibold text-sm flex-shrink-0">
                       {getInitials(member.name, member.email)}
                     </div>
-                    <div>
-                      <div className="font-medium text-gray-900">
+                    <div className="min-w-0">
+                      <div className="font-medium text-gray-900 truncate">
                         {member.name || member.email}
                       </div>
                       {member.name && (
-                        <div className="text-sm text-gray-600">{member.email}</div>
+                        <div className="text-sm text-gray-600 truncate">{member.email}</div>
                       )}
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2 sm:gap-6">
+                  <div className="flex items-center gap-2 sm:gap-6 flex-shrink-0">
                     <div className="flex items-center gap-2">
                       <div
                         className={cn(
