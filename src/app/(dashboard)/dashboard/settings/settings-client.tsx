@@ -1106,30 +1106,44 @@ export default function SettingsPage() {
                     className="card p-6 overflow-x-auto scroll-mt-24"
                   >
                     <h2 className="font-semibold text-gray-900 mb-4">Compare all plans</h2>
-                    <div className="grid grid-cols-2 gap-6">
-                      {/* Starter column */}
-                      <div>
-                        <h3 className="font-medium text-gray-700 mb-3">{starterPlan?.name || 'Starter'}</h3>
-                        <ul className="space-y-2 text-sm">
-                          {starterPlan?.features?.map((f, i) => (
-                            <li key={i} className={f.included ? 'text-gray-700' : 'text-gray-400'}>
-                              {f.included ? '✓' : '—'} {f.text}
-                            </li>
-                          )) || <li className="text-gray-400">No features listed</li>}
-                        </ul>
-                      </div>
-                      {/* Pro column */}
-                      <div>
-                        <h3 className="font-medium text-safety-orange mb-3">{proPlan?.name || 'Pro'}</h3>
-                        <ul className="space-y-2 text-sm">
-                          {proPlan?.features?.map((f, i) => (
-                            <li key={i} className={f.included ? 'text-gray-900' : 'text-gray-400'}>
-                              {f.included ? '✓' : '—'} {f.text}
-                            </li>
-                          )) || <li className="text-gray-400">No features listed</li>}
-                        </ul>
-                      </div>
-                    </div>
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b border-gray-200">
+                          <th className="py-3 pr-4 text-left font-medium text-gray-700">{starterPlan?.name || 'Starter'}</th>
+                          <th className="py-3 pl-4 text-left font-medium text-safety-orange">{proPlan?.name || 'Pro'}</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {(() => {
+                          const starterFeatures = starterPlan?.features || [];
+                          const proFeatures = proPlan?.features || [];
+                          const maxRows = Math.max(starterFeatures.length, proFeatures.length);
+
+                          return Array.from({ length: maxRows }).map((_, i) => {
+                            const starterF = starterFeatures[i];
+                            const proF = proFeatures[i];
+                            return (
+                              <tr key={i} className="border-b border-gray-100">
+                                <td className="py-2 pr-4">
+                                  {starterF ? (
+                                    <span className={starterF.included ? 'text-gray-700' : 'text-gray-400'}>
+                                      {starterF.included ? '✓' : '—'} {starterF.text}
+                                    </span>
+                                  ) : null}
+                                </td>
+                                <td className="py-2 pl-4">
+                                  {proF ? (
+                                    <span className={proF.included ? 'text-gray-900' : 'text-gray-400'}>
+                                      {proF.included ? '✓' : '—'} {proF.text}
+                                    </span>
+                                  ) : null}
+                                </td>
+                              </tr>
+                            );
+                          });
+                        })()}
+                      </tbody>
+                    </table>
                   </div>
 
                   <div className="card p-6">
