@@ -306,11 +306,11 @@ export default function FormsPage() {
               <div className="p-5">
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-safety-orange/10 flex items-center justify-center">
+                    <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center">
                       {form.formType === 'endpoint' ? (
-                        <Lightning size={20} className="text-safety-orange" />
+                        <Lightning size={20} className="text-gray-600" />
                       ) : (
-                        <Files size={20} className="text-safety-orange" />
+                        <Files size={20} className="text-gray-600" />
                       )}
                     </div>
                     <div>
@@ -438,11 +438,11 @@ export default function FormsPage() {
                 >
                   <td className="p-4">
                     <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-lg bg-safety-orange/10 flex items-center justify-center">
+                      <div className="w-9 h-9 rounded-lg bg-gray-100 flex items-center justify-center">
                         {form.formType === 'endpoint' ? (
-                          <Lightning size={18} className="text-safety-orange" />
+                          <Lightning size={18} className="text-gray-600" />
                         ) : (
-                          <Files size={18} className="text-safety-orange" />
+                          <Files size={18} className="text-gray-600" />
                         )}
                       </div>
                       <div>
@@ -553,7 +553,7 @@ export default function FormsPage() {
       {filteredForms.length === 0 && !isLoading && (
         <div className="card p-12 text-center">
           <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 flex items-center justify-center">
-            <Files size={32} className="text-safety-orange" />
+            <Files size={32} className="text-gray-600" />
           </div>
           <h3 className="text-lg font-medium text-gray-800 mb-2">No forms found</h3>
           <p className="text-gray-500 mb-6">
@@ -604,8 +604,8 @@ export default function FormsPage() {
               </button>
 
               <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 rounded-lg bg-safety-orange/10 flex items-center justify-center">
-                  <Lightning size={20} className="text-safety-orange" />
+                <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center">
+                  <Lightning size={20} className="text-gray-600" />
                 </div>
                 <div>
                   <h2 className="text-lg font-semibold text-gray-900">
