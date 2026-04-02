@@ -25,7 +25,7 @@ import {
 } from '@phosphor-icons/react';
 import { cn } from '@/lib/utils';
 import { useWorkspace } from '@/contexts/workspace-context';
-import { getPlanComparisonRows } from '@/lib/plan-catalog';
+// Removed hardcoded plan-catalog, using database plans instead
 
 interface PricingPlan {
   id: string;
@@ -1110,20 +1110,38 @@ export default function SettingsPage() {
                       <thead>
                         <tr className="border-b border-gray-200 text-gray-500">
                           <th className="py-3 pr-4 font-medium">Feature</th>
-                          <th className="py-3 px-3 font-medium">Free</th>
-                          <th className="py-3 px-3 font-medium">Trial (14 days)</th>
-                          <th className="py-3 px-3 font-medium text-safety-orange">Pro</th>
+                          <th className="py-3 px-3 font-medium">{starterPlan?.name || 'Starter'}</th>
+                          <th className="py-3 px-3 font-medium text-safety-orange">{proPlan?.name || 'Pro'}</th>
                         </tr>
                       </thead>
                       <tbody>
-                        {getPlanComparisonRows().map((row) => (
-                          <tr key={row.label} className="border-b border-gray-200/80">
-                            <td className="py-3 pr-4 text-gray-700">{row.label}</td>
-                            <td className="py-3 px-3 text-gray-600">{row.free}</td>
-                            <td className="py-3 px-3 text-gray-600">{row.trial}</td>
-                            <td className="py-3 px-3 text-gray-900">{row.pro}</td>
-                          </tr>
-                        ))}
+                        {/* Build comparison from database features */}
+                        {(() => {
+                          const starterFeatures = starterPlan?.features || [];
+                          const proFeatures = proPlan?.features || [];
+
+                          // Get all unique feature texts
+                          const allFeatures = new Map<string, { starter: boolean; pro: boolean }>();
+                          starterFeatures.forEach(f => {
+                            allFeatures.set(f.text, { starter: f.included, pro: false });
+                          });
+                          proFeatures.forEach(f => {
+                            const existing = allFeatures.get(f.text);
+                            if (existing) {
+                              existing.pro = f.included;
+                            } else {
+                              allFeatures.set(f.text, { starter: false, pro: f.included });
+                            }
+                          });
+
+                          return Array.from(allFeatures.entries()).map(([text, status]) => (
+                            <tr key={text} className="border-b border-gray-200/80">
+                              <td className="py-3 pr-4 text-gray-700">{text}</td>
+                              <td className="py-3 px-3 text-gray-600">{status.starter ? 'Included' : '—'}</td>
+                              <td className="py-3 px-3 text-gray-900">{status.pro ? 'Included' : '—'}</td>
+                            </tr>
+                          ));
+                        })()}
                       </tbody>
                     </table>
                   </div>
@@ -1143,14 +1161,14 @@ export default function SettingsPage() {
                       <div className="flex flex-wrap items-center justify-between gap-3">
                         <div>
                           <div className="text-lg font-semibold text-gray-900 capitalize">
-                            {subscription?.plan || 'Free'} plan
+                            {subscription?.plan === 'pro' ? (proPlan?.name || 'Pro') : subscription?.plan === 'free' ? (starterPlan?.name || 'Starter') : subscription?.plan || 'Free'} plan
                           </div>
                           <div className="text-gray-600 text-sm">
                             {subscription?.plan === 'pro'
-                              ? 'Unlimited submissions, forms, and team seats'
+                              ? (proPlan?.description || 'For growing teams and businesses')
                               : subscription?.plan === 'trial'
                               ? `Trial ends ${subscription.trialEndsAt ? new Date(subscription.trialEndsAt).toLocaleDateString() : 'soon'}`
-                              : `Up to ${subscription?.limits.submissions || 50} submissions this month`}
+                              : (starterPlan?.description || `Up to ${subscription?.limits.submissions || 50} submissions this month`)}
                           </div>
                         </div>
                         <div
