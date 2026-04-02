@@ -113,8 +113,8 @@ export default function DashboardPage() {
           className="bg-white border border-gray-200 rounded-xl p-5"
         >
           <div className="flex items-start justify-between mb-3">
-            <div className="p-2.5 rounded-lg bg-safety-orange/10">
-              <Files size={20} className="text-safety-orange" weight="duotone" />
+            <div className="p-2.5 rounded-lg bg-gray-100">
+              <Files size={20} className="text-gray-600" weight="duotone" />
             </div>
           </div>
           <div className="text-2xl font-semibold text-gray-900 mb-1">
@@ -130,8 +130,8 @@ export default function DashboardPage() {
           className="bg-white border border-gray-200 rounded-xl p-5"
         >
           <div className="flex items-start justify-between mb-3">
-            <div className="p-2.5 rounded-lg bg-safety-orange/10">
-              <EnvelopeSimple size={20} className="text-safety-orange" weight="duotone" />
+            <div className="p-2.5 rounded-lg bg-gray-100">
+              <EnvelopeSimple size={20} className="text-gray-600" weight="duotone" />
             </div>
           </div>
           <div className="text-2xl font-semibold text-gray-900 mb-1">
@@ -147,8 +147,8 @@ export default function DashboardPage() {
           className="bg-white border border-gray-200 rounded-xl p-5"
         >
           <div className="flex items-start justify-between mb-3">
-            <div className="p-2.5 rounded-lg bg-safety-orange/10">
-              <ChartLineUp size={20} className="text-safety-orange" weight="duotone" />
+            <div className="p-2.5 rounded-lg bg-gray-100">
+              <ChartLineUp size={20} className="text-gray-600" weight="duotone" />
             </div>
           </div>
           <div className="text-2xl font-semibold text-gray-900 mb-1">
@@ -164,8 +164,8 @@ export default function DashboardPage() {
           className="bg-white border border-gray-200 rounded-xl p-5"
         >
           <div className="flex items-start justify-between mb-3">
-            <div className="p-2.5 rounded-lg bg-safety-orange/10">
-              <Eye size={20} className="text-safety-orange" weight="duotone" />
+            <div className="p-2.5 rounded-lg bg-gray-100">
+              <Eye size={20} className="text-gray-600" weight="duotone" />
             </div>
           </div>
           <div className="text-2xl font-semibold text-gray-900 mb-1">
@@ -193,7 +193,7 @@ export default function DashboardPage() {
         {recentForms.length === 0 ? (
           <div className="p-12 text-center">
             <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 flex items-center justify-center">
-              <FileText size={32} className="text-safety-orange" />
+              <FileText size={32} className="text-gray-600" />
             </div>
             <h3 className="text-lg font-medium text-gray-900 mb-2">No forms yet</h3>
             <p className="text-gray-600 mb-6 max-w-sm mx-auto">
@@ -218,8 +218,8 @@ export default function DashboardPage() {
                   className="flex items-center justify-between p-5 hover:bg-gray-50 transition-colors"
                 >
                   <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 rounded-lg bg-safety-orange/10 flex items-center justify-center">
-                      <Files size={20} className="text-safety-orange" />
+                    <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center">
+                      <Files size={20} className="text-gray-600" />
                     </div>
                     <div>
                       <div className="font-medium text-gray-900">{form.name}</div>
@@ -256,8 +256,8 @@ export default function DashboardPage() {
             href="/dashboard/forms/new"
             className="flex items-center gap-3 p-4 rounded-lg bg-gray-50 hover:bg-gray-100 border border-gray-200 transition-colors"
           >
-            <div className="p-2 rounded-lg bg-safety-orange/10">
-              <Plus size={18} className="text-safety-orange" />
+            <div className="p-2 rounded-lg bg-gray-100">
+              <Plus size={18} className="text-gray-600" />
             </div>
             <div>
               <div className="font-medium text-gray-900">New Form</div>
@@ -268,8 +268,8 @@ export default function DashboardPage() {
             href="/dashboard/team"
             className="flex items-center gap-3 p-4 rounded-lg bg-gray-50 hover:bg-gray-100 border border-gray-200 transition-colors"
           >
-            <div className="p-2 rounded-lg bg-safety-orange/10">
-              <Rocket size={18} className="text-safety-orange" />
+            <div className="p-2 rounded-lg bg-gray-100">
+              <Rocket size={18} className="text-gray-600" />
             </div>
             <div>
               <div className="font-medium text-gray-900">Invite Team</div>
@@ -280,8 +280,8 @@ export default function DashboardPage() {
             href="/dashboard/settings?tab=api"
             className="flex items-center gap-3 p-4 rounded-lg bg-gray-50 hover:bg-gray-100 border border-gray-200 transition-colors"
           >
-            <div className="p-2 rounded-lg bg-safety-orange/10">
-              <Key size={18} className="text-safety-orange" />
+            <div className="p-2 rounded-lg bg-gray-100">
+              <Key size={18} className="text-gray-600" />
             </div>
             <div>
               <div className="font-medium text-gray-900">API Keys</div>
