@@ -138,10 +138,11 @@ export async function getSubscriptionInfo(workspaceId: string): Promise<Subscrip
   }
   const effectiveConfig = PLAN_LIMITS[effectivePlan];
 
+  // Use effective plan limits (not stored subscription limits) for proper admin/trial handling
   const limits = {
-    submissions: subscription.submissionsLimit,
-    forms: subscription.formsLimit,
-    members: subscription.membersLimit,
+    submissions: effectiveConfig.submissions,
+    forms: effectiveConfig.forms,
+    members: effectiveConfig.members,
   };
 
   const currentUsage = {
