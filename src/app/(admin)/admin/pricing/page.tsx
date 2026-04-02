@@ -27,6 +27,9 @@ interface PricingPlan {
   description: string;
   monthlyPrice: number | null;
   yearlyPrice: number | null;
+  submissionsLimit: number;
+  formsLimit: number;
+  membersLimit: number;
   icon: string;
   popular: boolean;
   ctaText: string;
@@ -62,6 +65,9 @@ export default function AdminPricingPage() {
     description: '',
     monthlyPrice: '',
     yearlyPrice: '',
+    submissionsLimit: '50',
+    formsLimit: '3',
+    membersLimit: '1',
     icon: 'Lightning',
     popular: false,
     ctaText: 'Get Started',
@@ -108,6 +114,9 @@ export default function AdminPricingPage() {
       description: plan.description,
       monthlyPrice: plan.monthlyPrice !== null ? String(plan.monthlyPrice) : '',
       yearlyPrice: plan.yearlyPrice !== null ? String(plan.yearlyPrice) : '',
+      submissionsLimit: String(plan.submissionsLimit),
+      formsLimit: String(plan.formsLimit),
+      membersLimit: String(plan.membersLimit),
       icon: plan.icon,
       popular: plan.popular,
       ctaText: plan.ctaText,
@@ -129,6 +138,9 @@ export default function AdminPricingPage() {
       description: formData.description,
       monthlyPrice: formData.monthlyPrice ? parseInt(formData.monthlyPrice) : null,
       yearlyPrice: formData.yearlyPrice ? parseInt(formData.yearlyPrice) : null,
+      submissionsLimit: parseInt(formData.submissionsLimit) || 50,
+      formsLimit: parseInt(formData.formsLimit) || 3,
+      membersLimit: parseInt(formData.membersLimit) || 1,
       icon: formData.icon,
       popular: formData.popular,
       ctaText: formData.ctaText,
@@ -313,6 +325,44 @@ export default function AdminPricingPage() {
             </div>
           </div>
 
+          {/* Plan Limits (enforced) */}
+          <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+            <h3 className="text-sm font-medium text-gray-700 mb-3">Plan Limits (enforced for users)</h3>
+            <p className="text-xs text-gray-500 mb-3">Use -1 for unlimited. These values are the actual enforcement limits.</p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-sm text-gray-600 mb-1">Submissions / month</label>
+                <input
+                  type="number"
+                  value={formData.submissionsLimit}
+                  onChange={(e) => setFormData({ ...formData, submissionsLimit: e.target.value })}
+                  className="input w-full"
+                  placeholder="e.g., 50 or -1 for unlimited"
+                />
+              </div>
+              <div>
+                <label className="block text-sm text-gray-600 mb-1">Max Forms</label>
+                <input
+                  type="number"
+                  value={formData.formsLimit}
+                  onChange={(e) => setFormData({ ...formData, formsLimit: e.target.value })}
+                  className="input w-full"
+                  placeholder="e.g., 3 or -1 for unlimited"
+                />
+              </div>
+              <div>
+                <label className="block text-sm text-gray-600 mb-1">Max Team Members</label>
+                <input
+                  type="number"
+                  value={formData.membersLimit}
+                  onChange={(e) => setFormData({ ...formData, membersLimit: e.target.value })}
+                  className="input w-full"
+                  placeholder="e.g., 5 or -1 for unlimited"
+                />
+              </div>
+            </div>
+          </div>
+
           {/* Features */}
           <div>
             <label className="block text-sm text-gray-600 mb-2">Features</label>
@@ -464,6 +514,17 @@ export default function AdminPricingPage() {
                     ) : (
                       <div className="text-2xl font-bold text-gray-900">Custom</div>
                     )}
+                    <div className="mt-2 flex flex-wrap gap-2 text-xs">
+                      <span className="px-2 py-0.5 bg-gray-100 rounded text-gray-600">
+                        {plan.submissionsLimit === -1 ? '∞' : plan.submissionsLimit} subs
+                      </span>
+                      <span className="px-2 py-0.5 bg-gray-100 rounded text-gray-600">
+                        {plan.formsLimit === -1 ? '∞' : plan.formsLimit} forms
+                      </span>
+                      <span className="px-2 py-0.5 bg-gray-100 rounded text-gray-600">
+                        {plan.membersLimit === -1 ? '∞' : plan.membersLimit} members
+                      </span>
+                    </div>
                   </div>
 
                   <div className="space-y-1.5 mb-4">

@@ -1,5 +1,5 @@
 import { prisma } from './prisma';
-import { PLAN_LIMITS, PlanType, PlanFeatures, STRIPE_PRICES } from './stripe';
+import { PLAN_LIMITS, PlanType, PlanFeatures, STRIPE_PRICES, getPlanLimitsFromDB } from './stripe';
 
 /**
  * Check if workspace has an admin owner (admins get Pro features automatically)
@@ -138,11 +138,12 @@ export async function getSubscriptionInfo(workspaceId: string): Promise<Subscrip
   }
   const effectiveConfig = PLAN_LIMITS[effectivePlan];
 
-  // Use effective plan limits (not stored subscription limits) for proper admin/trial handling
+  // Get limits from database (single source of truth)
+  const dbLimits = await getPlanLimitsFromDB(effectivePlan);
   const limits = {
-    submissions: effectiveConfig.submissions,
-    forms: effectiveConfig.forms,
-    members: effectiveConfig.members,
+    submissions: dbLimits.submissions,
+    forms: dbLimits.forms,
+    members: dbLimits.members,
   };
 
   const currentUsage = {

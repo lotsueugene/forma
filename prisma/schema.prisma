@@ -433,6 +433,11 @@ model PricingPlan {
   monthlyPrice   Float?   // Price in dollars (null for "Contact Sales")
   yearlyPrice    Float?   // Price in dollars per month when billed yearly
 
+  // Limits (-1 = unlimited, used for enforcement)
+  submissionsLimit Int     @default(50)   // Monthly submission limit
+  formsLimit       Int     @default(3)    // Max forms allowed
+  membersLimit     Int     @default(1)    // Max team members
+
   // Display
   icon           String   @default("Lightning") // Phosphor icon name
   popular        Boolean  @default(false)

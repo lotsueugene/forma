@@ -1,4 +1,5 @@
 import Stripe from 'stripe';
+import { prisma } from './prisma';
 
 // Only initialize Stripe if the secret key is set
 export const stripe = process.env.STRIPE_SECRET_KEY
@@ -47,9 +48,9 @@ export const PLAN_LIMITS = {
     },
   },
   pro: {
-    submissions: -1, // unlimited
+    submissions: 10000, // 10,000/month (matches PricingPlan DB)
     forms: -1, // unlimited
-    members: -1, // unlimited
+    members: 5, // 5 team members (matches PricingPlan DB)
     features: {
       analytics: true,
       teamMembers: true,
@@ -65,3 +66,74 @@ export const PLAN_LIMITS = {
 
 export type PlanType = keyof typeof PLAN_LIMITS;
 export type PlanFeatures = typeof PLAN_LIMITS.free.features;
+
+// Map plan types to PricingPlan slugs
+const PLAN_TO_SLUG: Record<PlanType, string> = {
+  free: 'starter',
+  trial: 'pro', // trial uses pro limits
+  pro: 'pro',
+};
+
+// Cache for plan limits (refreshed every 5 minutes)
+let planLimitsCache: Record<string, { submissions: number; forms: number; members: number }> | null = null;
+let planLimitsCacheTime = 0;
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
+/**
+ * Get plan limits from database (with caching)
+ * Falls back to hardcoded PLAN_LIMITS if DB unavailable
+ */
+export async function getPlanLimitsFromDB(planType: PlanType): Promise<{
+  submissions: number;
+  forms: number;
+  members: number;
+}> {
+  const now = Date.now();
+
+  // Refresh cache if expired
+  if (!planLimitsCache || now - planLimitsCacheTime > CACHE_TTL) {
+    try {
+      const plans = await prisma.pricingPlan.findMany({
+        where: { active: true },
+        select: {
+          slug: true,
+          submissionsLimit: true,
+          formsLimit: true,
+          membersLimit: true,
+        },
+      });
+
+      planLimitsCache = {};
+      for (const plan of plans) {
+        planLimitsCache[plan.slug] = {
+          submissions: plan.submissionsLimit,
+          forms: plan.formsLimit,
+          members: plan.membersLimit,
+        };
+      }
+      planLimitsCacheTime = now;
+    } catch (error) {
+      console.error('Failed to fetch plan limits from DB, using defaults:', error);
+      // Fall back to hardcoded limits
+      return {
+        submissions: PLAN_LIMITS[planType].submissions,
+        forms: PLAN_LIMITS[planType].forms,
+        members: PLAN_LIMITS[planType].members,
+      };
+    }
+  }
+
+  const slug = PLAN_TO_SLUG[planType];
+  const dbLimits = planLimitsCache?.[slug];
+
+  if (dbLimits) {
+    return dbLimits;
+  }
+
+  // Fall back to hardcoded limits
+  return {
+    submissions: PLAN_LIMITS[planType].submissions,
+    forms: PLAN_LIMITS[planType].forms,
+    members: PLAN_LIMITS[planType].members,
+  };
+}
