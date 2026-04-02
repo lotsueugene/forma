@@ -10,6 +10,42 @@ import { checkSpam, parseSpamSettings, cleanSpamFields } from '@/lib/spam-protec
 import { sendSubmissionNotification, isEmailConfigured } from '@/lib/email';
 import { deliverToIntegrations } from '@/lib/integrations';
 
+// Geolocation lookup using ip-api.com (free, no API key needed)
+async function fetchGeolocation(ip: string): Promise<{
+  country: string;
+  countryCode: string;
+  region: string;
+  city: string;
+  lat: number;
+  lon: number;
+  continent: string;
+} | null> {
+  try {
+    // Skip private/local IPs
+    if (ip === '127.0.0.1' || ip === '::1' || ip.startsWith('192.168.') || ip.startsWith('10.')) {
+      return null;
+    }
+    const response = await fetch(`http://ip-api.com/json/${ip}?fields=status,country,countryCode,region,city,lat,lon,continent`, {
+      signal: AbortSignal.timeout(3000), // 3s timeout
+    });
+    const data = await response.json();
+    if (data.status === 'success') {
+      return {
+        country: data.country,
+        countryCode: data.countryCode,
+        region: data.region,
+        city: data.city,
+        lat: data.lat,
+        lon: data.lon,
+        continent: data.continent || 'Unknown',
+      };
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
 // GET /api/forms/[id]/submissions - List submissions for a form (authenticated)
 export async function GET(
   request: NextRequest,
@@ -175,12 +211,15 @@ export async function POST(
     // Clean spam-related fields from submission data
     const cleanedData = cleanSpamFields(data);
 
-    // Build full metadata
-    const metadata = {
+    // Build full metadata with geolocation (fetched async)
+    const metadata: Record<string, unknown> = {
       userAgent: request.headers.get('user-agent'),
       ip,
       submittedAt: new Date().toISOString(),
     };
+
+    // Fetch geolocation data (non-blocking, we'll update submission after)
+    const geoPromise = ip ? fetchGeolocation(ip) : Promise.resolve(null);
 
     // Increment form views (could be separated into a separate tracking)
     await prisma.form.update({
@@ -328,6 +367,21 @@ export async function POST(
       metadata,
     }).catch((integrationErr) => {
       console.error('Error delivering to integrations:', integrationErr);
+    });
+
+    // Update submission with geolocation (non-blocking, don't await)
+    geoPromise.then(async (geo) => {
+      if (geo) {
+        try {
+          const updatedMetadata = { ...metadata, geo };
+          await prisma.submission.update({
+            where: { id: submission.id },
+            data: { metadata: JSON.stringify(updatedMetadata) },
+          });
+        } catch (geoErr) {
+          console.error('Error updating submission with geolocation:', geoErr);
+        }
+      }
     });
 
     // Handle redirect for HTML form submissions

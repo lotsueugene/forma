@@ -28,6 +28,7 @@ import {
   Archive,
 } from '@phosphor-icons/react';
 import { cn } from '@/lib/utils';
+import FormAnalytics from '@/components/dashboard/FormAnalytics';
 
 interface Form {
   id: string;
@@ -871,15 +872,7 @@ export default function FormDetailPage() {
       )}
 
       {activeTab === 'analytics' && (
-        <div className="card p-8 text-center">
-          <ChartLineUp size={48} className="mx-auto text-gray-400 mb-4" />
-          <h3 className="text-lg font-medium text-gray-800 mb-2">
-            Analytics Coming Soon
-          </h3>
-          <p className="text-gray-500">
-            Detailed form analytics with conversion funnels and submission trends.
-          </p>
-        </div>
+        <FormAnalytics formId={formId} />
       )}
 
       {activeTab === 'settings' && (
