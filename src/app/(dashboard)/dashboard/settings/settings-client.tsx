@@ -35,6 +35,7 @@ interface PricingPlan {
   monthlyPrice: number | null;
   yearlyPrice: number | null;
   features: { text: string; included: boolean }[];
+  popular?: boolean;
 }
 
 type SettingsTab = 'profile' | 'workspace' | 'notifications' | 'api' | 'billing' | 'security';
@@ -925,16 +926,22 @@ export default function SettingsPage() {
                         )}
                       >
                         <div className="text-xs font-medium uppercase tracking-wide text-gray-500 mb-1">
-                          Free
+                          {starterPlan?.name || 'Starter'}
                         </div>
                         <div className="text-2xl font-semibold text-gray-900 mb-1">$0</div>
-                        <div className="text-sm text-gray-500 mb-4">For testing and small projects</div>
+                        <div className="text-sm text-gray-500 mb-4">{starterPlan?.description || 'For testing and small projects'}</div>
                         <ul className="text-sm text-gray-600 space-y-2 mb-6 flex-1">
-                          <li>50 submissions / month</li>
-                          <li>Up to 3 forms</li>
-                          <li>Owner only (no team invites)</li>
-                          <li>API access</li>
-                          <li className="text-gray-500">Webhooks —</li>
+                          {starterPlan?.features?.slice(0, 5).map((feature, i) => (
+                            <li key={i} className={!feature.included ? 'text-gray-400' : ''}>
+                              {feature.text}{!feature.included && ' —'}
+                            </li>
+                          )) || (
+                            <>
+                              <li>50 submissions / month</li>
+                              <li>Up to 3 forms</li>
+                              <li>Basic features</li>
+                            </>
+                          )}
                         </ul>
                         {subscription?.plan === 'free' ? (
                           <>
@@ -966,21 +973,28 @@ export default function SettingsPage() {
                             : 'border-[#ef6f2e]/25'
                         )}
                       >
-                        <div className="absolute top-3 right-3 text-[10px] font-semibold uppercase tracking-wide text-safety-orange bg-safety-orange/10 px-2 py-0.5 rounded">
-                          Popular
-                        </div>
+                        {proPlan?.popular && (
+                          <div className="absolute top-3 right-3 text-[10px] font-semibold uppercase tracking-wide text-safety-orange bg-safety-orange/10 px-2 py-0.5 rounded">
+                            Popular
+                          </div>
+                        )}
                         <div className="text-xs font-medium uppercase tracking-wide text-gray-500 mb-1">
-                          Pro
+                          {proPlan?.name || 'Pro'}
                         </div>
                         <div className="text-2xl font-semibold text-gray-900 mb-1">
                           ${monthlyPrice}/mo
                         </div>
-                        <div className="text-sm text-gray-500 mb-4">Billed monthly · cancel anytime</div>
+                        <div className="text-sm text-gray-500 mb-4">{proPlan?.description || 'Billed monthly · cancel anytime'}</div>
                         <ul className="text-sm text-gray-600 space-y-2 mb-6 flex-1">
-                          <li>Unlimited submissions &amp; forms</li>
-                          <li>Unlimited team members</li>
-                          <li>Analytics, team invites, webhooks</li>
-                          <li>Custom domain</li>
+                          {proPlan?.features?.filter(f => f.included).slice(0, 4).map((feature, i) => (
+                            <li key={i}>{feature.text}</li>
+                          )) || (
+                            <>
+                              <li>Unlimited submissions &amp; forms</li>
+                              <li>Unlimited team members</li>
+                              <li>Analytics, team invites, webhooks</li>
+                            </>
+                          )}
                         </ul>
                         {subscription?.plan === 'pro' && subscription?.billingInterval === 'monthly' ? (
                           <>
