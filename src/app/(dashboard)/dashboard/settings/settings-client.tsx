@@ -1106,44 +1106,30 @@ export default function SettingsPage() {
                     className="card p-6 overflow-x-auto scroll-mt-24"
                   >
                     <h2 className="font-semibold text-gray-900 mb-4">Compare all plans</h2>
-                    <table className="w-full text-sm text-left min-w-[560px]">
-                      <thead>
-                        <tr className="border-b border-gray-200 text-gray-500">
-                          <th className="py-3 pr-4 font-medium">Feature</th>
-                          <th className="py-3 px-3 font-medium">{starterPlan?.name || 'Starter'}</th>
-                          <th className="py-3 px-3 font-medium text-safety-orange">{proPlan?.name || 'Pro'}</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {/* Build comparison from database features */}
-                        {(() => {
-                          const starterFeatures = starterPlan?.features || [];
-                          const proFeatures = proPlan?.features || [];
-
-                          // Get all unique feature texts
-                          const allFeatures = new Map<string, { starter: boolean; pro: boolean }>();
-                          starterFeatures.forEach(f => {
-                            allFeatures.set(f.text, { starter: f.included, pro: false });
-                          });
-                          proFeatures.forEach(f => {
-                            const existing = allFeatures.get(f.text);
-                            if (existing) {
-                              existing.pro = f.included;
-                            } else {
-                              allFeatures.set(f.text, { starter: false, pro: f.included });
-                            }
-                          });
-
-                          return Array.from(allFeatures.entries()).map(([text, status]) => (
-                            <tr key={text} className="border-b border-gray-200/80">
-                              <td className="py-3 pr-4 text-gray-700">{text}</td>
-                              <td className="py-3 px-3 text-gray-600">{status.starter ? 'Included' : '—'}</td>
-                              <td className="py-3 px-3 text-gray-900">{status.pro ? 'Included' : '—'}</td>
-                            </tr>
-                          ));
-                        })()}
-                      </tbody>
-                    </table>
+                    <div className="grid grid-cols-2 gap-6">
+                      {/* Starter column */}
+                      <div>
+                        <h3 className="font-medium text-gray-700 mb-3">{starterPlan?.name || 'Starter'}</h3>
+                        <ul className="space-y-2 text-sm">
+                          {starterPlan?.features?.map((f, i) => (
+                            <li key={i} className={f.included ? 'text-gray-700' : 'text-gray-400'}>
+                              {f.included ? '✓' : '—'} {f.text}
+                            </li>
+                          )) || <li className="text-gray-400">No features listed</li>}
+                        </ul>
+                      </div>
+                      {/* Pro column */}
+                      <div>
+                        <h3 className="font-medium text-safety-orange mb-3">{proPlan?.name || 'Pro'}</h3>
+                        <ul className="space-y-2 text-sm">
+                          {proPlan?.features?.map((f, i) => (
+                            <li key={i} className={f.included ? 'text-gray-900' : 'text-gray-400'}>
+                              {f.included ? '✓' : '—'} {f.text}
+                            </li>
+                          )) || <li className="text-gray-400">No features listed</li>}
+                        </ul>
+                      </div>
+                    </div>
                   </div>
 
                   <div className="card p-6">
