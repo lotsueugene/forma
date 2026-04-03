@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
-import { resolveTxt, resolve4, resolveCname } from 'node:dns/promises';
+import { Resolver } from 'node:dns/promises';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { verifyWorkspaceAccess } from '@/lib/workspace-auth';
@@ -8,6 +8,10 @@ import { verifyWorkspaceAccess } from '@/lib/workspace-auth';
 // The server's IP address that custom domains should point to
 const SERVER_IP = 'SERVER_IP_REDACTED';
 const MAIN_DOMAIN = 'withforma.io';
+
+// Use Google's DNS for reliable lookups
+const resolver = new Resolver();
+resolver.setServers(['8.8.8.8', '8.8.4.4']);
 
 export const runtime = 'nodejs';
 
@@ -35,7 +39,7 @@ export async function POST(
     }
 
     const host = `_forma-verification.${customDomain.domain}`;
-    const records = await resolveTxt(host).catch(() => []);
+    const records = await resolver.resolveTxt(host).catch(() => []);
     const flattened = records.map((r) => r.join(''));
     const valid = flattened.includes(customDomain.verificationToken);
 
@@ -56,7 +60,7 @@ export async function POST(
 
     // Check A records
     try {
-      const aRecords = await resolve4(customDomain.domain);
+      const aRecords = await resolver.resolve4(customDomain.domain);
       if (aRecords.includes(SERVER_IP)) {
         pointsToServer = true;
       }
@@ -67,7 +71,7 @@ export async function POST(
     // Check CNAME records if A record didn't match
     if (!pointsToServer) {
       try {
-        const cnameRecords = await resolveCname(customDomain.domain);
+        const cnameRecords = await resolver.resolveCname(customDomain.domain);
         if (cnameRecords.some(cname => cname === MAIN_DOMAIN || cname.endsWith(`.${MAIN_DOMAIN}`))) {
           pointsToServer = true;
         }
