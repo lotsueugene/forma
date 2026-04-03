@@ -110,7 +110,7 @@ export async function PATCH(
   }
 }
 
-// DELETE /api/admin/users/[userId] - Delete user (dangerous!)
+// DELETE /api/admin/users/[userId] - Delete user and all their data
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ userId: string }> }
@@ -131,9 +131,92 @@ export async function DELETE(
       );
     }
 
-    // Delete user (cascades to related data)
-    await prisma.user.delete({
-      where: { id: userId },
+    // Find all workspaces where this user is the owner
+    const ownedWorkspaces = await prisma.workspaceMember.findMany({
+      where: {
+        userId,
+        role: 'owner',
+      },
+      select: {
+        workspaceId: true,
+      },
+    });
+
+    const workspaceIds = ownedWorkspaces.map((w) => w.workspaceId);
+
+    // Delete in transaction to ensure data integrity
+    await prisma.$transaction(async (tx) => {
+      // For each owned workspace, delete everything related
+      if (workspaceIds.length > 0) {
+        // Delete form submissions first (no cascade from Form)
+        await tx.submission.deleteMany({
+          where: {
+            form: {
+              workspaceId: { in: workspaceIds },
+            },
+          },
+        });
+
+        // Delete forms
+        await tx.form.deleteMany({
+          where: { workspaceId: { in: workspaceIds } },
+        });
+
+        // Delete subscriptions
+        await tx.subscription.deleteMany({
+          where: { workspaceId: { in: workspaceIds } },
+        });
+
+        // Delete usage records
+        await tx.usageRecord.deleteMany({
+          where: { workspaceId: { in: workspaceIds } },
+        });
+
+        // Delete integrations
+        await tx.integration.deleteMany({
+          where: { workspaceId: { in: workspaceIds } },
+        });
+
+        // Delete API keys
+        await tx.apiKey.deleteMany({
+          where: { workspaceId: { in: workspaceIds } },
+        });
+
+        // Delete invitations
+        await tx.invitation.deleteMany({
+          where: { workspaceId: { in: workspaceIds } },
+        });
+
+        // Delete workspace members (including other members)
+        await tx.workspaceMember.deleteMany({
+          where: { workspaceId: { in: workspaceIds } },
+        });
+
+        // Delete webhook endpoints
+        await tx.webhookEndpoint.deleteMany({
+          where: { workspaceId: { in: workspaceIds } },
+        });
+
+        // Delete custom domains
+        await tx.customDomain.deleteMany({
+          where: { workspaceId: { in: workspaceIds } },
+        });
+
+        // Delete notifications for workspaces
+        await tx.notification.deleteMany({
+          where: { workspaceId: { in: workspaceIds } },
+        });
+
+        // Finally delete the workspaces
+        await tx.workspace.deleteMany({
+          where: { id: { in: workspaceIds } },
+        });
+      }
+
+      // Delete user (cascades to remaining relations like sessions, accounts)
+      await tx.user.delete({
+        where: { id: userId },
+      });
     });
 
     return NextResponse.json({ success: true });
