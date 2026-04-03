@@ -144,7 +144,7 @@ export default function PricingSection() {
   })();
 
   return (
-    <section id="pricing" className="relative py-24 lg:py-32 bg-white">
+    <section id="pricing" className="relative py-16 sm:py-24 lg:py-32 bg-white">
       <div className="relative mx-auto w-full max-w-[1400px] px-4 lg:px-9">
         {/* Section Header */}
         <motion.div
@@ -152,23 +152,23 @@ export default function PricingSection() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.5 }}
-          className="text-center mb-12 lg:mb-16"
+          className="text-center mb-10 sm:mb-12 lg:mb-16"
         >
           {/* Status Badge */}
-          <div className="text-pretty font-mono text-[15px] leading-[100%] tracking-[-0.0175rem] inline-flex items-center gap-3 uppercase mb-8 justify-center">
+          <div className="text-pretty font-mono text-[15px] leading-[100%] tracking-[-0.0175rem] inline-flex items-center gap-3 uppercase mb-6 sm:mb-8 justify-center">
             <div className="size-2.5 transform-gpu rounded-full border bg-safety-orange border-transparent shadow-[0_0_8px_rgba(255,77,0,0.6)]" />
-            <p className="whitespace-nowrap text-gray-700 text-pretty font-mono text-[13px] leading-[100%] tracking-[-0.015rem] uppercase">
+            <p className="whitespace-nowrap text-gray-700 text-pretty font-mono text-[11px] sm:text-[13px] leading-[100%] tracking-[-0.015rem] uppercase">
               Pricing
             </p>
           </div>
 
           <h2
-            className="font-normal text-[32px] leading-[100%] tracking-[-0.08rem] lg:text-[48px] lg:tracking-[-0.12rem] mb-6 text-gray-900"
+            className="font-normal text-[26px] sm:text-[32px] leading-[110%] tracking-[-0.06rem] lg:text-[48px] lg:tracking-[-0.12rem] mb-4 sm:mb-6 text-gray-900"
           >
             Simple, transparent pricing<span className="text-safety-orange">.</span>
           </h2>
 
-          <p className="font-mono text-[16px] leading-[140%] tracking-[-0.02rem] lg:text-[18px] text-gray-700 max-w-2xl mx-auto mb-8">
+          <p className="font-mono text-[14px] sm:text-[16px] leading-[140%] tracking-[-0.02rem] lg:text-[18px] text-gray-700 max-w-2xl mx-auto mb-6 sm:mb-8">
             Start free, scale as you grow. No hidden fees, no surprises.
           </p>
 

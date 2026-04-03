@@ -69,17 +69,17 @@ export default function HeroSection() {
             {/* Headline */}
             <motion.h1
               variants={staggerVariants}
-              className="text-5xl lg:text-7xl font-normal tracking-tight text-gray-900"
+              className="text-4xl sm:text-5xl lg:text-7xl font-normal tracking-tight text-gray-900"
             >
               Forma<span className="text-safety-orange">.</span>
             </motion.h1>
 
             {/* Description */}
-            <motion.div variants={staggerVariants} className="space-y-4 max-w-xl">
-              <p className="font-mono text-lg lg:text-xl text-gray-700 leading-relaxed">
+            <motion.div variants={staggerVariants} className="space-y-3 sm:space-y-4 max-w-xl">
+              <p className="font-mono text-base sm:text-lg lg:text-xl text-gray-700 leading-relaxed">
                 The modern way to build and manage forms.
               </p>
-              <p className="font-mono text-lg lg:text-xl text-gray-700 leading-relaxed">
+              <p className="font-mono text-base sm:text-lg lg:text-xl text-gray-700 leading-relaxed">
                 Collect submissions, automate workflows, and integrate with your
                 favorite tools. Enterprise-grade security included.
               </p>
@@ -88,27 +88,27 @@ export default function HeroSection() {
             {/* Interactive Input */}
             <motion.div variants={staggerVariants} className="max-w-xl">
               <div className="rounded-lg border border-gray-200 bg-white overflow-hidden shadow-lg">
-                <div className="flex gap-3 border-b border-gray-200 p-3">
-                  <span className="px-3 py-1 rounded bg-gray-100 border border-gray-200 font-mono text-[13px] uppercase text-gray-900">
+                <div className="flex flex-wrap gap-2 sm:gap-3 border-b border-gray-200 p-2 sm:p-3">
+                  <span className="px-2 sm:px-3 py-1 rounded bg-gray-100 border border-gray-200 font-mono text-[11px] sm:text-[13px] uppercase text-gray-900">
                     Dashboard
                   </span>
-                  <span className="px-3 py-1 font-mono text-[13px] uppercase text-gray-500 hover:text-gray-900 cursor-pointer transition-colors">
+                  <span className="px-2 sm:px-3 py-1 font-mono text-[11px] sm:text-[13px] uppercase text-gray-500 hover:text-gray-900 cursor-pointer transition-colors">
                     API / CLI
                   </span>
                 </div>
 
-                <div className="p-4">
-                  <div className="flex items-center gap-3 p-4 rounded-lg border border-gray-200 bg-gray-50">
-                    <span className="text-safety-orange font-mono text-lg">&gt;</span>
+                <div className="p-3 sm:p-4">
+                  <div className="flex items-center gap-2 sm:gap-3 p-3 sm:p-4 rounded-lg border border-gray-200 bg-gray-50">
+                    <span className="text-safety-orange font-mono text-base sm:text-lg">&gt;</span>
                     <input
                       type="text"
                       placeholder={placeholder + '|'}
-                      className="flex-1 bg-transparent font-mono text-lg text-gray-900 placeholder:text-gray-500 outline-none"
+                      className="flex-1 min-w-0 bg-transparent font-mono text-sm sm:text-lg text-gray-900 placeholder:text-gray-500 outline-none"
                       readOnly
                     />
                     <Link
                       href="/signup"
-                      className="p-2 rounded border border-gray-200 bg-white text-gray-500 hover:text-gray-900 hover:bg-gray-100 transition-colors"
+                      className="p-2 rounded border border-gray-200 bg-white text-gray-500 hover:text-gray-900 hover:bg-gray-100 transition-colors flex-shrink-0"
                     >
                       <ArrowRight size={20} weight="bold" />
                     </Link>
@@ -137,24 +137,24 @@ export default function HeroSection() {
             </motion.div>
 
             {/* Platform Integrations */}
-            <motion.div variants={staggerVariants} className="pt-8 border-t border-gray-200">
-              <div className="flex items-center gap-3 mb-4">
+            <motion.div variants={staggerVariants} className="pt-6 sm:pt-8 border-t border-gray-200">
+              <div className="flex items-center gap-3 mb-3 sm:mb-4">
                 <div className="w-2.5 h-2.5 rounded-full bg-safety-orange" />
-                <p className="font-mono text-[13px] uppercase tracking-wider text-gray-700">
+                <p className="font-mono text-[11px] sm:text-[13px] uppercase tracking-wider text-gray-700">
                   Platform Integrations
                 </p>
               </div>
-              <div className="flex flex-wrap gap-8 opacity-60">
-                <span className="text-xl font-bold text-gray-500 hover:text-gray-900 transition-colors cursor-pointer">
+              <div className="flex flex-wrap gap-4 sm:gap-8 opacity-60">
+                <span className="text-base sm:text-xl font-bold text-gray-500 hover:text-gray-900 transition-colors cursor-pointer">
                   Stripe
                 </span>
-                <span className="text-xl font-bold text-gray-500 hover:text-gray-900 transition-colors cursor-pointer">
+                <span className="text-base sm:text-xl font-bold text-gray-500 hover:text-gray-900 transition-colors cursor-pointer">
                   Slack
                 </span>
-                <span className="text-xl font-bold text-gray-500 hover:text-gray-900 transition-colors cursor-pointer">
+                <span className="text-base sm:text-xl font-bold text-gray-500 hover:text-gray-900 transition-colors cursor-pointer">
                   Zapier
                 </span>
-                <span className="text-xl font-bold text-gray-500 hover:text-gray-900 transition-colors cursor-pointer">
+                <span className="text-base sm:text-xl font-bold text-gray-500 hover:text-gray-900 transition-colors cursor-pointer">
                   HubSpot
                 </span>
               </div>
