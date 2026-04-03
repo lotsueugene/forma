@@ -207,7 +207,8 @@ model Form {
   id          String   @id @default(cuid())
   name        String
   description String?
-  status      String   @default("draft") // draft, active, archived
+  slug        String?  // URL-friendly slug for custom domains (e.g., "contact")
+  status      String   @default("draft") // draft, active, archived, paused
   formType    String   @default("builder") // endpoint (quick) or builder (full)
   fields      String   @default("[]") // JSON string of form fields
   settings    String?  // JSON string of form settings
@@ -216,10 +217,13 @@ model Form {
   workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
 
   submissions Submission[]
+  defaultForDomains CustomDomain[] @relation("DefaultForm")
 
   views       Int      @default(0)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+
+  @@unique([workspaceId, slug])
 }
 
 model Submission {
@@ -314,6 +318,10 @@ model CustomDomain {
   verificationToken String
   verifiedAt        DateTime?
   status            String    @default("pending") // pending, verified
+
+  // Default form to show at root of custom domain
+  defaultFormId     String?
+  defaultForm       Form?     @relation("DefaultForm", fields: [defaultFormId], references: [id], onDelete: SetNull)
 
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
