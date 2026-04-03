@@ -5,10 +5,10 @@ import type { NextRequest } from 'next/server';
 const MAIN_DOMAINS = [
   'localhost',
   '127.0.0.1',
-  'withforma.com',
-  'www.withforma.com',
-  'forma.withforma.com',
-  // Add your VPS IP or domain here
+  'withforma.io',
+  'www.withforma.io',
+  'forma.withforma.io',
+  // VPS IP
   'SERVER_IP_REDACTED',
 ];
 
