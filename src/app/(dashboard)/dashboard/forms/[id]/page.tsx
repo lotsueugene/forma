@@ -26,6 +26,7 @@ import {
   Play,
   Pause,
   Archive,
+  DotsThree,
 } from '@phosphor-icons/react';
 import { cn } from '@/lib/utils';
 import FormAnalytics from '@/components/dashboard/FormAnalytics';
@@ -68,6 +69,8 @@ export default function FormDetailPage() {
   const [showExportMenu, setShowExportMenu] = useState(false);
   const [showStatusMenu, setShowStatusMenu] = useState(false);
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
+  const [showMoreMenu, setShowMoreMenu] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Filter submissions based on search query
   const filteredSubmissions = submissions.filter((submission) => {
@@ -205,6 +208,28 @@ export default function FormDetailPage() {
     } finally {
       setIsUpdatingStatus(false);
       setShowStatusMenu(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!confirm('Are you sure you want to delete this form? This will also delete all submissions. This action cannot be undone.')) {
+      return;
+    }
+    setIsDeleting(true);
+    try {
+      const response = await fetch(`/api/forms/${formId}`, {
+        method: 'DELETE',
+      });
+      if (response.ok) {
+        window.location.href = '/dashboard/forms';
+      } else {
+        const data = await response.json();
+        alert(data.error || 'Failed to delete form');
+      }
+    } catch (err) {
+      alert('Failed to delete form');
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -350,6 +375,20 @@ export default function FormDetailPage() {
           </div>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
+          {form.status === 'draft' && (
+            <button
+              onClick={() => updateFormStatus('active')}
+              disabled={isUpdatingStatus}
+              className="btn btn-primary text-sm"
+            >
+              {isUpdatingStatus ? (
+                <Spinner size={18} className="animate-spin" />
+              ) : (
+                <Play size={18} weight="fill" />
+              )}
+              <span className="hidden sm:inline">Publish</span>
+            </button>
+          )}
           {form.formType === 'builder' && (
             <Link
               href={`/dashboard/forms/${formId}/edit`}
@@ -370,6 +409,41 @@ export default function FormDetailPage() {
             <span className="sm:hidden">View</span>
             <ArrowSquareOut size={14} className="hidden sm:block" />
           </Link>
+          {/* More menu with delete */}
+          <div className="relative">
+            <button
+              onClick={() => setShowMoreMenu(!showMoreMenu)}
+              className="btn btn-secondary text-sm px-2"
+            >
+              <DotsThree size={20} weight="bold" />
+            </button>
+            <AnimatePresence>
+              {showMoreMenu && (
+                <>
+                  <div className="fixed inset-0 z-10" onClick={() => setShowMoreMenu(false)} />
+                  <motion.div
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 8 }}
+                    className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden z-20"
+                  >
+                    <button
+                      onClick={handleDelete}
+                      disabled={isDeleting}
+                      className="w-full px-4 py-3 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2 disabled:opacity-50"
+                    >
+                      {isDeleting ? (
+                        <Spinner size={16} className="animate-spin" />
+                      ) : (
+                        <Trash size={16} />
+                      )}
+                      Delete Form
+                    </button>
+                  </motion.div>
+                </>
+              )}
+            </AnimatePresence>
+          </div>
         </div>
       </div>
 
