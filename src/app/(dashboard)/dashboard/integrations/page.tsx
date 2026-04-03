@@ -579,27 +579,43 @@ export default function IntegrationsPage() {
               </div>
 
               {customDomain && (
-                <div className="text-xs text-gray-600 bg-gray-50 rounded p-3 space-y-1">
+                <div className="text-xs text-gray-600 bg-gray-50 rounded p-3 space-y-3">
                   <div className="flex items-center gap-2">
                     {customDomain.status === 'verified' ? (
                       <>
                         <CheckCircle size={14} className="text-emerald-600" />
-                        <span className="text-emerald-300">Verified</span>
+                        <span className="text-emerald-600 font-medium">Domain verified and active</span>
                       </>
                     ) : (
                       <>
-                        <XCircle size={14} className="text-amber-400" />
-                        <span className="text-amber-300">Pending verification</span>
+                        <XCircle size={14} className="text-amber-500" />
+                        <span className="text-amber-600 font-medium">Pending verification</span>
                       </>
                     )}
                   </div>
                   {customDomain.status !== 'verified' && (
-                    <>
-                      <div>Add TXT record host:</div>
-                      <div><code>_forma-verification.{customDomain.domain}</code></div>
-                      <div>TXT value:</div>
-                      <div><code>{customDomain.verificationToken}</code></div>
-                    </>
+                    <div className="space-y-3">
+                      <div className="space-y-1">
+                        <div className="font-medium text-gray-700">Step 1: Add A record (point domain to our server)</div>
+                        <div className="grid grid-cols-[80px_1fr] gap-1 text-gray-600">
+                          <span>Type:</span><code className="bg-gray-100 px-1 rounded">A</code>
+                          <span>Host:</span><code className="bg-gray-100 px-1 rounded">@</code>
+                          <span>Value:</span><code className="bg-gray-100 px-1 rounded">SERVER_IP_REDACTED</code>
+                        </div>
+                      </div>
+                      <div className="space-y-1">
+                        <div className="font-medium text-gray-700">Step 2: Add TXT record (verify ownership)</div>
+                        <div className="grid grid-cols-[80px_1fr] gap-1 text-gray-600">
+                          <span>Type:</span><code className="bg-gray-100 px-1 rounded">TXT</code>
+                          <span>Host:</span><code className="bg-gray-100 px-1 rounded">_forma-verification</code>
+                          <span>Value:</span><code className="bg-gray-100 px-1 rounded break-all">{customDomain.verificationToken}</code>
+                        </div>
+                      </div>
+                      <p className="text-gray-500">DNS changes can take up to 24-48 hours to propagate. Click &quot;Verify DNS&quot; after adding both records.</p>
+                    </div>
+                  )}
+                  {customDomain.status === 'verified' && (
+                    <p className="text-gray-600">Your forms are now available at <code className="bg-gray-100 px-1 rounded">https://{customDomain.domain}</code></p>
                   )}
                 </div>
               )}

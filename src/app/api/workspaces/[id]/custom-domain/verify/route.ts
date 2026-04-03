@@ -1,9 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
-import { resolveTxt } from 'node:dns/promises';
+import { resolveTxt, resolve4, resolveCname } from 'node:dns/promises';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { verifyWorkspaceAccess } from '@/lib/workspace-auth';
+
+// The server's IP address that custom domains should point to
+const SERVER_IP = 'SERVER_IP_REDACTED';
+const MAIN_DOMAIN = 'withforma.io';
 
 export const runtime = 'nodejs';
 
@@ -42,6 +46,42 @@ export async function POST(
           error: 'Verification TXT record not found yet',
           expectedHost: host,
           expectedValue: customDomain.verificationToken,
+        },
+        { status: 400 }
+      );
+    }
+
+    // Check if domain points to our server (A record or CNAME)
+    let pointsToServer = false;
+
+    // Check A records
+    try {
+      const aRecords = await resolve4(customDomain.domain);
+      if (aRecords.includes(SERVER_IP)) {
+        pointsToServer = true;
+      }
+    } catch {
+      // No A record, check CNAME
+    }
+
+    // Check CNAME records if A record didn't match
+    if (!pointsToServer) {
+      try {
+        const cnameRecords = await resolveCname(customDomain.domain);
+        if (cnameRecords.some(cname => cname === MAIN_DOMAIN || cname.endsWith(`.${MAIN_DOMAIN}`))) {
+          pointsToServer = true;
+        }
+      } catch {
+        // No CNAME record
+      }
+    }
+
+    if (!pointsToServer) {
+      return NextResponse.json(
+        {
+          verified: false,
+          error: 'Domain does not point to our server. Please add an A record pointing to ' + SERVER_IP + ' or a CNAME pointing to ' + MAIN_DOMAIN,
+          txtVerified: true,
         },
         { status: 400 }
       );
