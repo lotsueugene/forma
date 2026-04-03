@@ -6,11 +6,18 @@ import { motion, Variants } from 'framer-motion';
 import { ArrowRight, Code, WebhooksLogo, Lightning } from '@phosphor-icons/react';
 import Magnetic from '@/components/animations/Magnetic';
 
-const PLACEHOLDERS = [
+const PLACEHOLDERS_DESKTOP = [
   'Create a contact form with validation...',
   'Build a survey with conditional logic...',
   'Design a registration form with file upload...',
   'Set up webhook integration with Slack...',
+];
+
+const PLACEHOLDERS_MOBILE = [
+  'Create a contact form...',
+  'Build a survey...',
+  'Design a registration form...',
+  'Set up a webhook...',
 ];
 
 const staggerVariants: Variants = {
@@ -27,6 +34,17 @@ export default function HeroSection() {
   const [phIndex, setPhIndex] = useState(0);
   const [charIndex, setCharIndex] = useState(0);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Detect mobile screen
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 640);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  const PLACEHOLDERS = isMobile ? PLACEHOLDERS_MOBILE : PLACEHOLDERS_DESKTOP;
 
   useEffect(() => {
     const currentString = PLACEHOLDERS[phIndex];
@@ -48,7 +66,7 @@ export default function HeroSection() {
 
     setPlaceholder(currentString.substring(0, charIndex));
     return () => clearTimeout(timeout);
-  }, [charIndex, isDeleting, phIndex]);
+  }, [charIndex, isDeleting, phIndex, PLACEHOLDERS]);
 
   return (
     <section className="min-h-screen pt-24 pb-16 px-4 lg:px-9">
@@ -103,7 +121,7 @@ export default function HeroSection() {
                     <input
                       type="text"
                       placeholder={placeholder + '|'}
-                      className="flex-1 min-w-0 bg-transparent font-mono text-[11px] sm:text-lg text-gray-900 placeholder:text-gray-500 outline-none truncate"
+                      className="flex-1 min-w-0 bg-transparent font-mono text-[11px] sm:text-lg text-gray-900 placeholder:text-gray-500 outline-none"
                       readOnly
                     />
                     <Link
