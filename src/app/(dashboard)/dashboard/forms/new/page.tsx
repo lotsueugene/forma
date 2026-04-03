@@ -405,11 +405,11 @@ export default function NewFormPage() {
   return (
     <div className="min-h-[calc(100vh-4rem)] flex flex-col -m-4 lg:-m-6">
       {/* Top Bar */}
-      <div className="h-14 flex items-center justify-between px-4 lg:px-6 border-b border-gray-200 bg-white">
-        <div className="flex items-center gap-4">
+      <div className="h-14 flex items-center justify-between px-3 sm:px-4 lg:px-6 border-b border-gray-200 bg-white">
+        <div className="flex items-center gap-2 sm:gap-4 min-w-0 flex-1">
           <Link
             href="/dashboard/forms"
-            className="p-2 text-gray-500 hover:text-gray-900 rounded-lg hover:bg-gray-100"
+            className="p-2 text-gray-500 hover:text-gray-900 rounded-lg hover:bg-gray-100 flex-shrink-0"
           >
             <ArrowLeft size={20} />
           </Link>
@@ -417,66 +417,67 @@ export default function NewFormPage() {
             type="text"
             value={formName}
             onChange={(e) => setFormName(e.target.value)}
-            className="text-lg font-medium text-gray-900 bg-transparent outline-none border-b border-transparent hover:border-gray-300 focus:border-safety-orange transition-colors"
+            className="text-base sm:text-lg font-medium text-gray-900 bg-transparent outline-none border-b border-transparent hover:border-gray-300 focus:border-safety-orange transition-colors min-w-0 flex-1 truncate"
           />
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
           {error && (
-            <span className="text-red-600 text-sm mr-2">{error}</span>
+            <span className="text-red-600 text-sm mr-2 hidden sm:block">{error}</span>
           )}
           <button
             onClick={() => setShowAIModal(true)}
-            className="btn btn-secondary bg-safety-orange/10 border-safety-orange/30 text-safety-orange hover:bg-safety-orange/20"
+            className="btn btn-secondary bg-safety-orange/10 border-safety-orange/30 text-safety-orange hover:bg-safety-orange/20 px-2 sm:px-3 hidden sm:flex"
+            title="AI Generate"
           >
             <Sparkle size={18} weight="fill" />
-            AI Generate
+            <span className="hidden md:inline">AI Generate</span>
           </button>
           <button
             onClick={() => handleSave('draft')}
             disabled={isSaving || isPublishing}
-            className="btn btn-secondary"
+            className="btn btn-secondary px-2 sm:px-3 hidden sm:flex"
           >
             {isSaving ? (
               <div className="w-4 h-4 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin" />
             ) : (
               <FloppyDisk size={18} weight="bold" />
             )}
-            Save Draft
+            <span className="hidden md:inline">Save Draft</span>
           </button>
           <button
             onClick={() => handleSave('active')}
             disabled={isSaving || isPublishing}
-            className="btn btn-primary"
+            className="btn btn-primary px-2 sm:px-3"
           >
             {isPublishing ? (
               <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
             ) : (
               <Rocket size={18} weight="bold" />
             )}
-            Publish
+            <span className="hidden sm:inline">Publish</span>
           </button>
         </div>
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 flex overflow-hidden">
+      <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
         {/* Form Builder Canvas */}
-        <div className="flex-1 overflow-y-auto p-6 lg:p-8">
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
           <div className="max-w-2xl mx-auto">
             {/* Form Header */}
-            <div className="mb-8">
+            <div className="mb-6 sm:mb-8">
               <input
                 type="text"
                 value={formName}
                 onChange={(e) => setFormName(e.target.value)}
-                className="text-3xl font-semibold text-gray-900 bg-transparent outline-none w-full mb-2"
+                className="text-2xl sm:text-3xl font-semibold text-gray-900 bg-transparent outline-none w-full mb-2"
                 placeholder="Form Title"
               />
               <input
                 type="text"
                 value={formDescription}
                 onChange={(e) => setFormDescription(e.target.value)}
-                className="text-gray-500 bg-transparent outline-none w-full"
+                className="text-sm sm:text-base text-gray-500 bg-transparent outline-none w-full"
                 placeholder="Add a description (optional)"
               />
             </div>
@@ -529,7 +530,7 @@ export default function NewFormPage() {
                         <X size={16} />
                       </button>
                     </div>
-                    <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+                    <div className="grid grid-cols-2 xs:grid-cols-3 sm:grid-cols-4 gap-2">
                       {fieldTypes.map((fieldType) => (
                         <button
                           key={fieldType.type}
@@ -560,24 +561,38 @@ export default function NewFormPage() {
           </div>
         </div>
 
-        {/* Field Settings Panel */}
+        {/* Field Settings Panel - Bottom sheet on mobile, side panel on desktop */}
         <AnimatePresence mode="wait">
           {selectedField && (
-            <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 20 }}
-              className="w-80 border-l border-gray-200 bg-white overflow-y-auto flex-shrink-0"
-            >
-              <div className="p-4 border-b border-gray-200 flex items-center justify-between sticky top-0 bg-white z-10">
-                <h3 className="font-medium text-gray-900">Field Settings</h3>
-                <button
-                  onClick={() => setSelectedFieldId(null)}
-                  className="p-1 text-gray-500 hover:text-gray-900"
-                >
-                  <X size={18} />
-                </button>
-              </div>
+            <>
+              {/* Mobile overlay */}
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="fixed inset-0 bg-black/30 z-40 lg:hidden"
+                onClick={() => setSelectedFieldId(null)}
+              />
+              <motion.div
+                initial={{ opacity: 0, y: '100%' }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: '100%' }}
+                transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+                className="fixed bottom-0 left-0 right-0 z-50 lg:relative lg:z-auto lg:bottom-auto lg:left-auto lg:right-auto w-full lg:w-80 max-h-[70vh] lg:max-h-none border-t lg:border-t-0 lg:border-l border-gray-200 bg-white overflow-y-auto flex-shrink-0 rounded-t-2xl lg:rounded-none shadow-xl lg:shadow-none"
+              >
+                {/* Mobile drag handle */}
+                <div className="lg:hidden flex justify-center pt-3 pb-1">
+                  <div className="w-10 h-1 bg-gray-300 rounded-full" />
+                </div>
+                <div className="p-4 border-b border-gray-200 flex items-center justify-between sticky top-0 bg-white z-10">
+                  <h3 className="font-medium text-gray-900">Field Settings</h3>
+                  <button
+                    onClick={() => setSelectedFieldId(null)}
+                    className="p-1 text-gray-500 hover:text-gray-900"
+                  >
+                    <X size={18} />
+                  </button>
+                </div>
               <div className="p-4 space-y-4">
                 {/* Field Type Badge */}
                 <div className="flex items-center gap-2 pb-4 border-b border-gray-200">
@@ -840,6 +855,7 @@ export default function NewFormPage() {
                 </button>
               </div>
             </motion.div>
+            </>
           )}
         </AnimatePresence>
       </div>
