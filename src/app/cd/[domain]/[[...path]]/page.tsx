@@ -12,7 +12,7 @@ interface Props {
 export default async function CustomDomainPage({ params }: Props) {
   const { domain, path } = await params;
 
-  // Look up the custom domain
+  // Look up the custom domain with default form
   const customDomain = await prisma.customDomain.findUnique({
     where: { domain },
     include: {
@@ -24,6 +24,7 @@ export default async function CustomDomainPage({ params }: Props) {
           },
         },
       },
+      defaultForm: true,
     },
   });
 
@@ -35,64 +36,56 @@ export default async function CustomDomainPage({ params }: Props) {
   const workspace = customDomain.workspace;
   const forms = workspace.forms;
 
-  // If no path, show form listing or redirect to first form
+  // If no path, show default form or first form
   if (!path || path.length === 0) {
+    // If default form is set and active, show it
+    if (customDomain.defaultForm && customDomain.defaultForm.status === 'active') {
+      return <FormPageClient formId={customDomain.defaultForm.id} />;
+    }
+
+    // If only one form, show it directly
     if (forms.length === 1) {
-      // If only one form, show it directly
       return <FormPageClient formId={forms[0].id} />;
     }
 
-    // Show form listing
-    return (
-      <div className="min-h-screen bg-gray-50 py-12 px-4">
-        <div className="max-w-2xl mx-auto">
-          <h1 className="text-2xl font-bold text-gray-900 mb-8">
-            {workspace.name}
-          </h1>
+    // If no forms, show 404
+    if (forms.length === 0) {
+      notFound();
+    }
 
-          {forms.length === 0 ? (
-            <p className="text-gray-500">No forms available.</p>
-          ) : (
-            <div className="space-y-4">
-              {forms.map((form) => (
-                <a
-                  key={form.id}
-                  href={`/${form.id}`}
-                  className="block p-6 bg-white rounded-lg border border-gray-200 hover:border-gray-300 hover:shadow-md transition-all"
-                >
-                  <h2 className="text-lg font-medium text-gray-900">
-                    {form.name}
-                  </h2>
-                  {form.description && (
-                    <p className="text-gray-500 mt-1">{form.description}</p>
-                  )}
-                </a>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-    );
+    // Multiple forms but no default - show first form
+    return <FormPageClient formId={forms[0].id} />;
   }
 
-  // Path provided - should be a form ID
-  const formId = path[0];
+  // Path provided - look up by slug first, then by ID
+  const slugOrId = path[0];
 
-  // Check if the form belongs to this workspace
-  const form = await prisma.form.findFirst({
+  // Try to find form by slug
+  let form = await prisma.form.findFirst({
     where: {
-      id: formId,
+      slug: slugOrId,
       workspaceId: workspace.id,
       status: 'active',
     },
   });
+
+  // If not found by slug, try by ID
+  if (!form) {
+    form = await prisma.form.findFirst({
+      where: {
+        id: slugOrId,
+        workspaceId: workspace.id,
+        status: 'active',
+      },
+    });
+  }
 
   if (!form) {
     notFound();
   }
 
   // Render the form
-  return <FormPageClient formId={formId} />;
+  return <FormPageClient formId={form.id} />;
 }
 
 // Generate metadata
@@ -103,6 +96,7 @@ export async function generateMetadata({ params }: Props) {
     where: { domain },
     include: {
       workspace: true,
+      defaultForm: true,
     },
   });
 
@@ -110,13 +104,26 @@ export async function generateMetadata({ params }: Props) {
     return { title: 'Not Found' };
   }
 
+  // If path provided, look up form by slug or ID
   if (path && path.length > 0) {
-    const form = await prisma.form.findFirst({
+    const slugOrId = path[0];
+
+    // Try slug first, then ID
+    let form = await prisma.form.findFirst({
       where: {
-        id: path[0],
+        slug: slugOrId,
         workspaceId: customDomain.workspaceId,
       },
     });
+
+    if (!form) {
+      form = await prisma.form.findFirst({
+        where: {
+          id: slugOrId,
+          workspaceId: customDomain.workspaceId,
+        },
+      });
+    }
 
     if (form) {
       return {
@@ -124,6 +131,14 @@ export async function generateMetadata({ params }: Props) {
         description: form.description || `Fill out ${form.name}`,
       };
     }
+  }
+
+  // No path - use default form metadata if set
+  if (customDomain.defaultForm) {
+    return {
+      title: customDomain.defaultForm.name,
+      description: customDomain.defaultForm.description || `Fill out ${customDomain.defaultForm.name}`,
+    };
   }
 
   return {

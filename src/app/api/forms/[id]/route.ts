@@ -41,6 +41,7 @@ export async function GET(
         id: form.id,
         name: form.name,
         description: form.description,
+        slug: form.slug,
         status: form.status,
         formType: form.formType,
         fields: JSON.parse(form.fields),
@@ -80,13 +81,37 @@ export async function PUT(
     }
 
     const existingForm = access.form!;
-    const { name, description, fields, settings, status } = await request.json();
+    const { name, description, fields, settings, status, slug } = await request.json();
+
+    // Validate slug uniqueness within workspace if provided
+    if (slug !== undefined && slug !== existingForm.slug) {
+      if (slug) {
+        // Clean and validate slug format
+        const cleanSlug = slug.trim().toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
+        if (cleanSlug.length < 2) {
+          return NextResponse.json({ error: 'Slug must be at least 2 characters' }, { status: 400 });
+        }
+
+        // Check if slug is already used by another form in this workspace
+        const existingSlug = await prisma.form.findFirst({
+          where: {
+            workspaceId: existingForm.workspaceId,
+            slug: cleanSlug,
+            id: { not: id },
+          },
+        });
+        if (existingSlug) {
+          return NextResponse.json({ error: 'This slug is already used by another form' }, { status: 400 });
+        }
+      }
+    }
 
     const form = await prisma.form.update({
       where: { id },
       data: {
         name: name ?? existingForm.name,
         description: description ?? existingForm.description,
+        slug: slug !== undefined ? (slug || null) : existingForm.slug,
         fields: fields ? JSON.stringify(fields) : existingForm.fields,
         settings: settings ? JSON.stringify(settings) : existingForm.settings,
         status: status ?? existingForm.status,
@@ -98,6 +123,7 @@ export async function PUT(
         id: form.id,
         name: form.name,
         description: form.description,
+        slug: form.slug,
         status: form.status,
         formType: form.formType,
         fields: JSON.parse(form.fields),

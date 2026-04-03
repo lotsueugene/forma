@@ -26,11 +26,24 @@ export async function GET(
     const info = await getSubscriptionInfo(id);
     const domain = await prisma.customDomain.findUnique({
       where: { workspaceId: id },
+      include: {
+        defaultForm: {
+          select: { id: true, name: true, slug: true },
+        },
+      },
+    });
+
+    // Get list of active forms for the default form selector
+    const forms = await prisma.form.findMany({
+      where: { workspaceId: id, status: 'active' },
+      select: { id: true, name: true, slug: true },
+      orderBy: { name: 'asc' },
     });
 
     return NextResponse.json({
       featureEnabled: info.features.customDomain,
       domain,
+      forms,
     });
   } catch (error) {
     console.error('Error fetching custom domain:', error);
@@ -99,6 +112,60 @@ export async function PUT(
     console.error('Error saving custom domain:', error);
     return NextResponse.json(
       { error: 'Failed to save custom domain' },
+      { status: 500 }
+    );
+  }
+}
+
+// PATCH /api/workspaces/[id]/custom-domain - Update default form
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    const { id } = await params;
+    const access = await verifyWorkspaceAccess(session.user.id, id, 'manager');
+    if (!access.allowed) {
+      return NextResponse.json({ error: access.error }, { status: 403 });
+    }
+
+    const body = (await request.json()) as { defaultFormId?: string | null };
+
+    // Verify form belongs to workspace if provided
+    if (body.defaultFormId) {
+      const form = await prisma.form.findFirst({
+        where: {
+          id: body.defaultFormId,
+          workspaceId: id,
+          status: 'active',
+        },
+      });
+      if (!form) {
+        return NextResponse.json({ error: 'Form not found or not active' }, { status: 404 });
+      }
+    }
+
+    const updated = await prisma.customDomain.update({
+      where: { workspaceId: id },
+      data: {
+        defaultFormId: body.defaultFormId || null,
+      },
+      include: {
+        defaultForm: {
+          select: { id: true, name: true, slug: true },
+        },
+      },
+    });
+
+    return NextResponse.json({ domain: updated });
+  } catch (error) {
+    console.error('Error updating custom domain:', error);
+    return NextResponse.json(
+      { error: 'Failed to update custom domain' },
       { status: 500 }
     );
   }

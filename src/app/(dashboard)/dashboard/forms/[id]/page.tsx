@@ -35,6 +35,7 @@ interface Form {
   id: string;
   name: string;
   description: string | null;
+  slug: string | null;
   status: string;
   formType: string;
   fields: Array<{ id: string; label: string; type: string }>;
@@ -71,6 +72,9 @@ export default function FormDetailPage() {
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
   const [showMoreMenu, setShowMoreMenu] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [slugInput, setSlugInput] = useState('');
+  const [isSavingSlug, setIsSavingSlug] = useState(false);
+  const [slugError, setSlugError] = useState('');
 
   // Filter submissions based on search query
   const filteredSubmissions = submissions.filter((submission) => {
@@ -168,6 +172,7 @@ export default function FormDetailPage() {
       }
 
       setForm(formData.form);
+      setSlugInput(formData.form.slug || '');
 
       // Fetch submissions
       const submissionsResponse = await fetch(`/api/forms/${formId}/submissions`);
@@ -230,6 +235,39 @@ export default function FormDetailPage() {
       alert('Failed to delete form');
     } finally {
       setIsDeleting(false);
+    }
+  };
+
+  const saveSlug = async () => {
+    if (!form) return;
+
+    // Validate slug format
+    const slug = slugInput.trim().toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
+    if (slug && slug.length < 2) {
+      setSlugError('Slug must be at least 2 characters');
+      return;
+    }
+
+    setIsSavingSlug(true);
+    setSlugError('');
+    try {
+      const response = await fetch(`/api/forms/${formId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ slug: slug || null }),
+      });
+
+      const data = await response.json();
+      if (response.ok) {
+        setForm({ ...form, slug: data.form.slug });
+        setSlugInput(data.form.slug || '');
+      } else {
+        setSlugError(data.error || 'Failed to save slug');
+      }
+    } catch (err) {
+      setSlugError('Failed to save slug');
+    } finally {
+      setIsSavingSlug(false);
     }
   };
 
@@ -951,6 +989,45 @@ export default function FormDetailPage() {
 
       {activeTab === 'settings' && (
         <div className="space-y-6">
+          {/* Custom Domain URL Slug */}
+          <div className="card p-6">
+            <h3 className="font-medium text-gray-800 mb-4 flex items-center gap-2">
+              <LinkIcon size={20} className="text-safety-orange" />
+              Custom Domain URL
+            </h3>
+            <p className="text-sm text-gray-500 mb-4">
+              Set a custom URL slug for this form when accessed via a custom domain (e.g., forms.yourdomain.com/<strong>contact</strong>)
+            </p>
+            <div className="flex gap-2 items-start">
+              <div className="flex-1">
+                <input
+                  type="text"
+                  value={slugInput}
+                  onChange={(e) => {
+                    setSlugInput(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-'));
+                    setSlugError('');
+                  }}
+                  placeholder="e.g., contact, registration, feedback"
+                  className="input w-full"
+                />
+                {slugError && <p className="text-red-500 text-sm mt-1">{slugError}</p>}
+                {form?.slug && !slugError && (
+                  <p className="text-gray-500 text-sm mt-1">
+                    Current: <code className="bg-gray-100 px-1 rounded">/{form.slug}</code>
+                  </p>
+                )}
+              </div>
+              <button
+                onClick={saveSlug}
+                disabled={isSavingSlug || slugInput === (form?.slug || '')}
+                className="btn btn-primary"
+              >
+                {isSavingSlug ? <Spinner size={18} className="animate-spin" /> : <Check size={18} />}
+                Save
+              </button>
+            </div>
+          </div>
+
           {/* Embed Options */}
           <div className="card p-6">
             <h3 className="font-medium text-gray-800 mb-4 flex items-center gap-2">

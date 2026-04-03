@@ -25,12 +25,20 @@ import {
 } from '@phosphor-icons/react';
 import { useWorkspace } from '@/contexts/workspace-context';
 
+interface FormOption {
+  id: string;
+  name: string;
+  slug: string | null;
+}
+
 interface CustomDomainState {
   id: string;
   domain: string;
   verificationToken: string;
   status: 'pending' | 'verified';
   verifiedAt: string | null;
+  defaultFormId: string | null;
+  defaultForm: FormOption | null;
 }
 
 interface WebhookEndpointState {
@@ -77,9 +85,11 @@ export default function IntegrationsPage() {
 
   const [domainFeatureEnabled, setDomainFeatureEnabled] = useState(false);
   const [customDomain, setCustomDomain] = useState<CustomDomainState | null>(null);
+  const [availableForms, setAvailableForms] = useState<FormOption[]>([]);
   const [domainInput, setDomainInput] = useState('');
   const [savingDomain, setSavingDomain] = useState(false);
   const [verifyingDomain, setVerifyingDomain] = useState(false);
+  const [savingDefaultForm, setSavingDefaultForm] = useState(false);
 
   const [webhooksFeatureEnabled, setWebhooksFeatureEnabled] = useState(false);
   const [webhooks, setWebhooks] = useState<WebhookEndpointState[]>([]);
@@ -109,9 +119,11 @@ export default function IntegrationsPage() {
         setDomainFeatureEnabled(Boolean(data.featureEnabled));
         setCustomDomain(data.domain || null);
         setDomainInput(data.domain?.domain || '');
+        setAvailableForms(data.forms || []);
       } else if (domainRes.status === 402) {
         setDomainFeatureEnabled(false);
         setCustomDomain(null);
+        setAvailableForms([]);
       } else {
         const text = await domainRes.text().catch(() => '');
         setError(`Failed to load custom domain (${domainRes.status}): ${text || domainRes.statusText}`);
@@ -195,6 +207,28 @@ export default function IntegrationsPage() {
       setError(e instanceof Error ? e.message : 'Failed to verify custom domain');
     } finally {
       setVerifyingDomain(false);
+    }
+  };
+
+  const saveDefaultForm = async (formId: string | null) => {
+    if (!currentWorkspace) return;
+    setSavingDefaultForm(true);
+    try {
+      const res = await fetch(`/api/workspaces/${currentWorkspace.id}/custom-domain`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ defaultFormId: formId }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(data.error || `Failed (${res.status})`);
+      }
+      setCustomDomain(data.domain);
+      setError(null);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed to update default form');
+    } finally {
+      setSavingDefaultForm(false);
     }
   };
 
@@ -623,7 +657,34 @@ export default function IntegrationsPage() {
                     );
                   })()}
                   {customDomain.status === 'verified' && (
-                    <p className="text-gray-600">Your forms are now available at <code className="bg-gray-100 px-1 rounded">https://{customDomain.domain}</code></p>
+                    <div className="space-y-3">
+                      <p className="text-gray-600">Your forms are now available at <code className="bg-gray-100 px-1 rounded">https://{customDomain.domain}</code></p>
+
+                      <div className="border-t border-gray-200 pt-3">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Default form (shown at root URL)
+                        </label>
+                        <div className="flex items-center gap-2">
+                          <select
+                            className="input flex-1"
+                            value={customDomain.defaultFormId || ''}
+                            onChange={(e) => saveDefaultForm(e.target.value || null)}
+                            disabled={savingDefaultForm}
+                          >
+                            <option value="">First active form</option>
+                            {availableForms.map((form) => (
+                              <option key={form.id} value={form.id}>
+                                {form.name} {form.slug ? `(/${form.slug})` : ''}
+                              </option>
+                            ))}
+                          </select>
+                          {savingDefaultForm && <Spinner size={16} className="animate-spin text-gray-400" />}
+                        </div>
+                        <p className="text-xs text-gray-500 mt-1">
+                          This form will show when users visit {customDomain.domain} directly
+                        </p>
+                      </div>
+                    </div>
                   )}
                 </div>
               )}
