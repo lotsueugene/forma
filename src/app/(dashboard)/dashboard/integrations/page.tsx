@@ -594,16 +594,21 @@ export default function IntegrationsPage() {
                 onChange={(e) => setDomainInput(e.target.value)}
               />
               <div className="flex gap-2 flex-wrap">
-                <button type="button" className="btn btn-primary" onClick={saveDomain} disabled={savingDomain || !domainInput.trim()}>
-                  {savingDomain ? <Spinner size={16} className="animate-spin" /> : <Plus size={16} />}
-                  Save domain
-                </button>
+                {/* Show Add/Update button only when input differs from saved domain */}
+                {(!customDomain || domainInput.trim() !== customDomain.domain) && (
+                  <button type="button" className="btn btn-primary" onClick={saveDomain} disabled={savingDomain || !domainInput.trim()}>
+                    {savingDomain ? <Spinner size={16} className="animate-spin" /> : <CheckCircle size={16} />}
+                    {customDomain ? 'Update' : 'Save'}
+                  </button>
+                )}
                 {customDomain && (
                   <>
-                    <button type="button" className="btn btn-secondary" onClick={verifyDomain} disabled={verifyingDomain}>
-                      {verifyingDomain ? <Spinner size={16} className="animate-spin" /> : <ArrowsClockwise size={16} />}
-                      Verify DNS
-                    </button>
+                    {customDomain.status !== 'verified' && (
+                      <button type="button" className="btn btn-secondary" onClick={verifyDomain} disabled={verifyingDomain}>
+                        {verifyingDomain ? <Spinner size={16} className="animate-spin" /> : <ArrowsClockwise size={16} />}
+                        Verify DNS
+                      </button>
+                    )}
                     <button type="button" className="btn btn-ghost text-red-600" onClick={removeDomain}>
                       <Trash size={16} />
                       Remove
