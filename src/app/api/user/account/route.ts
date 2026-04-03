@@ -45,10 +45,7 @@ export async function DELETE(request: NextRequest) {
           where: { workspaceId: { in: workspaceIds } },
         });
 
-        // Delete subscriptions
-        await tx.subscription.deleteMany({
-          where: { workspaceId: { in: workspaceIds } },
-        });
+        // Subscriptions are preserved for MRR tracking (workspaceId set to null via cascade)
 
         // Delete usage records
         await tx.usageRecord.deleteMany({
