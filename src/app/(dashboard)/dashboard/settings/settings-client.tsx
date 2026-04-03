@@ -114,6 +114,7 @@ export default function SettingsPage() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isChangingPassword, setIsChangingPassword] = useState(false);
   const [passwordMessage, setPasswordMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [isDeletingAccount, setIsDeletingAccount] = useState(false);
 
   // Workspace settings state
   const [workspaceName, setWorkspaceName] = useState('');
@@ -466,6 +467,41 @@ export default function SettingsPage() {
       setPasswordMessage({ type: 'error', text: 'Failed to change password' });
     } finally {
       setIsChangingPassword(false);
+    }
+  };
+
+  // Delete account
+  const handleDeleteAccount = async () => {
+    const confirmed = confirm(
+      'Are you sure you want to delete your account?\n\nThis will permanently delete:\n- Your account\n- All workspaces you own\n- All forms and submissions\n- All integrations and API keys\n\nThis action cannot be undone.'
+    );
+
+    if (!confirmed) return;
+
+    // Double confirm
+    const doubleConfirmed = confirm(
+      'This is your final warning. All your data will be permanently deleted. Continue?'
+    );
+
+    if (!doubleConfirmed) return;
+
+    setIsDeletingAccount(true);
+    try {
+      const response = await fetch('/api/user/account', {
+        method: 'DELETE',
+      });
+
+      if (response.ok) {
+        // Sign out and redirect to home
+        window.location.href = '/api/auth/signout?callbackUrl=/';
+      } else {
+        const data = await response.json();
+        alert(data.error || 'Failed to delete account');
+      }
+    } catch (error) {
+      alert('Failed to delete account');
+    } finally {
+      setIsDeletingAccount(false);
     }
   };
 
@@ -1388,9 +1424,22 @@ export default function SettingsPage() {
                       Permanently delete your account and all data
                     </div>
                   </div>
-                  <button className="btn bg-red-500/10 text-red-600 hover:bg-red-500/20 border border-red-500/30">
-                    <Trash size={16} />
-                    Delete Account
+                  <button
+                    onClick={handleDeleteAccount}
+                    disabled={isDeletingAccount}
+                    className="btn bg-red-500/10 text-red-600 hover:bg-red-500/20 border border-red-500/30 disabled:opacity-50"
+                  >
+                    {isDeletingAccount ? (
+                      <>
+                        <Spinner size={16} className="animate-spin" />
+                        Deleting...
+                      </>
+                    ) : (
+                      <>
+                        <Trash size={16} />
+                        Delete Account
+                      </>
+                    )}
                   </button>
                 </div>
               </div>
