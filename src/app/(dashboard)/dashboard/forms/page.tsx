@@ -44,7 +44,7 @@ export default function FormsPage() {
   const [search, setSearch] = useState('');
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const [sortBy, setSortBy] = useState<SortOption>('newest');
-  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'draft'>('all');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'paused' | 'draft'>('all');
   const [menuOpenId, setMenuOpenId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
@@ -239,6 +239,7 @@ export default function FormsPage() {
         >
           <option value="all">All Status</option>
           <option value="active">Active</option>
+          <option value="paused">Paused</option>
           <option value="draft">Draft</option>
         </select>
 
