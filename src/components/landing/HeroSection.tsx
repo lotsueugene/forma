@@ -86,31 +86,32 @@ export default function HeroSection() {
             </motion.div>
 
             {/* Interactive Input */}
-            <motion.div variants={staggerVariants} className="max-w-xl">
-              <div className="rounded-lg border border-gray-200 bg-white overflow-hidden shadow-lg">
-                <div className="flex flex-wrap gap-2 sm:gap-3 border-b border-gray-200 p-2 sm:p-3">
-                  <span className="px-2 sm:px-3 py-1 rounded bg-gray-100 border border-gray-200 font-mono text-[11px] sm:text-[13px] uppercase text-gray-900">
+            <motion.div variants={staggerVariants} className="w-full max-w-xl">
+              <div className="rounded-lg border border-gray-200 bg-white shadow-lg">
+                <div className="flex gap-2 sm:gap-3 border-b border-gray-200 px-3 py-2 sm:p-3">
+                  <span className="px-2 sm:px-3 py-1 rounded bg-gray-100 border border-gray-200 font-mono text-[10px] sm:text-[13px] uppercase text-gray-900">
                     Dashboard
                   </span>
-                  <span className="px-2 sm:px-3 py-1 font-mono text-[11px] sm:text-[13px] uppercase text-gray-500 hover:text-gray-900 cursor-pointer transition-colors">
+                  <span className="px-2 sm:px-3 py-1 font-mono text-[10px] sm:text-[13px] uppercase text-gray-500 hover:text-gray-900 cursor-pointer transition-colors">
                     API / CLI
                   </span>
                 </div>
 
                 <div className="p-3 sm:p-4">
-                  <div className="flex items-center gap-2 sm:gap-3 p-3 sm:p-4 rounded-lg border border-gray-200 bg-gray-50">
-                    <span className="text-safety-orange font-mono text-base sm:text-lg">&gt;</span>
+                  <div className="flex items-center gap-2 sm:gap-3 p-2.5 sm:p-4 rounded-lg border border-gray-200 bg-gray-50">
+                    <span className="text-safety-orange font-mono text-sm sm:text-lg">&gt;</span>
                     <input
                       type="text"
                       placeholder={placeholder + '|'}
-                      className="flex-1 min-w-0 bg-transparent font-mono text-sm sm:text-lg text-gray-900 placeholder:text-gray-500 outline-none"
+                      className="flex-1 min-w-0 bg-transparent font-mono text-[11px] sm:text-lg text-gray-900 placeholder:text-gray-500 outline-none truncate"
                       readOnly
                     />
                     <Link
                       href="/signup"
-                      className="p-2 rounded border border-gray-200 bg-white text-gray-500 hover:text-gray-900 hover:bg-gray-100 transition-colors flex-shrink-0"
+                      className="p-1.5 sm:p-2 rounded border border-gray-200 bg-white text-gray-500 hover:text-gray-900 hover:bg-gray-100 transition-colors flex-shrink-0"
                     >
-                      <ArrowRight size={20} weight="bold" />
+                      <ArrowRight size={16} weight="bold" className="sm:hidden" />
+                      <ArrowRight size={20} weight="bold" className="hidden sm:block" />
                     </Link>
                   </div>
                 </div>
