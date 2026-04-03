@@ -115,6 +115,8 @@ export default function SettingsPage() {
   const [isChangingPassword, setIsChangingPassword] = useState(false);
   const [passwordMessage, setPasswordMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [isDeletingAccount, setIsDeletingAccount] = useState(false);
+  const [showDeleteAccountModal, setShowDeleteAccountModal] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
 
   // Workspace settings state
   const [workspaceName, setWorkspaceName] = useState('');
@@ -472,18 +474,7 @@ export default function SettingsPage() {
 
   // Delete account
   const handleDeleteAccount = async () => {
-    const confirmed = confirm(
-      'Are you sure you want to delete your account?\n\nThis will permanently delete:\n- Your account\n- All workspaces you own\n- All forms and submissions\n- All integrations and API keys\n\nThis action cannot be undone.'
-    );
-
-    if (!confirmed) return;
-
-    // Double confirm
-    const doubleConfirmed = confirm(
-      'This is your final warning. All your data will be permanently deleted. Continue?'
-    );
-
-    if (!doubleConfirmed) return;
+    if (deleteConfirmText.toLowerCase() !== 'delete') return;
 
     setIsDeletingAccount(true);
     try {
@@ -502,6 +493,8 @@ export default function SettingsPage() {
       alert('Failed to delete account');
     } finally {
       setIsDeletingAccount(false);
+      setShowDeleteAccountModal(false);
+      setDeleteConfirmText('');
     }
   };
 
@@ -1425,21 +1418,11 @@ export default function SettingsPage() {
                     </div>
                   </div>
                   <button
-                    onClick={handleDeleteAccount}
-                    disabled={isDeletingAccount}
-                    className="btn bg-red-500/10 text-red-600 hover:bg-red-500/20 border border-red-500/30 disabled:opacity-50"
+                    onClick={() => setShowDeleteAccountModal(true)}
+                    className="btn bg-red-500/10 text-red-600 hover:bg-red-500/20 border border-red-500/30"
                   >
-                    {isDeletingAccount ? (
-                      <>
-                        <Spinner size={16} className="animate-spin" />
-                        Deleting...
-                      </>
-                    ) : (
-                      <>
-                        <Trash size={16} />
-                        Delete Account
-                      </>
-                    )}
+                    <Trash size={16} />
+                    Delete Account
                   </button>
                 </div>
               </div>
@@ -1539,6 +1522,74 @@ export default function SettingsPage() {
                   )}
                 </button>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Account Modal */}
+      {showDeleteAccountModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60">
+          <div className="w-full max-w-md bg-white border border-gray-200 rounded-xl">
+            <div className="p-6 border-b border-gray-200">
+              <h2 className="text-lg font-semibold text-red-600">Delete Account</h2>
+              <p className="text-sm text-gray-500 mt-1">
+                This action cannot be undone. This will permanently delete your account and remove all associated data.
+              </p>
+            </div>
+            <div className="p-6 space-y-4">
+              <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+                <p className="text-sm text-red-700">
+                  <strong>Warning:</strong> This will permanently delete:
+                </p>
+                <ul className="text-sm text-red-600 mt-2 ml-4 list-disc space-y-1">
+                  <li>Your account and profile</li>
+                  <li>All workspaces you own</li>
+                  <li>All forms and submissions</li>
+                  <li>All integrations and API keys</li>
+                </ul>
+              </div>
+              <div className="form-field">
+                <label className="form-label">
+                  To confirm, type <span className="text-red-600 font-semibold">delete</span> below:
+                </label>
+                <input
+                  type="text"
+                  value={deleteConfirmText}
+                  onChange={(e) => setDeleteConfirmText(e.target.value)}
+                  placeholder="delete"
+                  className="input border-red-300 focus:border-red-500"
+                  autoComplete="off"
+                />
+              </div>
+            </div>
+            <div className="p-6 border-t border-gray-200 flex justify-end gap-3">
+              <button
+                onClick={() => {
+                  setShowDeleteAccountModal(false);
+                  setDeleteConfirmText('');
+                }}
+                className="btn btn-secondary"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteAccount}
+                disabled={isDeletingAccount || deleteConfirmText.toLowerCase() !== 'delete'}
+                className="btn bg-red-600 text-white hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isDeletingAccount ? (
+                  <>
+                    <Spinner size={16} className="animate-spin" />
+                    Deleting...
+                  </>
+                ) : (
+                  <>
+                    <Trash size={16} />
+                    Delete Account
+                  </>
+                )}
+              </button>
             </div>
           </div>
         </div>
