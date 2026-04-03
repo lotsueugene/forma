@@ -20,6 +20,9 @@ import Link from 'next/link';
 // reCAPTCHA site key from environment
 const RECAPTCHA_SITE_KEY = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY;
 
+// Main domains where reCAPTCHA should be loaded (custom domains won't have reCAPTCHA)
+const MAIN_DOMAINS = ['withforma.io', 'www.withforma.io', 'localhost', '127.0.0.1'];
+
 // Extend window for grecaptcha
 declare global {
   interface Window {
@@ -91,6 +94,16 @@ export default function FormPageClient({ formId }: FormPageClientProps) {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [formData, setFormData] = useState<Record<string, string | string[]>>({});
   const [currentStep, setCurrentStep] = useState(0);
+  const [isCustomDomain, setIsCustomDomain] = useState(false);
+
+  // Check if we're on a custom domain (reCAPTCHA won't work there)
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const hostname = window.location.hostname;
+      const isMain = MAIN_DOMAINS.some(d => hostname === d || hostname.endsWith(`.${d}`));
+      setIsCustomDomain(!isMain);
+    }
+  }, []);
 
   // Split fields into pages based on page_break fields
   const getPages = (fields: FormField[]): FormField[][] => {
@@ -175,9 +188,9 @@ export default function FormPageClient({ formId }: FormPageClientProps) {
     setIsSubmitting(true);
 
     try {
-      // Get reCAPTCHA token if configured
+      // Get reCAPTCHA token if configured (skip on custom domains)
       let recaptchaToken: string | undefined;
-      if (RECAPTCHA_SITE_KEY && window.grecaptcha) {
+      if (RECAPTCHA_SITE_KEY && !isCustomDomain && window.grecaptcha) {
         try {
           recaptchaToken = await window.grecaptcha.execute(RECAPTCHA_SITE_KEY, { action: 'submit' });
         } catch (recaptchaErr) {
@@ -307,7 +320,7 @@ export default function FormPageClient({ formId }: FormPageClientProps) {
 
   return (
     <>
-      {RECAPTCHA_SITE_KEY && (
+      {RECAPTCHA_SITE_KEY && !isCustomDomain && (
         <Script
           src={`https://www.google.com/recaptcha/api.js?render=${RECAPTCHA_SITE_KEY}`}
           strategy="lazyOnload"
