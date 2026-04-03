@@ -47,6 +47,23 @@ function WorkspaceSwitcher() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newWorkspaceName, setNewWorkspaceName] = useState('');
   const [isCreating, setIsCreating] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleClickOutside = (e: MouseEvent | TouchEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('touchstart', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleClickOutside);
+    };
+  }, [isOpen]);
 
   const handleCreateWorkspace = async () => {
     if (!newWorkspaceName.trim() || isCreating) return;
@@ -83,7 +100,7 @@ function WorkspaceSwitcher() {
 
   return (
     <>
-      <div className="px-4 py-3 border-b border-gray-200">
+      <div className="px-4 py-3 border-b border-gray-200" ref={dropdownRef}>
         <button
           onClick={() => setIsOpen(!isOpen)}
           className="w-full flex items-center justify-between p-2 rounded-lg hover:bg-gray-100 transition-colors"
@@ -212,6 +229,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const notificationPanelRef = useRef<HTMLDivElement>(null);
+  const userMenuRef = useRef<HTMLDivElement>(null);
 
   // Check if user is admin
   useEffect(() => {
@@ -240,6 +258,22 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
       document.removeEventListener('keydown', onKey);
     };
   }, [notificationsOpen]);
+
+  // Close user menu when clicking outside
+  useEffect(() => {
+    if (!userMenuOpen) return;
+    const handleClickOutside = (e: MouseEvent | TouchEvent) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
+        setUserMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('touchstart', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleClickOutside);
+    };
+  }, [userMenuOpen]);
 
   // Intentionally not closing dropdowns on route change here to satisfy
   // react-hooks/set-state-in-effect (menus close on click-outside / next interaction).
@@ -341,7 +375,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
 
         {/* User Section */}
         <div className="p-4 border-t border-gray-200">
-          <div className="relative">
+          <div className="relative" ref={userMenuRef}>
             <button
               type="button"
               onClick={() => {

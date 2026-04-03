@@ -16,6 +16,7 @@ import {
   Spinner,
   Lightning,
   X,
+  CheckCircle,
 } from '@phosphor-icons/react';
 import { cn } from '@/lib/utils';
 import { useWorkspace } from '@/contexts/workspace-context';
@@ -47,6 +48,7 @@ export default function FormsPage() {
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'draft'>('all');
   const [menuOpenId, setMenuOpenId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [publishingId, setPublishingId] = useState<string | null>(null);
 
   // Quick create modal state
   const [showQuickCreate, setShowQuickCreate] = useState(false);
@@ -135,6 +137,29 @@ export default function FormsPage() {
     } finally {
       setDeletingId(null);
       setMenuOpenId(null);
+    }
+  };
+
+  const handlePublish = async (id: string) => {
+    setPublishingId(id);
+    try {
+      const response = await fetch(`/api/forms/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'active' }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        alert(data.error || 'Failed to publish form');
+        return;
+      }
+
+      setForms(forms.map((f) => (f.id === id ? { ...f, status: 'active' } : f)));
+    } catch (err) {
+      alert('Failed to publish form');
+    } finally {
+      setPublishingId(null);
     }
   };
 
@@ -337,58 +362,87 @@ export default function FormsPage() {
                       </div>
                     </div>
                   </div>
-                  <div className="relative">
-                    <button
-                      onClick={() =>
-                        setMenuOpenId(menuOpenId === form.id ? null : form.id)
-                      }
-                      className="p-1.5 text-gray-500 hover:text-gray-900 rounded-md hover:bg-gray-100"
-                    >
-                      <DotsThree size={20} weight="bold" />
-                    </button>
-                    <AnimatePresence>
-                      {menuOpenId === form.id && (
-                        <>
-                          <div className="fixed inset-0 z-10" onClick={() => setMenuOpenId(null)} />
-                          <motion.div
-                            initial={{ opacity: 0, scale: 0.95 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            exit={{ opacity: 0, scale: 0.95 }}
-                            className="absolute right-0 mt-1 w-40 bg-white border border-gray-300 rounded-lg shadow-lg overflow-hidden z-20"
-                          >
-                            <Link
-                              href={`/dashboard/forms/${form.id}`}
-                              className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:text-gray-900 hover:bg-gray-100"
+                  {form.status === 'draft' ? (
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={() => handlePublish(form.id)}
+                        disabled={publishingId === form.id}
+                        className="p-1.5 text-green-600 hover:text-green-700 rounded-md hover:bg-green-50 disabled:opacity-50"
+                        title="Publish form"
+                      >
+                        {publishingId === form.id ? (
+                          <Spinner size={18} className="animate-spin" />
+                        ) : (
+                          <CheckCircle size={18} weight="fill" />
+                        )}
+                      </button>
+                      <button
+                        onClick={() => handleDelete(form.id)}
+                        disabled={deletingId === form.id}
+                        className="p-1.5 text-red-500 hover:text-red-600 rounded-md hover:bg-red-50 disabled:opacity-50"
+                        title="Delete form"
+                      >
+                        {deletingId === form.id ? (
+                          <Spinner size={18} className="animate-spin" />
+                        ) : (
+                          <Trash size={18} />
+                        )}
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="relative">
+                      <button
+                        onClick={() =>
+                          setMenuOpenId(menuOpenId === form.id ? null : form.id)
+                        }
+                        className="p-1.5 text-gray-500 hover:text-gray-900 rounded-md hover:bg-gray-100"
+                      >
+                        <DotsThree size={20} weight="bold" />
+                      </button>
+                      <AnimatePresence>
+                        {menuOpenId === form.id && (
+                          <>
+                            <div className="fixed inset-0 z-10" onClick={() => setMenuOpenId(null)} />
+                            <motion.div
+                              initial={{ opacity: 0, scale: 0.95 }}
+                              animate={{ opacity: 1, scale: 1 }}
+                              exit={{ opacity: 0, scale: 0.95 }}
+                              className="absolute right-0 mt-1 w-40 bg-white border border-gray-300 rounded-lg shadow-lg overflow-hidden z-20"
                             >
-                              <Eye size={16} className="text-gray-500" />
-                              View
-                            </Link>
-                            {form.formType === 'builder' && (
                               <Link
-                                href={`/dashboard/forms/${form.id}/edit`}
+                                href={`/dashboard/forms/${form.id}`}
                                 className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:text-gray-900 hover:bg-gray-100"
                               >
-                                <PencilSimple size={16} className="text-gray-500" />
-                                Edit Fields
+                                <Eye size={16} className="text-gray-500" />
+                                View
                               </Link>
-                            )}
-                            <button
-                              onClick={() => handleDelete(form.id)}
-                              disabled={deletingId === form.id}
-                              className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:text-red-700 hover:bg-red-50 disabled:opacity-50"
-                            >
-                              {deletingId === form.id ? (
-                                <Spinner size={16} className="animate-spin" />
-                              ) : (
-                                <Trash size={16} />
+                              {form.formType === 'builder' && (
+                                <Link
+                                  href={`/dashboard/forms/${form.id}/edit`}
+                                  className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:text-gray-900 hover:bg-gray-100"
+                                >
+                                  <PencilSimple size={16} className="text-gray-500" />
+                                  Edit Fields
+                                </Link>
                               )}
-                              Delete
-                            </button>
-                          </motion.div>
-                        </>
-                      )}
-                    </AnimatePresence>
-                  </div>
+                              <button
+                                onClick={() => handleDelete(form.id)}
+                                disabled={deletingId === form.id}
+                                className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:text-red-700 hover:bg-red-50 disabled:opacity-50"
+                              >
+                                {deletingId === form.id ? (
+                                  <Spinner size={16} className="animate-spin" />
+                                ) : (
+                                  <Trash size={16} />
+                                )}
+                                Delete
+                              </button>
+                            </motion.div>
+                          </>
+                        )}
+                      </AnimatePresence>
+                    </div>
+                  )}
                 </div>
                 <p className="text-sm text-gray-500 mb-4 line-clamp-2">
                   {form.description || 'No description'}
@@ -489,58 +543,87 @@ export default function FormsPage() {
                   </td>
                   <td className="p-4 text-sm text-gray-500">{getTimeAgo(form.createdAt)}</td>
                   <td className="p-4">
-                    <div className="relative">
-                      <button
-                        onClick={() =>
-                          setMenuOpenId(menuOpenId === form.id ? null : form.id)
-                        }
-                        className="p-1.5 text-gray-500 hover:text-gray-900 rounded-md hover:bg-gray-100"
-                      >
-                        <DotsThree size={20} weight="bold" />
-                      </button>
-                      <AnimatePresence>
-                        {menuOpenId === form.id && (
-                          <>
-                            <div className="fixed inset-0 z-10" onClick={() => setMenuOpenId(null)} />
-                            <motion.div
-                              initial={{ opacity: 0, scale: 0.95 }}
-                              animate={{ opacity: 1, scale: 1 }}
-                              exit={{ opacity: 0, scale: 0.95 }}
-                              className="absolute right-0 mt-1 w-40 bg-white border border-gray-300 rounded-lg shadow-lg overflow-hidden z-20"
-                            >
-                              <Link
-                                href={`/dashboard/forms/${form.id}`}
-                                className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:text-gray-900 hover:bg-gray-100"
+                    {form.status === 'draft' ? (
+                      <div className="flex items-center gap-1">
+                        <button
+                          onClick={() => handlePublish(form.id)}
+                          disabled={publishingId === form.id}
+                          className="p-1.5 text-green-600 hover:text-green-700 rounded-md hover:bg-green-50 disabled:opacity-50"
+                          title="Publish form"
+                        >
+                          {publishingId === form.id ? (
+                            <Spinner size={18} className="animate-spin" />
+                          ) : (
+                            <CheckCircle size={18} weight="fill" />
+                          )}
+                        </button>
+                        <button
+                          onClick={() => handleDelete(form.id)}
+                          disabled={deletingId === form.id}
+                          className="p-1.5 text-red-500 hover:text-red-600 rounded-md hover:bg-red-50 disabled:opacity-50"
+                          title="Delete form"
+                        >
+                          {deletingId === form.id ? (
+                            <Spinner size={18} className="animate-spin" />
+                          ) : (
+                            <Trash size={18} />
+                          )}
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="relative">
+                        <button
+                          onClick={() =>
+                            setMenuOpenId(menuOpenId === form.id ? null : form.id)
+                          }
+                          className="p-1.5 text-gray-500 hover:text-gray-900 rounded-md hover:bg-gray-100"
+                        >
+                          <DotsThree size={20} weight="bold" />
+                        </button>
+                        <AnimatePresence>
+                          {menuOpenId === form.id && (
+                            <>
+                              <div className="fixed inset-0 z-10" onClick={() => setMenuOpenId(null)} />
+                              <motion.div
+                                initial={{ opacity: 0, scale: 0.95 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                exit={{ opacity: 0, scale: 0.95 }}
+                                className="absolute right-0 mt-1 w-40 bg-white border border-gray-300 rounded-lg shadow-lg overflow-hidden z-20"
                               >
-                                <Eye size={16} className="text-gray-500" />
-                                View
-                              </Link>
-                              {form.formType === 'builder' && (
                                 <Link
-                                  href={`/dashboard/forms/${form.id}/edit`}
+                                  href={`/dashboard/forms/${form.id}`}
                                   className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:text-gray-900 hover:bg-gray-100"
                                 >
-                                  <PencilSimple size={16} className="text-gray-500" />
-                                  Edit Fields
+                                  <Eye size={16} className="text-gray-500" />
+                                  View
                                 </Link>
-                              )}
-                              <button
-                                onClick={() => handleDelete(form.id)}
-                                disabled={deletingId === form.id}
-                                className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:text-red-700 hover:bg-red-50 disabled:opacity-50"
-                              >
-                                {deletingId === form.id ? (
-                                  <Spinner size={16} className="animate-spin" />
-                                ) : (
-                                  <Trash size={16} />
+                                {form.formType === 'builder' && (
+                                  <Link
+                                    href={`/dashboard/forms/${form.id}/edit`}
+                                    className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:text-gray-900 hover:bg-gray-100"
+                                  >
+                                    <PencilSimple size={16} className="text-gray-500" />
+                                    Edit Fields
+                                  </Link>
                                 )}
-                                Delete
-                              </button>
-                            </motion.div>
-                          </>
-                        )}
-                      </AnimatePresence>
-                    </div>
+                                <button
+                                  onClick={() => handleDelete(form.id)}
+                                  disabled={deletingId === form.id}
+                                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:text-red-700 hover:bg-red-50 disabled:opacity-50"
+                                >
+                                  {deletingId === form.id ? (
+                                    <Spinner size={16} className="animate-spin" />
+                                  ) : (
+                                    <Trash size={16} />
+                                  )}
+                                  Delete
+                                </button>
+                              </motion.div>
+                            </>
+                          )}
+                        </AnimatePresence>
+                      </div>
+                    )}
                   </td>
                 </motion.tr>
               ))}
