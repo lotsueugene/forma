@@ -66,6 +66,7 @@ export default function AnalyticsPage() {
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<AnalyticsData | null>(null);
   const [period, setPeriod] = useState<'7d' | '30d' | '90d'>('30d');
+  const [featureGated, setFeatureGated] = useState(false);
 
   const loadAnalytics = useCallback(async () => {
     if (!currentWorkspace) return;
@@ -75,6 +76,10 @@ export default function AnalyticsPage() {
       const res = await fetch(
         `/api/analytics?workspaceId=${currentWorkspace.id}&period=${period}`
       );
+      if (res.status === 402) {
+        setFeatureGated(true);
+        return;
+      }
       if (!res.ok) throw new Error('Failed to fetch analytics');
 
       const analyticsData = await res.json();
@@ -94,6 +99,19 @@ export default function AnalyticsPage() {
     return (
       <div className="flex items-center justify-center h-48 sm:h-64">
         <Spinner size={32} className="animate-spin text-gray-500" />
+      </div>
+    );
+  }
+
+  if (featureGated) {
+    return (
+      <div className="text-center py-12">
+        <ChartLineUp size={48} className="mx-auto text-gray-400 mb-4" />
+        <h2 className="text-xl font-semibold text-gray-900 mb-2">Analytics requires Trial or Pro</h2>
+        <p className="text-gray-600 mb-6">Upgrade your plan to access detailed analytics, charts, and insights for your forms.</p>
+        <Link href="/dashboard/settings" className="btn btn-primary">
+          Upgrade Plan
+        </Link>
       </div>
     );
   }

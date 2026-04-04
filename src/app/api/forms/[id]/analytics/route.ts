@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { verifyFormAccess } from '@/lib/workspace-auth';
+import { getSubscriptionInfo } from '@/lib/subscription';
 
 interface GeoData {
   country: string;
@@ -34,6 +35,15 @@ export async function GET(
     const access = await verifyFormAccess(session.user.id, id);
     if (!access.allowed) {
       return NextResponse.json({ error: access.error }, { status: access.error === 'Form not found' ? 404 : 403 });
+    }
+
+    // Check subscription - analytics requires Trial or Pro
+    const subscriptionInfo = await getSubscriptionInfo(access.form!.workspaceId);
+    if (!subscriptionInfo.features.analytics) {
+      return NextResponse.json(
+        { error: 'Analytics requires Trial or Pro plan.' },
+        { status: 402 }
+      );
     }
 
     // Get form with views

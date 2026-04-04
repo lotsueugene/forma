@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { getSubscriptionInfo } from '@/lib/subscription';
 
 // GET /api/analytics - Get analytics data for current workspace
 export async function GET(request: NextRequest) {
@@ -29,6 +30,15 @@ export async function GET(request: NextRequest) {
 
     if (!member) {
       return NextResponse.json({ error: 'Access denied' }, { status: 403 });
+    }
+
+    // Check subscription - analytics requires Trial or Pro
+    const info = await getSubscriptionInfo(workspaceId);
+    if (!info.features.analytics) {
+      return NextResponse.json(
+        { error: 'Analytics requires Trial or Pro plan.' },
+        { status: 402 }
+      );
     }
 
     // Calculate date range

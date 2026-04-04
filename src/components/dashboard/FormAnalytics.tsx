@@ -58,6 +58,7 @@ export default function FormAnalytics({ formId }: { formId: string }) {
   const [data, setData] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [featureGated, setFeatureGated] = useState(false);
 
   useEffect(() => {
     fetchAnalytics();
@@ -66,6 +67,10 @@ export default function FormAnalytics({ formId }: { formId: string }) {
   const fetchAnalytics = async () => {
     try {
       const response = await fetch(`/api/forms/${formId}/analytics`);
+      if (response.status === 402) {
+        setFeatureGated(true);
+        return;
+      }
       if (!response.ok) throw new Error('Failed to fetch analytics');
       const result = await response.json();
       setData(result);
@@ -80,6 +85,16 @@ export default function FormAnalytics({ formId }: { formId: string }) {
     return (
       <div className="flex items-center justify-center py-12">
         <Spinner size={32} className="text-safety-orange animate-spin" />
+      </div>
+    );
+  }
+
+  if (featureGated) {
+    return (
+      <div className="card p-8 text-center">
+        <Target size={48} className="mx-auto text-gray-400 mb-4" />
+        <h3 className="text-lg font-semibold text-gray-900 mb-2">Analytics requires Trial or Pro</h3>
+        <p className="text-gray-600">Upgrade your plan to view detailed analytics for this form.</p>
       </div>
     );
   }
