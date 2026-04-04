@@ -182,6 +182,7 @@ export default function IntegrationsPage() {
         throw new Error(data.error || `Failed (${res.status})`);
       }
       setCustomDomain(data.domain);
+      setDomainInput(data.domain.domain);
       setError(null);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to save custom domain');
@@ -399,10 +400,12 @@ export default function IntegrationsPage() {
             <LinkSimple size={18} />
             Connected Integrations
           </h2>
-          {!integrationsFeatureEnabled && <span className="badge badge-warning">Trial/Pro required</span>}
+          {!loading && !integrationsFeatureEnabled && <span className="badge badge-warning">Trial/Pro required</span>}
         </div>
 
-        {!integrationsFeatureEnabled ? (
+        {loading ? (
+          <div className="text-sm text-gray-600">Loading…</div>
+        ) : !integrationsFeatureEnabled ? (
           <p className="text-sm text-gray-600">Upgrade to Trial or Pro to connect integrations like Slack, Notion, and more.</p>
         ) : (
           <>
@@ -579,10 +582,12 @@ export default function IntegrationsPage() {
               <GlobeHemisphereWest size={18} />
               Custom Domain
             </h2>
-            {!domainFeatureEnabled && <span className="badge badge-warning">Pro required</span>}
+            {!loading && !domainFeatureEnabled && <span className="badge badge-warning">Pro required</span>}
           </div>
 
-          {!domainFeatureEnabled ? (
+          {loading ? (
+            <div className="text-sm text-gray-600">Loading…</div>
+          ) : !domainFeatureEnabled ? (
             <p className="text-sm text-gray-600">Upgrade to Pro to connect your own domain for hosted form URLs.</p>
           ) : (
             <>
@@ -703,10 +708,12 @@ export default function IntegrationsPage() {
               <LinkSimple size={18} />
               Webhooks
             </h2>
-            {!webhooksFeatureEnabled && <span className="badge badge-warning">Trial/Pro required</span>}
+            {!loading && !webhooksFeatureEnabled && <span className="badge badge-warning">Trial/Pro required</span>}
           </div>
 
-          {!webhooksFeatureEnabled ? (
+          {loading ? (
+            <div className="text-sm text-gray-600">Loading…</div>
+          ) : !webhooksFeatureEnabled ? (
             <p className="text-sm text-gray-600">Upgrade to Trial/Pro to deliver signed <code>submission.created</code> payloads.</p>
           ) : (
             <>
