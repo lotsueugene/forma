@@ -40,12 +40,7 @@ export function middleware(request: NextRequest) {
   const formPath = pathname === '/' ? '' : pathname;
   url.pathname = `/cd/${hostname}${formPath}`;
 
-  const response = NextResponse.rewrite(url);
-  response.headers.set('Cache-Control', 'no-store, must-revalidate');
-  response.headers.set('X-Content-Type-Options', 'nosniff');
-  // Remove internal rewrite header that can confuse some browsers
-  response.headers.delete('x-middleware-rewrite');
-  return response;
+  return NextResponse.rewrite(url);
 }
 
 export const config = {
