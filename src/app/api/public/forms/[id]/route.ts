@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { getSubscriptionInfo } from '@/lib/subscription';
 
 // GET /api/public/forms/[id] - Get form data for public rendering
 export async function GET(
@@ -29,13 +30,23 @@ export async function GET(
       data: { views: { increment: 1 } },
     });
 
+    const settings = form.settings ? JSON.parse(form.settings) : null;
+
+    // Enforce branding for non-Pro users — only Pro can remove "Powered by Forma"
+    if (settings?.thankYou?.showBranding === false) {
+      const info = await getSubscriptionInfo(form.workspaceId);
+      if (info.plan !== 'pro') {
+        settings.thankYou.showBranding = true;
+      }
+    }
+
     return NextResponse.json({
       form: {
         id: form.id,
         name: form.name,
         description: form.description,
         fields: JSON.parse(form.fields),
-        settings: form.settings ? JSON.parse(form.settings) : null,
+        settings,
       },
     });
   } catch (error) {

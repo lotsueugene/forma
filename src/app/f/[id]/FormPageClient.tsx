@@ -484,6 +484,7 @@ export default function FormPageClient({ formId }: FormPageClientProps) {
             </div>
           </motion.form>
 
+          {form?.settings?.thankYou?.showBranding !== false && (
           <div className="mt-8 flex items-center justify-center gap-2 text-sm text-gray-500">
             <span>Powered by</span>
             <Link href="/" className="flex items-center gap-1 text-safety-orange hover:text-safety-orange/80">
@@ -491,6 +492,7 @@ export default function FormPageClient({ formId }: FormPageClientProps) {
               Forma
             </Link>
           </div>
+          )}
         </div>
       </div>
     </>
