@@ -30,6 +30,7 @@ export const PLAN_LIMITS = {
       integrations: false,
       emailNotifications: false,
       spamProtection: true, // Basic (honeypot only)
+      payments: false,
     },
   },
   trial: {
@@ -45,6 +46,7 @@ export const PLAN_LIMITS = {
       integrations: true,
       emailNotifications: true,
       spamProtection: true, // Full (honeypot + rate limit + reCAPTCHA)
+      payments: false,
     },
   },
   pro: {
@@ -60,6 +62,7 @@ export const PLAN_LIMITS = {
       integrations: true,
       emailNotifications: true,
       spamProtection: true,
+      payments: true,
     },
   },
 };

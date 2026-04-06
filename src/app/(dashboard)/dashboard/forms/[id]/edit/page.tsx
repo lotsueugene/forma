@@ -662,12 +662,19 @@ export default function EditFormPage({ params }: { params: Promise<{ id: string 
                       </button>
                     </div>
                     <div className="grid grid-cols-2 xs:grid-cols-3 sm:grid-cols-4 gap-2">
-                      {fieldTypes.map((fieldType) => (
+                      {fieldTypes.map((fieldType) => {
+                        const needsPro = fieldType.type === 'payment' && planType !== 'pro';
+                        return (
                         <button
                           key={fieldType.type}
-                          onClick={() => addField(fieldType.type)}
-                          className="flex flex-col items-center gap-2 p-3 rounded-lg hover:bg-gray-100 transition-colors text-center group"
+                          onClick={() => !needsPro && addField(fieldType.type)}
+                          disabled={needsPro}
+                          className={cn(
+                            "flex flex-col items-center gap-2 p-3 rounded-lg transition-colors text-center group relative",
+                            needsPro ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-100'
+                          )}
                         >
+                          {needsPro && <span className="absolute top-1 right-1 text-[9px] font-bold text-safety-orange bg-safety-orange/10 px-1 rounded">PRO</span>}
                           <div className="w-10 h-10 rounded-lg bg-gray-100 group-hover:bg-gray-200 flex items-center justify-center transition-colors">
                             <fieldType.icon size={20} className="text-gray-500 group-hover:text-safety-orange transition-colors" />
                           </div>
@@ -675,7 +682,8 @@ export default function EditFormPage({ params }: { params: Promise<{ id: string 
                             {fieldType.label}
                           </span>
                         </button>
-                      ))}
+                        );
+                      })}
                     </div>
                   </motion.div>
                 )}

@@ -3,7 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { verifyFormAccess } from '@/lib/workspace-auth';
-import { checkLimit, incrementSubmissionCount } from '@/lib/subscription';
+import { checkLimit, incrementSubmissionCount, getSubscriptionInfo } from '@/lib/subscription';
 import { publishToUser } from '@/lib/notifications/pubsub';
 import { deliverSubmissionCreatedWebhook } from '@/lib/webhooks';
 import { checkSpam, parseSpamSettings, cleanSpamFields } from '@/lib/spam-protection';
@@ -224,6 +224,15 @@ export async function POST(
     const paymentField = formFields.find((f) => f.type === 'payment' && f.amount && f.amount > 0);
 
     if (paymentField && stripe) {
+      // Verify workspace has Pro plan for payments
+      const subscriptionInfo = await getSubscriptionInfo(form.workspaceId);
+      if (!subscriptionInfo.features.payments) {
+        return NextResponse.json(
+          { error: 'Payment forms require a Pro plan. Please contact the form owner.' },
+          { status: 402, headers: corsHeaders }
+        );
+      }
+
       const workspace = await prisma.workspace.findUnique({
         where: { id: form.workspaceId },
         select: { stripeConnectAccountId: true },
