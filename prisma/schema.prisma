@@ -74,8 +74,11 @@ model Workspace {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  // Stripe customer ID
+  // Stripe customer ID (for subscriptions)
   stripeCustomerId String?
+
+  // Stripe Connect account ID (for receiving form payments)
+  stripeConnectAccountId String?
 
   // Email notification settings
   notificationEmail String?  // Email to receive submission notifications

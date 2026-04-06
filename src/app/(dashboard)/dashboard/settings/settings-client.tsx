@@ -75,6 +75,112 @@ const SETTINGS_TAB_IDS: SettingsTab[] = [
   'security',
 ];
 
+function StripeConnectSection({ workspaceId }: { workspaceId: string }) {
+  const [loading, setLoading] = useState(true);
+  const [connecting, setConnecting] = useState(false);
+  const [disconnecting, setDisconnecting] = useState(false);
+  const [account, setAccount] = useState<{
+    connected: boolean;
+    chargesEnabled?: boolean;
+    payoutsEnabled?: boolean;
+    detailsSubmitted?: boolean;
+    email?: string;
+    businessName?: string;
+  } | null>(null);
+
+  useEffect(() => {
+    if (!workspaceId) return;
+    fetch(`/api/stripe/connect?workspaceId=${workspaceId}`)
+      .then((res) => res.ok ? res.json() : null)
+      .then((data) => setAccount(data))
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, [workspaceId]);
+
+  const handleConnect = async () => {
+    setConnecting(true);
+    try {
+      const res = await fetch('/api/stripe/connect', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ workspaceId }),
+      });
+      const data = await res.json();
+      if (data.url) {
+        window.location.href = data.url;
+      }
+    } catch {
+      // ignore
+    } finally {
+      setConnecting(false);
+    }
+  };
+
+  const handleDisconnect = async () => {
+    if (!confirm('Disconnect your Stripe account? Forms with payment fields will stop collecting payments.')) return;
+    setDisconnecting(true);
+    try {
+      await fetch('/api/stripe/connect', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ workspaceId }),
+      });
+      setAccount({ connected: false });
+    } catch {
+      // ignore
+    } finally {
+      setDisconnecting(false);
+    }
+  };
+
+  if (loading) {
+    return <div className="py-4"><Spinner size={20} className="animate-spin text-gray-400" /></div>;
+  }
+
+  if (account?.connected) {
+    return (
+      <div className="card p-4 space-y-3">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-lg bg-emerald-500/10 flex items-center justify-center">
+            <Check size={20} className="text-emerald-600" />
+          </div>
+          <div className="flex-1">
+            <p className="text-sm font-medium text-gray-900">
+              {account.businessName || account.email || 'Stripe Account Connected'}
+            </p>
+            <p className="text-xs text-gray-500">
+              {account.chargesEnabled ? 'Accepting payments' : 'Setup incomplete — click to finish onboarding'}
+            </p>
+          </div>
+          {!account.chargesEnabled && (
+            <button onClick={handleConnect} disabled={connecting} className="btn btn-primary text-sm">
+              {connecting ? <Spinner size={16} className="animate-spin" /> : 'Complete Setup'}
+            </button>
+          )}
+        </div>
+        <button
+          onClick={handleDisconnect}
+          disabled={disconnecting}
+          className="text-xs text-red-500 hover:text-red-700"
+        >
+          {disconnecting ? 'Disconnecting...' : 'Disconnect Stripe account'}
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <button
+      onClick={handleConnect}
+      disabled={connecting}
+      className="btn btn-secondary flex items-center gap-2"
+    >
+      {connecting ? <Spinner size={16} className="animate-spin" /> : <CreditCard size={18} />}
+      Connect Stripe Account
+    </button>
+  );
+}
+
 export default function SettingsPage() {
   const { data: session, update: updateSession } = useSession();
   const searchParams = useSearchParams();
@@ -1335,6 +1441,15 @@ export default function SettingsPage() {
                         </div>
                       </div>
                     </div>
+                  </div>
+
+                  {/* Stripe Connect - Payment Account */}
+                  <div className="border-t border-gray-200 pt-6 mt-6">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">Payment Account</h3>
+                    <p className="text-sm text-gray-500 mb-4">
+                      Connect your Stripe account to receive payments from forms with payment fields. Forma takes a 5% platform fee.
+                    </p>
+                    <StripeConnectSection workspaceId={currentWorkspace?.id || ''} />
                   </div>
                 </>
               )}
