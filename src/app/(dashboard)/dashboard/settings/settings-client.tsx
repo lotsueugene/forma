@@ -79,6 +79,7 @@ function StripeConnectSection({ workspaceId }: { workspaceId: string }) {
   const [loading, setLoading] = useState(true);
   const [connecting, setConnecting] = useState(false);
   const [disconnecting, setDisconnecting] = useState(false);
+  const [error, setError] = useState('');
   const [account, setAccount] = useState<{
     connected: boolean;
     chargesEnabled?: boolean;
@@ -89,7 +90,7 @@ function StripeConnectSection({ workspaceId }: { workspaceId: string }) {
   } | null>(null);
 
   useEffect(() => {
-    if (!workspaceId) return;
+    if (!workspaceId) { setLoading(false); return; }
     fetch(`/api/stripe/connect?workspaceId=${workspaceId}`)
       .then((res) => res.ok ? res.json() : null)
       .then((data) => setAccount(data))
@@ -98,7 +99,9 @@ function StripeConnectSection({ workspaceId }: { workspaceId: string }) {
   }, [workspaceId]);
 
   const handleConnect = async () => {
+    if (!workspaceId) { setError('No workspace selected'); return; }
     setConnecting(true);
+    setError('');
     try {
       const res = await fetch('/api/stripe/connect', {
         method: 'POST',
@@ -106,11 +109,15 @@ function StripeConnectSection({ workspaceId }: { workspaceId: string }) {
         body: JSON.stringify({ workspaceId }),
       });
       const data = await res.json();
+      if (!res.ok) {
+        setError(data.error || 'Failed to connect');
+        return;
+      }
       if (data.url) {
         window.location.href = data.url;
       }
-    } catch {
-      // ignore
+    } catch (err) {
+      setError('Network error — please try again');
     } finally {
       setConnecting(false);
     }
@@ -170,14 +177,17 @@ function StripeConnectSection({ workspaceId }: { workspaceId: string }) {
   }
 
   return (
-    <button
-      onClick={handleConnect}
-      disabled={connecting}
-      className="btn btn-secondary flex items-center gap-2"
-    >
-      {connecting ? <Spinner size={16} className="animate-spin" /> : <CreditCard size={18} />}
-      Connect Stripe Account
-    </button>
+    <div className="space-y-2">
+      {error && <p className="text-sm text-red-600">{error}</p>}
+      <button
+        onClick={handleConnect}
+        disabled={connecting}
+        className="btn btn-secondary flex items-center gap-2"
+      >
+        {connecting ? <Spinner size={16} className="animate-spin" /> : <CreditCard size={18} />}
+        Connect Stripe Account
+      </button>
+    </div>
   );
 }
 
