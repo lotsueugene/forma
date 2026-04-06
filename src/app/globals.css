@@ -152,7 +152,6 @@ body {
   background: var(--accent-200);
   color: white;
   box-shadow: 0 4px 12px rgba(239, 111, 46, 0.35), 0 2px 4px rgba(239, 111, 46, 0.2);
-  transform: translateY(-1px);
 }
 
 .btn-secondary {
@@ -166,7 +165,6 @@ body {
   background: var(--neutral-1000);
   color: var(--neutral-100);
   border-color: var(--neutral-700);
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
 }
 
 .btn-ghost {
@@ -222,9 +220,6 @@ body {
   transition: box-shadow 200ms ease, border-color 200ms ease;
 }
 
-.card:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06), 0 1px 3px rgba(0, 0, 0, 0.04);
-}
 
 .card-elevated {
   background: white;

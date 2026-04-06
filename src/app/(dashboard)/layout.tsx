@@ -366,7 +366,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
         <div className="p-4 border-t border-black/6">
           <Link
             href="/dashboard/forms/new"
-            className="w-full flex items-center justify-center gap-2 py-3 font-mono text-[13px] uppercase tracking-[-0.015rem] bg-safety-orange text-white rounded-lg hover:bg-accent-200 border border-transparent transition-all duration-200 shadow-[0_2px_8px_rgba(239,111,46,0.3)] hover:shadow-[0_4px_16px_rgba(239,111,46,0.4)] hover:-translate-y-0.5"
+            className="w-full flex items-center justify-center gap-2 py-3 font-mono text-[13px] uppercase tracking-[-0.015rem] bg-safety-orange text-white rounded-lg hover:bg-accent-200 border border-transparent transition-all duration-200 shadow-[0_2px_8px_rgba(239,111,46,0.3)]"
           >
             <Plus size={18} weight="bold" />
             Create Form
