@@ -146,7 +146,7 @@ export default async function BlogPage() {
                   <h2 className="text-2xl font-semibold text-gray-900 mb-8">
                     {featuredPosts.length > 0 ? 'All Posts' : 'Latest Posts'}
                   </h2>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                  <div className={regularPosts.length === 1 ? 'max-w-2xl mx-auto' : 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8'}>
                     {regularPosts.map((post) => (
                       <Link
                         key={post.id}
