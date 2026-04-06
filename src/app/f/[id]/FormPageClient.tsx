@@ -112,6 +112,32 @@ export default function FormPageClient({ formId }: FormPageClientProps) {
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [paymentConfirming, setPaymentConfirming] = useState(false);
+
+  // Confirm payment submission after Stripe redirect
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('payment') === 'success' && params.get('session_id') && params.get('acct')) {
+      setPaymentConfirming(true);
+      fetch('/api/stripe/connect/confirm', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sessionId: params.get('session_id'),
+          connectedAccountId: params.get('acct'),
+        }),
+      })
+        .then((res) => res.json())
+        .then(() => {
+          setIsSubmitted(true);
+          // Clean URL
+          window.history.replaceState({}, '', window.location.pathname);
+        })
+        .catch(() => setIsSubmitted(true))
+        .finally(() => setPaymentConfirming(false));
+    }
+  }, []);
   const [formData, setFormData] = useState<Record<string, string | string[]>>({});
   const [currentStep, setCurrentStep] = useState(0);
   const [isCustomDomain, setIsCustomDomain] = useState(false);
@@ -318,6 +344,15 @@ export default function FormPageClient({ formId }: FormPageClientProps) {
     };
     reader.readAsDataURL(file);
   };
+
+  if (paymentConfirming) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center flex-col gap-4">
+        <Spinner size={32} className="text-safety-orange animate-spin" />
+        <p className="text-gray-500 text-sm">Confirming your payment...</p>
+      </div>
+    );
+  }
 
   if (isLoading) {
     return (

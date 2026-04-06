@@ -266,7 +266,7 @@ export async function POST(
             payment_intent_data: {
               application_fee_amount: applicationFee,
             },
-            success_url: `${process.env.NEXTAUTH_URL || request.nextUrl.origin}/f/${id}?payment=success`,
+            success_url: `${process.env.NEXTAUTH_URL || request.nextUrl.origin}/f/${id}?payment=success&session_id={CHECKOUT_SESSION_ID}&acct=${workspace.stripeConnectAccountId}`,
             cancel_url: `${process.env.NEXTAUTH_URL || request.nextUrl.origin}/f/${id}?payment=cancelled`,
             metadata: {
               formId: form.id,
