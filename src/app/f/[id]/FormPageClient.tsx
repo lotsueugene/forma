@@ -394,14 +394,14 @@ export default function FormPageClient({ formId }: FormPageClientProps) {
           {isMultiStep && (
             <div className="mb-6">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-sm text-gray-600">
+                <span className="text-sm" style={{ color: form?.settings?.branding?.textColor ? `${form.settings.branding.textColor}99` : '#4b5563' }}>
                   Step {currentStep + 1} of {totalSteps}
                 </span>
-                <span className="text-sm text-gray-600">
+                <span className="text-sm" style={{ color: form?.settings?.branding?.textColor ? `${form.settings.branding.textColor}99` : '#4b5563' }}>
                   {Math.round(((currentStep + 1) / totalSteps) * 100)}%
                 </span>
               </div>
-              <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+              <div className="h-2 rounded-full overflow-hidden" style={{ backgroundColor: form?.settings?.branding?.textColor ? `${form.settings.branding.textColor}20` : '#e5e7eb' }}>
                 <motion.div
                   className="h-full rounded-full"
                   style={{ backgroundColor: form?.settings?.branding?.accentColor || 'var(--accent-100)' }}
@@ -425,7 +425,12 @@ export default function FormPageClient({ formId }: FormPageClientProps) {
                 setCurrentStep((prev) => prev + 1);
               }
             }}
-            className="card p-6 space-y-6"
+            className="rounded-xl border p-6 space-y-6"
+            style={{
+              backgroundColor: form?.settings?.branding?.backgroundColor || '#ffffff',
+              borderColor: form?.settings?.branding?.textColor ? `${form.settings.branding.textColor}15` : '#e5e7eb',
+              color: form?.settings?.branding?.textColor || undefined,
+            }}
           >
             <AnimatePresence mode="sync">
               {currentPageFields
@@ -439,7 +444,7 @@ export default function FormPageClient({ formId }: FormPageClientProps) {
                   transition={{ duration: 0.2 }}
                   className="form-field overflow-hidden"
                 >
-                  <label className="form-label">
+                  <label className="form-label" style={{ color: form?.settings?.branding?.textColor || undefined }}>
                     {field.label}
                     {field.required && <span className="text-red-600 ml-1">*</span>}
                   </label>
