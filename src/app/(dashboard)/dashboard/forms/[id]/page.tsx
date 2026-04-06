@@ -891,13 +891,28 @@ export default function FormDetailPage() {
                                       className="rounded border-gray-300"
                                     />
                                   </td>
-                                  {dynamicColumns.map(col => (
+                                  {dynamicColumns.map(col => {
+                                    const colField = form.fields.find((f: { id: string; type: string }) => f.id === col);
+                                    if (colField?.type === 'payment' && submission.metadata?.payment) {
+                                      const p = submission.metadata.payment;
+                                      const symbols: Record<string, string> = { usd: '$', eur: '€', gbp: '£', cad: 'C$', aud: 'A$' };
+                                      const sym = symbols[p.currency || 'usd'] || '$';
+                                      return (
+                                        <td key={col} className="p-4 max-w-[180px]">
+                                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700">
+                                            {sym}{Number(p.amount).toFixed(2)} Paid
+                                          </span>
+                                        </td>
+                                      );
+                                    }
+                                    return (
                                     <td key={col} className="p-4 max-w-[180px]">
                                       <span className="text-gray-700 truncate block">
                                         {formatCellValue(submission.data[col])}
                                       </span>
                                     </td>
-                                  ))}
+                                    );
+                                  })}
                                   <td className="p-4 w-32 text-sm text-gray-500">
                                     {getTimeAgo(submission.createdAt)}
                                   </td>
@@ -931,7 +946,27 @@ export default function FormDetailPage() {
                                               <h4 className="font-medium text-gray-800">
                                                 All Submission Data
                                               </h4>
-                                              {Object.entries(submission.data).map(([key, value]) => (
+                                              {Object.entries(submission.data).map(([key, value]) => {
+                                                // For payment fields, show payment info from metadata instead of empty value
+                                                const fieldDef = form.fields.find((f: { id: string; type: string }) => f.id === key);
+                                                if (fieldDef?.type === 'payment' && submission.metadata?.payment) {
+                                                  const p = submission.metadata.payment;
+                                                  const symbols: Record<string, string> = { usd: '$', eur: '€', gbp: '£', cad: 'C$', aud: 'A$' };
+                                                  const sym = symbols[p.currency || 'usd'] || '$';
+                                                  return (
+                                                    <div key={key}>
+                                                      <div className="text-xs text-gray-500 uppercase tracking-wider mb-1">
+                                                        {getFieldLabel(key)}
+                                                      </div>
+                                                      <div className="flex items-center gap-2">
+                                                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-sm font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                                          {sym}{Number(p.amount).toFixed(2)} {(p.currency || 'usd').toUpperCase()} — Paid
+                                                        </span>
+                                                      </div>
+                                                    </div>
+                                                  );
+                                                }
+                                                return (
                                                 <div key={key}>
                                                   <div className="text-xs text-gray-500 uppercase tracking-wider mb-1">
                                                     {getFieldLabel(key)}
@@ -942,7 +977,8 @@ export default function FormDetailPage() {
                                                       : formatCellValue(value)}
                                                   </div>
                                                 </div>
-                                              ))}
+                                                );
+                                              })}
                                             </div>
                                             <div className="space-y-4">
                                               <h4 className="font-medium text-gray-800">Metadata</h4>
