@@ -46,7 +46,7 @@ export function markdownToSafeHtml(content: string): string {
   };
 
   for (let i = 0; i < lines.length; i++) {
-    let line = lines[i];
+    let line = lines[i].trimEnd();
 
     // Code blocks
     if (line.trim().startsWith('```')) {
@@ -65,11 +65,11 @@ export function markdownToSafeHtml(content: string): string {
     }
 
     // Inline formatting (apply before block processing)
-    line = line
-      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-      .replace(/(?<!\*)\*(?!\*)(.*?)(?<!\*)\*(?!\*)/g, '<em>$1</em>')
-      .replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>')
-      .replace(/`(.*?)`/g, '<code>$1</code>');
+    // Bold must come before italic to avoid conflicts
+    line = line.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+    line = line.replace(/(?<![*<])\*([^*]+?)\*(?![*>])/g, '<em>$1</em>');
+    line = line.replace(/\[([^\]]+?)\]\(([^)]+?)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
+    line = line.replace(/`([^`]+?)`/g, '<code>$1</code>');
 
     // Horizontal rule
     if (/^---+$/.test(line.trim())) {
