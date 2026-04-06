@@ -47,6 +47,7 @@ interface FormField {
   required: boolean;
   options?: string[];
   condition?: FieldCondition;
+  defaultValue?: string;
 }
 
 // Evaluate if a field's condition is met
@@ -75,11 +76,26 @@ function evaluateCondition(
   }
 }
 
+interface FormSettings {
+  branding?: {
+    accentColor?: string;
+    backgroundColor?: string;
+    textColor?: string;
+  };
+  thankYou?: {
+    heading?: string;
+    message?: string;
+    redirectUrl?: string;
+    showBranding?: boolean;
+  };
+}
+
 interface Form {
   id: string;
   name: string;
   description: string | null;
   fields: FormField[];
+  settings?: FormSettings | null;
 }
 
 interface FormPageClientProps {
@@ -154,9 +170,16 @@ export default function FormPageClient({ formId }: FormPageClientProps) {
 
       // Initialize form data with empty values
       const initialData: Record<string, string | string[]> = {};
+      const urlParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
       data.form.fields.forEach((field: FormField) => {
         if (field.type === 'checkbox') {
           initialData[field.id] = [];
+        } else if (field.type === 'hidden' && field.defaultValue) {
+          // Resolve {{param}} placeholders from URL query params
+          const resolved = field.defaultValue.replace(/\{\{(\w+)\}\}/g, (_, param) => {
+            return urlParams?.get(param) || '';
+          });
+          initialData[field.id] = resolved;
         } else {
           initialData[field.id] = '';
         }
@@ -290,29 +313,49 @@ export default function FormPageClient({ formId }: FormPageClientProps) {
   }
 
   if (isSubmitted) {
+    const thankYou = form?.settings?.thankYou;
+    const branding = form?.settings?.branding;
+
+    // Redirect if configured
+    if (thankYou?.redirectUrl) {
+      if (typeof window !== 'undefined') {
+        window.location.href = thankYou.redirectUrl;
+      }
+      return (
+        <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: branding?.backgroundColor || '#ffffff' }}>
+          <Spinner size={32} className="animate-spin" style={{ color: branding?.accentColor || undefined }} />
+        </div>
+      );
+    }
+
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center p-4">
+      <div className="min-h-screen flex items-center justify-center p-4" style={{ backgroundColor: branding?.backgroundColor || '#ffffff' }}>
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           className="max-w-md w-full text-center"
         >
-          <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-emerald-500/20 flex items-center justify-center">
-            <Check size={32} className="text-emerald-600" />
+          <div
+            className="w-16 h-16 mx-auto mb-6 rounded-full flex items-center justify-center"
+            style={{ backgroundColor: branding?.accentColor ? `${branding.accentColor}20` : 'rgb(16 185 129 / 0.2)' }}
+          >
+            <Check size={32} style={{ color: branding?.accentColor || 'rgb(5 150 105)' }} />
           </div>
-          <h1 className="text-2xl font-semibold text-gray-900 mb-2">
-            Thank you!
+          <h1 className="text-2xl font-semibold mb-2" style={{ color: branding?.textColor || '#111827' }}>
+            {thankYou?.heading || 'Thank you!'}
           </h1>
-          <p className="text-gray-600 mb-6">
-            Your response has been submitted successfully.
+          <p className="mb-6" style={{ color: branding?.textColor ? `${branding.textColor}99` : '#4b5563' }}>
+            {thankYou?.message || 'Your response has been submitted successfully.'}
           </p>
-          <div className="flex items-center justify-center gap-2 text-sm text-gray-500">
-            <span>Powered by</span>
-            <Link href="/" className="flex items-center gap-1 text-safety-orange hover:text-safety-orange/80">
-              <Stack size={16} weight="fill" />
-              Forma
-            </Link>
-          </div>
+          {thankYou?.showBranding !== false && (
+            <div className="flex items-center justify-center gap-2 text-sm text-gray-500">
+              <span>Powered by</span>
+              <Link href="/" className="flex items-center gap-1 text-safety-orange hover:text-safety-orange/80">
+                <Stack size={16} weight="fill" />
+                Forma
+              </Link>
+            </div>
+          )}
         </motion.div>
       </div>
     );
@@ -327,18 +370,18 @@ export default function FormPageClient({ formId }: FormPageClientProps) {
         />
       )}
 
-      <div className="min-h-screen bg-white py-8 px-4">
+      <div className="min-h-screen py-8 px-4" style={{ backgroundColor: form?.settings?.branding?.backgroundColor || '#ffffff' }}>
         <div className="max-w-2xl mx-auto">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             className="mb-8"
           >
-            <h1 className="text-3xl font-semibold text-gray-900 mb-2">
+            <h1 className="text-3xl font-semibold mb-2" style={{ color: form?.settings?.branding?.textColor || '#111827' }}>
               {form?.name}
             </h1>
             {form?.description && (
-              <p className="text-gray-600">{form.description}</p>
+              <p style={{ color: form?.settings?.branding?.textColor ? `${form.settings.branding.textColor}99` : '#4b5563' }}>{form.description}</p>
             )}
           </motion.div>
 
@@ -360,7 +403,8 @@ export default function FormPageClient({ formId }: FormPageClientProps) {
               </div>
               <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
                 <motion.div
-                  className="h-full bg-safety-orange rounded-full"
+                  className="h-full rounded-full"
+                  style={{ backgroundColor: form?.settings?.branding?.accentColor || 'var(--accent-100)' }}
                   initial={{ width: 0 }}
                   animate={{ width: `${((currentStep + 1) / totalSteps) * 100}%` }}
                   transition={{ duration: 0.3 }}
@@ -385,7 +429,7 @@ export default function FormPageClient({ formId }: FormPageClientProps) {
           >
             <AnimatePresence mode="sync">
               {currentPageFields
-                .filter((field) => evaluateCondition(field.condition, formData))
+                .filter((field) => field.type !== 'hidden' && evaluateCondition(field.condition, formData))
                 .map((field) => (
                 <motion.div
                   key={field.id}
@@ -424,6 +468,7 @@ export default function FormPageClient({ formId }: FormPageClientProps) {
                   'btn btn-primary flex-1 justify-center flex items-center gap-2',
                   isSubmitting && 'opacity-70 cursor-not-allowed'
                 )}
+                style={form?.settings?.branding?.accentColor ? { backgroundColor: form.settings.branding.accentColor, borderColor: form.settings.branding.accentColor } : undefined}
               >
                 {isSubmitting ? (
                   <Spinner size={20} className="animate-spin" />
