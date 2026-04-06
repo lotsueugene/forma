@@ -4,6 +4,8 @@ import { stripe } from '@/lib/stripe';
 import { incrementSubmissionCount } from '@/lib/subscription';
 import { deliverSubmissionCreatedWebhook } from '@/lib/webhooks';
 import { deliverToIntegrations } from '@/lib/integrations';
+import { sendSubmissionNotification, isEmailConfigured } from '@/lib/email';
+import { publishToUser } from '@/lib/notifications/pubsub';
 
 // POST /api/stripe/connect/confirm - Confirm payment and create submission
 export async function POST(request: NextRequest) {
@@ -102,6 +104,83 @@ export async function POST(request: NextRequest) {
         data: formData,
         metadata: submissionMetadata,
       }).catch((err) => console.error('Integration delivery error:', err));
+
+      // In-app notifications and email (fire and forget)
+      (async () => {
+        try {
+          const workspace = await prisma.workspace.findUnique({
+            where: { id: form.workspaceId },
+            select: {
+              name: true,
+              notificationEmail: true,
+              members: {
+                select: {
+                  userId: true,
+                  user: {
+                    select: {
+                      email: true,
+                      settings: {
+                        select: { notifyNewSubmissions: true },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          });
+
+          // In-app notifications
+          const recipientIds = (workspace?.members || [])
+            .filter((m) => m.user.settings?.notifyNewSubmissions !== false)
+            .map((m) => m.userId);
+
+          if (recipientIds.length > 0) {
+            await prisma.notification.createMany({
+              data: recipientIds.map((userId) => ({
+                userId,
+                workspaceId: form.workspaceId,
+                type: 'submission',
+                title: `New paid submission`,
+                body: `${form.name} received a new paid submission ($${submissionMetadata.payment?.amount || 0}).`,
+                href: `/dashboard/forms/${formId}`,
+              })),
+            });
+            for (const userId of recipientIds) {
+              publishToUser(userId, { type: 'submission', workspaceId: form.workspaceId });
+            }
+          }
+
+          // Email notifications
+          if (isEmailConfigured()) {
+            let emailRecipients: string[] = [];
+            if (workspace?.notificationEmail) {
+              emailRecipients = [workspace.notificationEmail];
+            } else {
+              emailRecipients = (workspace?.members || [])
+                .filter((m) => m.user.settings?.notifyNewSubmissions !== false)
+                .map((m) => m.user.email)
+                .filter((email): email is string => !!email);
+            }
+
+            const fullForm = await prisma.form.findUnique({ where: { id: formId }, select: { fields: true } });
+            const formFields = fullForm?.fields ? JSON.parse(fullForm.fields) : [];
+
+            for (const emailTo of emailRecipients) {
+              await sendSubmissionNotification(emailTo, {
+                formName: form.name,
+                formId,
+                submissionId: submission.id,
+                submittedAt: submission.createdAt.toISOString(),
+                data: formData as Record<string, unknown>,
+                workspaceName: workspace?.name,
+                fields: formFields,
+              });
+            }
+          }
+        } catch (notifyErr) {
+          console.error('Error sending payment notifications:', notifyErr);
+        }
+      })();
     }
 
     return NextResponse.json({ success: true, submissionId: submission.id });
