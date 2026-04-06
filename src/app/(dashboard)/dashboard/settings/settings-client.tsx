@@ -123,8 +123,9 @@ function StripeConnectSection({ workspaceId }: { workspaceId: string }) {
     }
   };
 
+  const [confirmDisconnect, setConfirmDisconnect] = useState(false);
+
   const handleDisconnect = async () => {
-    if (!confirm('Disconnect your Stripe account? Forms with payment fields will stop collecting payments.')) return;
     setDisconnecting(true);
     try {
       await fetch('/api/stripe/connect', {
@@ -133,6 +134,7 @@ function StripeConnectSection({ workspaceId }: { workspaceId: string }) {
         body: JSON.stringify({ workspaceId }),
       });
       setAccount({ connected: false });
+      setConfirmDisconnect(false);
     } catch {
       // ignore
     } finally {
@@ -165,13 +167,31 @@ function StripeConnectSection({ workspaceId }: { workspaceId: string }) {
             </button>
           )}
         </div>
-        <button
-          onClick={handleDisconnect}
-          disabled={disconnecting}
-          className="text-xs text-red-500 hover:text-red-700 cursor-pointer"
-        >
-          {disconnecting ? 'Disconnecting...' : 'Disconnect Stripe account'}
-        </button>
+        {confirmDisconnect ? (
+          <div className="flex items-center gap-3 p-3 bg-red-50 rounded-lg border border-red-100">
+            <p className="text-xs text-red-600 flex-1">Forms with payment fields will stop collecting payments.</p>
+            <button
+              onClick={() => setConfirmDisconnect(false)}
+              className="btn btn-ghost text-xs px-3 py-1.5"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleDisconnect}
+              disabled={disconnecting}
+              className="text-xs font-medium text-white bg-red-500 hover:bg-red-600 px-3 py-1.5 rounded-md transition-colors cursor-pointer"
+            >
+              {disconnecting ? 'Disconnecting...' : 'Disconnect'}
+            </button>
+          </div>
+        ) : (
+          <button
+            onClick={() => setConfirmDisconnect(true)}
+            className="text-xs text-red-500 hover:text-red-700 cursor-pointer"
+          >
+            Disconnect Stripe account
+          </button>
+        )}
       </div>
     );
   }
