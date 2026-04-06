@@ -229,7 +229,14 @@ export async function POST(
         select: { stripeConnectAccountId: true },
       });
 
-      if (workspace?.stripeConnectAccountId) {
+      if (!workspace?.stripeConnectAccountId) {
+        return NextResponse.json(
+          { error: 'Payment is not configured for this form. Please contact the form owner.' },
+          { status: 400, headers: corsHeaders }
+        );
+      }
+
+      {
         try {
           const applicationFee = Math.round((paymentField.amount || 0) * 100 * 0.05); // 5% platform fee
           const checkoutSession = await stripe.checkout.sessions.create({
