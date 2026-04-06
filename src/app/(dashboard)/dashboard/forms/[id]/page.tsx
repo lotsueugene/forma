@@ -519,7 +519,7 @@ export default function FormDetailPage() {
         {hasPaymentField && (
         <div className="card p-4">
           <div className="text-sm text-gray-500 mb-1">Revenue</div>
-          <div className="text-2xl font-semibold text-emerald-600">
+          <div className="text-2xl font-semibold text-gray-900">
             {sym}{totalRevenue.toFixed(2)}
           </div>
           <div className="text-xs text-gray-400 mt-1">{paidCount} paid</div>
