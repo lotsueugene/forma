@@ -53,18 +53,18 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Dynamic career pages
   let careerPages: MetadataRoute.Sitemap = [];
   try {
-    const careers = await prisma.career.findMany({
+    const jobs = await prisma.jobPosting.findMany({
       where: { published: true },
       select: { slug: true, updatedAt: true },
     });
-    careerPages = careers.map((career) => ({
-      url: `${baseUrl}/careers/${career.slug}`,
-      lastModified: career.updatedAt,
+    careerPages = jobs.map((job) => ({
+      url: `${baseUrl}/careers/${job.slug}`,
+      lastModified: job.updatedAt,
       changeFrequency: 'monthly' as const,
       priority: 0.5,
     }));
   } catch {
-    // Career table might not exist yet
+    // Table might not exist yet
   }
 
   return [...staticPages, ...blogPages, ...careerPages];
