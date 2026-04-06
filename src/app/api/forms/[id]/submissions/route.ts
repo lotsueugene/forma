@@ -270,7 +270,6 @@ export async function POST(
             cancel_url: `${request.nextUrl.origin}/f/${id}?payment=cancelled`,
             metadata: {
               formId: form.id,
-              workspaceId: form.workspaceId,
               formData: JSON.stringify(cleanedData),
               submissionMetadata: JSON.stringify(metadata),
             },

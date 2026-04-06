@@ -76,16 +76,16 @@ export async function POST(request: NextRequest) {
               },
             });
 
-            // Increment usage counter
-            if (workspaceId) {
-              await incrementSubmissionCount(workspaceId);
-            }
-
-            // Get form name for notifications
+            // Get form for workspace info and notifications
             const form = await prisma.form.findUnique({
               where: { id: formId },
               select: { name: true, workspaceId: true },
             });
+
+            // Increment usage counter
+            if (form) {
+              await incrementSubmissionCount(form.workspaceId);
+            }
 
             if (form) {
               // Deliver webhooks
