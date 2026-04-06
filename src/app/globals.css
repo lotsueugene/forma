@@ -124,43 +124,49 @@ body {
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  padding: 0.625rem 1rem;
+  padding: 0.625rem 1.125rem;
   font-size: 0.8125rem;
   font-weight: 500;
   font-family: 'Geist Mono Custom', ui-monospace, monospace;
   text-transform: uppercase;
   letter-spacing: -0.015rem;
-  border-radius: 0.25rem;
-  transition: all 150ms ease;
+  border-radius: 0.5rem;
+  transition: all 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
   cursor: pointer;
   border: 1px solid transparent;
   outline: none;
 }
 
 .btn:active {
-  transform: scale(0.98);
+  transform: scale(0.97);
 }
 
 .btn-primary {
   background: var(--accent-100);
   color: white;
   border-color: transparent;
+  box-shadow: 0 1px 3px rgba(239, 111, 46, 0.3), 0 1px 2px rgba(239, 111, 46, 0.2);
 }
 
 .btn-primary:hover {
   background: var(--accent-200);
   color: white;
+  box-shadow: 0 4px 12px rgba(239, 111, 46, 0.35), 0 2px 4px rgba(239, 111, 46, 0.2);
+  transform: translateY(-1px);
 }
 
 .btn-secondary {
   background: white;
   color: var(--neutral-300);
   border-color: var(--neutral-800);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
 }
 
 .btn-secondary:hover {
-  background: var(--neutral-900);
+  background: var(--neutral-1000);
   color: var(--neutral-100);
+  border-color: var(--neutral-700);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
 }
 
 .btn-ghost {
@@ -170,7 +176,7 @@ body {
 
 .btn-ghost:hover {
   color: var(--light-base-secondary);
-  background: var(--neutral-900);
+  background: var(--neutral-1000);
 }
 
 /* Input - Light Theme */
@@ -180,11 +186,11 @@ body {
   padding-inline: 1rem;
   font-size: 0.875rem;
   font-family: 'Geist Mono Custom', ui-monospace, monospace;
-  background: white;
-  border: 1px solid var(--neutral-800);
-  border-radius: 0.5rem;
+  background: var(--neutral-1000);
+  border: 1.5px solid var(--neutral-900);
+  border-radius: 0.625rem;
   color: var(--light-base-secondary);
-  transition: all 150ms ease;
+  transition: all 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
   outline: none;
 }
 
@@ -193,9 +199,14 @@ body {
   padding-left: 2.5rem;
 }
 
+.input:hover {
+  border-color: var(--neutral-700);
+}
+
 .input:focus {
+  background: white;
   border-color: var(--accent-100);
-  box-shadow: 0 0 0 1px var(--accent-100);
+  box-shadow: 0 0 0 3px rgba(239, 111, 46, 0.12);
 }
 
 .input::placeholder {
@@ -205,15 +216,21 @@ body {
 /* Card - Light Theme */
 .card {
   background: white;
-  border: 1px solid var(--neutral-800);
-  border-radius: 0.75rem;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 0.875rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02);
+  transition: box-shadow 200ms ease, border-color 200ms ease;
+}
+
+.card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06), 0 1px 3px rgba(0, 0, 0, 0.04);
 }
 
 .card-elevated {
   background: white;
-  border: 1px solid var(--neutral-800);
-  border-radius: 0.75rem;
-  box-shadow: 0 4px 20px -5px rgba(0,0,0,0.1);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 0.875rem;
+  box-shadow: 0 4px 24px -4px rgba(0,0,0,0.08), 0 2px 8px -2px rgba(0,0,0,0.04);
 }
 
 /* Badge - Light Theme */
@@ -223,11 +240,11 @@ body {
   gap: 0.25rem;
   padding: 0.25rem 0.625rem;
   font-size: 0.6875rem;
-  font-weight: 500;
+  font-weight: 600;
   font-family: 'Geist Mono Custom', ui-monospace, monospace;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  border-radius: 0.25rem;
+  border-radius: 999px;
   border: 1px solid transparent;
 }
 

@@ -92,7 +92,7 @@ function WorkspaceSwitcher() {
 
   if (isLoading || !currentWorkspace) {
     return (
-      <div className="px-4 py-3 border-b border-gray-200">
+      <div className="px-4 py-3 border-b border-black/6">
         <div className="h-10 bg-gray-200 rounded-lg animate-pulse" />
       </div>
     );
@@ -100,7 +100,7 @@ function WorkspaceSwitcher() {
 
   return (
     <>
-      <div className="px-4 py-3 border-b border-gray-200" ref={dropdownRef}>
+      <div className="px-4 py-3 border-b border-black/6" ref={dropdownRef}>
         <button
           onClick={() => setIsOpen(!isOpen)}
           className="w-full flex items-center justify-between p-2 rounded-lg hover:bg-gray-100 transition-colors"
@@ -122,7 +122,7 @@ function WorkspaceSwitcher() {
               initial={{ opacity: 0, y: -8 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -8 }}
-              className="mt-2 py-2 bg-white border border-gray-200 rounded-lg shadow-xl"
+              className="mt-2 py-2 bg-white border border-black/6 rounded-lg shadow-xl"
             >
               {workspaces.map((ws) => (
                 <button
@@ -148,7 +148,7 @@ function WorkspaceSwitcher() {
                   )}
                 </button>
               ))}
-              <div className="border-t border-gray-200 mt-2 pt-2 px-2">
+              <div className="border-t border-black/6 mt-2 pt-2 px-2">
                 <button
                   onClick={() => {
                     setIsOpen(false);
@@ -182,7 +182,7 @@ function WorkspaceSwitcher() {
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="relative w-full max-w-md p-6 bg-white border border-gray-200 rounded-xl shadow-xl"
+              className="relative w-full max-w-md p-6 bg-white border border-black/6 rounded-xl shadow-xl"
             >
               <h2 className="text-lg font-semibold text-gray-900 mb-4">
                 Create New Workspace
@@ -292,7 +292,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
       : user?.email?.slice(0, 2).toUpperCase() || '?';
 
   return (
-    <div className="min-h-screen bg-white flex">
+    <div className="min-h-screen bg-[#f8f9fb] flex">
       {/* Mobile Sidebar Backdrop */}
       <AnimatePresence>
         {sidebarOpen && (
@@ -309,12 +309,12 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
       {/* Sidebar */}
       <aside
         className={cn(
-          'fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-gray-200 flex flex-col transition-transform duration-300 lg:translate-x-0 lg:static',
+          'fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-black/6 flex flex-col transition-transform duration-300 lg:translate-x-0 lg:static shadow-[1px_0_12px_rgba(0,0,0,0.03)]',
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
         )}
       >
         {/* Logo */}
-        <div className="h-16 flex items-center justify-between px-4 border-b border-gray-200">
+        <div className="h-16 flex items-center justify-between px-4 border-b border-black/6">
           <Link href="/dashboard" className="flex items-center gap-2">
             <Stack size={24} weight="fill" className="text-gray-900" />
             <span className="font-sans text-xl font-medium tracking-[-0.04em] text-gray-900">
@@ -345,10 +345,10 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
                 key={item.name}
                 href={item.href}
                 className={cn(
-                  'flex items-center gap-3 px-3 py-2.5 rounded-lg font-mono text-[13px] uppercase tracking-[-0.015rem] transition-colors',
+                  'flex items-center gap-3 px-3 py-2.5 rounded-lg font-mono text-[13px] uppercase tracking-[-0.015rem] transition-all duration-200',
                   isActive
-                    ? 'bg-safety-orange/10 text-safety-orange'
-                    : 'text-gray-700 hover:text-gray-900 hover:bg-gray-100'
+                    ? 'bg-safety-orange/8 text-safety-orange shadow-[inset_0_0_0_1px_rgba(239,111,46,0.12)]'
+                    : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'
                 )}
               >
                 <item.icon
@@ -363,10 +363,10 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
         </nav>
 
         {/* Create Form Button */}
-        <div className="p-4 border-t border-gray-200">
+        <div className="p-4 border-t border-black/6">
           <Link
             href="/dashboard/forms/new"
-            className="w-full flex items-center justify-center gap-2 py-3 font-mono text-[13px] uppercase tracking-[-0.015rem] bg-safety-orange text-white rounded-sm hover:bg-accent-200 border border-transparent transition-colors duration-150"
+            className="w-full flex items-center justify-center gap-2 py-3 font-mono text-[13px] uppercase tracking-[-0.015rem] bg-safety-orange text-white rounded-lg hover:bg-accent-200 border border-transparent transition-all duration-200 shadow-[0_2px_8px_rgba(239,111,46,0.3)] hover:shadow-[0_4px_16px_rgba(239,111,46,0.4)] hover:-translate-y-0.5"
           >
             <Plus size={18} weight="bold" />
             Create Form
@@ -374,7 +374,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
         </div>
 
         {/* User Section */}
-        <div className="p-4 border-t border-gray-200">
+        <div className="p-4 border-t border-black/6">
           <div className="relative" ref={userMenuRef}>
             <button
               type="button"
@@ -410,7 +410,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
                   initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: 8 }}
-                  className="absolute bottom-full left-0 right-0 mb-2 p-2 bg-white border border-gray-200 rounded-lg shadow-lg"
+                  className="absolute bottom-full left-0 right-0 mb-2 p-2 bg-white border border-black/6 rounded-lg shadow-lg"
                 >
                   {isAdmin && (
                     <Link
@@ -445,7 +445,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
       {/* Main Content */}
       <div className="flex-1 flex flex-col min-h-screen">
         {/* Top Bar */}
-        <header className="h-16 flex items-center justify-between px-4 lg:px-6 border-b border-gray-200 bg-white sticky top-0 z-30">
+        <header className="h-16 flex items-center justify-between px-4 lg:px-6 border-b border-black/6 bg-white/80 backdrop-blur-xl sticky top-0 z-30">
           <div className="flex items-center gap-4">
             {/* Mobile Menu Toggle */}
             <button
@@ -467,7 +467,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
         </header>
 
         {/* Page Content */}
-        <main className="flex-1 p-4 lg:p-6">
+        <main className="flex-1 p-4 lg:p-8">
           <AnnouncementBanner />
           <UpgradeBanner />
           {children}
