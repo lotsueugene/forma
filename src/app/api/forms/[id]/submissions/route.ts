@@ -9,7 +9,7 @@ import { deliverSubmissionCreatedWebhook } from '@/lib/webhooks';
 import { checkSpam, parseSpamSettings, cleanSpamFields } from '@/lib/spam-protection';
 import { sendSubmissionNotification, isEmailConfigured } from '@/lib/email';
 import { deliverToIntegrations } from '@/lib/integrations';
-import { stripe } from '@/lib/stripe';
+import { stripe, getPlatformFeePercentage } from '@/lib/stripe';
 
 // Geolocation lookup using ip-api.com (free, no API key needed)
 async function fetchGeolocation(ip: string): Promise<{
@@ -247,7 +247,8 @@ export async function POST(
 
       {
         try {
-          const applicationFee = Math.round((paymentField.amount || 0) * 100 * 0.05); // 5% platform fee
+          const feePercent = await getPlatformFeePercentage();
+          const applicationFee = Math.round((paymentField.amount || 0) * 100 * (feePercent / 100));
           const checkoutSession = await stripe.checkout.sessions.create({
             payment_method_types: ['card'],
             line_items: [{

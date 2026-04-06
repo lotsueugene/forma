@@ -70,6 +70,25 @@ export const PLAN_LIMITS = {
 export type PlanType = keyof typeof PLAN_LIMITS;
 export type PlanFeatures = typeof PLAN_LIMITS.free.features;
 
+// Platform fee percentage — read from SiteSetting, cached for 60 seconds
+let cachedFee: { value: number; fetchedAt: number } | null = null;
+
+export async function getPlatformFeePercentage(): Promise<number> {
+  if (cachedFee && Date.now() - cachedFee.fetchedAt < 60_000) {
+    return cachedFee.value;
+  }
+  try {
+    const setting = await prisma.siteSetting.findUnique({
+      where: { key: 'platform_fee_percentage' },
+    });
+    const value = setting ? parseFloat(setting.value) : 5;
+    cachedFee = { value, fetchedAt: Date.now() };
+    return value;
+  } catch {
+    return 5; // default 5%
+  }
+}
+
 // Map plan types to PricingPlan slugs
 const PLAN_TO_SLUG: Record<PlanType, string> = {
   free: 'starter',
