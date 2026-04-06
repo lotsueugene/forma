@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { stripe } from '@/lib/stripe';
-import { upgradeToProPlan, downgradeToFreePlan } from '@/lib/subscription';
+import { upgradeToProPlan, downgradeToFreePlan, incrementSubmissionCount } from '@/lib/subscription';
 import Stripe from 'stripe';
 import { prisma } from '@/lib/prisma';
 import { publishToUser } from '@/lib/notifications/pubsub';
+import { deliverSubmissionCreatedWebhook } from '@/lib/webhooks';
+import { deliverToIntegrations } from '@/lib/integrations';
 
 // This needs to be exported for Next.js to handle raw body
 export const runtime = 'nodejs';
@@ -47,6 +49,77 @@ export async function POST(request: NextRequest) {
       case 'checkout.session.completed': {
         const session = event.data.object as Stripe.Checkout.Session;
         const workspaceId = session.metadata?.workspaceId;
+
+        // Handle form payment completion — create submission after successful payment
+        if (session.metadata?.formId && session.metadata?.formData && session.mode === 'payment') {
+          try {
+            const formId = session.metadata.formId;
+            const formData = JSON.parse(session.metadata.formData);
+            const submissionMetadata = session.metadata.submissionMetadata
+              ? JSON.parse(session.metadata.submissionMetadata)
+              : {};
+
+            // Add payment info to metadata
+            submissionMetadata.payment = {
+              status: 'paid',
+              amount: session.amount_total ? session.amount_total / 100 : 0,
+              currency: session.currency,
+              stripeSessionId: session.id,
+              paidAt: new Date().toISOString(),
+            };
+
+            const submission = await prisma.submission.create({
+              data: {
+                formId,
+                data: JSON.stringify(formData),
+                metadata: JSON.stringify(submissionMetadata),
+              },
+            });
+
+            // Increment usage counter
+            if (workspaceId) {
+              await incrementSubmissionCount(workspaceId);
+            }
+
+            // Get form name for notifications
+            const form = await prisma.form.findUnique({
+              where: { id: formId },
+              select: { name: true, workspaceId: true },
+            });
+
+            if (form) {
+              // Deliver webhooks
+              deliverSubmissionCreatedWebhook({
+                event: 'submission.created',
+                data: {
+                  submissionId: submission.id,
+                  formId,
+                  formName: form.name,
+                  workspaceId: form.workspaceId,
+                  submittedAt: submission.createdAt.toISOString(),
+                  submission: formData,
+                  metadata: submissionMetadata,
+                },
+              }).catch((err) => console.error('Webhook delivery error:', err));
+
+              // Deliver to integrations
+              deliverToIntegrations({
+                submissionId: submission.id,
+                formId,
+                formName: form.name,
+                workspaceId: form.workspaceId,
+                submittedAt: submission.createdAt.toISOString(),
+                data: formData,
+                metadata: submissionMetadata,
+              }).catch((err) => console.error('Integration delivery error:', err));
+            }
+
+            console.log(`Payment submission created: ${submission.id} for form ${formId}`);
+          } catch (err) {
+            console.error('Error creating paid submission:', err);
+          }
+          break;
+        }
 
         if (workspaceId && session.subscription) {
           // Fetch the subscription to get details

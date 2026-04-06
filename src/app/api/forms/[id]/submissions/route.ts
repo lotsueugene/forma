@@ -219,6 +219,60 @@ export async function POST(
       submittedAt: new Date().toISOString(),
     };
 
+    // Check if form has a payment field — if so, redirect to Stripe before saving
+    const formFields = JSON.parse(form.fields) as Array<{ type: string; amount?: number; currency?: string; label?: string }>;
+    const paymentField = formFields.find((f) => f.type === 'payment' && f.amount && f.amount > 0);
+
+    if (paymentField && stripe) {
+      const workspace = await prisma.workspace.findUnique({
+        where: { id: form.workspaceId },
+        select: { stripeConnectAccountId: true },
+      });
+
+      if (workspace?.stripeConnectAccountId) {
+        try {
+          const applicationFee = Math.round((paymentField.amount || 0) * 100 * 0.05); // 5% platform fee
+          const checkoutSession = await stripe.checkout.sessions.create({
+            payment_method_types: ['card'],
+            line_items: [{
+              price_data: {
+                currency: paymentField.currency || 'usd',
+                product_data: {
+                  name: form.name,
+                  description: paymentField.label || 'Form payment',
+                },
+                unit_amount: Math.round((paymentField.amount || 0) * 100),
+              },
+              quantity: 1,
+            }],
+            mode: 'payment',
+            payment_intent_data: {
+              application_fee_amount: applicationFee,
+            },
+            success_url: `${request.nextUrl.origin}/f/${id}?payment=success`,
+            cancel_url: `${request.nextUrl.origin}/f/${id}?payment=cancelled`,
+            metadata: {
+              formId: form.id,
+              workspaceId: form.workspaceId,
+              formData: JSON.stringify(cleanedData),
+              submissionMetadata: JSON.stringify(metadata),
+            },
+          }, {
+            stripeAccount: workspace.stripeConnectAccountId,
+          });
+
+          return NextResponse.json({
+            success: true,
+            paymentUrl: checkoutSession.url,
+            pendingPayment: true,
+          }, { headers: corsHeaders });
+        } catch (paymentErr) {
+          console.error('Error creating payment session:', paymentErr);
+          // Fall through to save submission without payment
+        }
+      }
+    }
+
     // Fetch geolocation data (non-blocking, we'll update submission after)
     const geoPromise = ip ? fetchGeolocation(ip) : Promise.resolve(null);
 
@@ -228,7 +282,7 @@ export async function POST(
       data: { views: { increment: 1 } },
     });
 
-    // Create submission
+    // Create submission (only for non-payment forms, or if payment setup failed)
     const submission = await prisma.submission.create({
       data: {
         formId: id,
@@ -384,65 +438,6 @@ export async function POST(
         }
       }
     });
-
-    // Check if form has a payment field and process payment
-    const formFields = JSON.parse(form.fields) as Array<{ type: string; amount?: number; currency?: string; label?: string }>;
-    const paymentField = formFields.find((f) => f.type === 'payment' && f.amount && f.amount > 0);
-
-    if (paymentField && stripe) {
-      // Get workspace's connected Stripe account
-      const workspace = await prisma.workspace.findUnique({
-        where: { id: form.workspaceId },
-        select: { stripeConnectAccountId: true },
-      });
-
-      if (!workspace?.stripeConnectAccountId) {
-        // No connected account - skip payment, submission still saved
-        console.warn(`Form ${id} has payment field but workspace has no connected Stripe account`);
-      } else {
-      try {
-        const applicationFee = Math.round((paymentField.amount || 0) * 100 * 0.05); // 5% platform fee
-        const session = await stripe.checkout.sessions.create({
-          payment_method_types: ['card'],
-          line_items: [{
-            price_data: {
-              currency: paymentField.currency || 'usd',
-              product_data: {
-                name: form.name,
-                description: paymentField.label || 'Form payment',
-              },
-              unit_amount: Math.round((paymentField.amount || 0) * 100),
-            },
-            quantity: 1,
-          }],
-          mode: 'payment',
-          payment_intent_data: {
-            application_fee_amount: applicationFee,
-          },
-          success_url: `${request.nextUrl.origin}/f/${id}?payment=success&session_id={CHECKOUT_SESSION_ID}`,
-          cancel_url: `${request.nextUrl.origin}/f/${id}?payment=cancelled`,
-          metadata: {
-            submissionId: submission.id,
-            formId: form.id,
-          },
-        }, {
-          stripeAccount: workspace.stripeConnectAccountId,
-        });
-
-        return NextResponse.json({
-          success: true,
-          submission: {
-            id: submission.id,
-            createdAt: submission.createdAt,
-          },
-          paymentUrl: session.url,
-        }, { headers: corsHeaders });
-      } catch (paymentErr) {
-        console.error('Error creating payment session:', paymentErr);
-        // Still return success - submission was created, payment just failed
-      }
-      } // close else block for connected account check
-    }
 
     // Handle redirect for HTML form submissions
     if (redirectUrl) {
