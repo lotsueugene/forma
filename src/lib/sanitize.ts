@@ -36,6 +36,14 @@ export function markdownToSafeHtml(content: string): string {
   let inTable = false;
   let inTableHead = false;
   let inCodeBlock = false;
+  let paragraphLines: string[] = [];
+
+  const flushParagraph = () => {
+    if (paragraphLines.length > 0) {
+      result.push(`<p>${paragraphLines.join('<br>')}</p>`);
+      paragraphLines = [];
+    }
+  };
 
   for (let i = 0; i < lines.length; i++) {
     let line = lines[i];
@@ -65,6 +73,7 @@ export function markdownToSafeHtml(content: string): string {
 
     // Horizontal rule
     if (/^---+$/.test(line.trim())) {
+      flushParagraph();
       if (inList) { result.push('</ul>'); inList = false; }
       if (inTable) { result.push('</tbody></table>'); inTable = false; }
       result.push('<hr>');
@@ -73,18 +82,21 @@ export function markdownToSafeHtml(content: string): string {
 
     // Headers
     if (line.startsWith('### ')) {
+      flushParagraph();
       if (inList) { result.push('</ul>'); inList = false; }
       if (inTable) { result.push('</tbody></table>'); inTable = false; }
       result.push(`<h3>${line.slice(4)}</h3>`);
       continue;
     }
     if (line.startsWith('## ')) {
+      flushParagraph();
       if (inList) { result.push('</ul>'); inList = false; }
       if (inTable) { result.push('</tbody></table>'); inTable = false; }
       result.push(`<h2>${line.slice(3)}</h2>`);
       continue;
     }
     if (line.startsWith('# ')) {
+      flushParagraph();
       if (inList) { result.push('</ul>'); inList = false; }
       if (inTable) { result.push('</tbody></table>'); inTable = false; }
       result.push(`<h1>${line.slice(2)}</h1>`);
@@ -99,6 +111,7 @@ export function markdownToSafeHtml(content: string): string {
         continue;
       }
       if (!inTable) {
+        flushParagraph();
         if (inList) { result.push('</ul>'); inList = false; }
         result.push('<table><thead>');
         inTable = true;
@@ -121,6 +134,7 @@ export function markdownToSafeHtml(content: string): string {
     // Unordered list items
     if (/^[\-\*] (.+)$/.test(line.trim())) {
       if (!inList) {
+        flushParagraph();
         result.push('<ul>');
         inList = true;
       }
@@ -132,18 +146,20 @@ export function markdownToSafeHtml(content: string): string {
       continue;
     }
 
-    // Empty line
+    // Empty line — flush paragraph
     if (line.trim() === '') {
+      flushParagraph();
       if (inList) { result.push('</ul>'); inList = false; }
       continue;
     }
 
-    // Paragraph
+    // Text line — accumulate into paragraph
     if (inList) { result.push('</ul>'); inList = false; }
-    result.push(`<p>${line}</p>`);
+    paragraphLines.push(line);
   }
 
   // Close any open tags
+  flushParagraph();
   if (inList) result.push('</ul>');
   if (inTable) result.push('</tbody></table>');
   if (inCodeBlock) result.push('</code></pre>');
