@@ -48,6 +48,10 @@ interface FormField {
   options?: string[];
   condition?: FieldCondition;
   defaultValue?: string;
+  mediaUrl?: string;
+  amount?: number;
+  currency?: string;
+  nextPage?: number;
 }
 
 // Evaluate if a field's condition is met
@@ -122,8 +126,9 @@ export default function FormPageClient({ formId }: FormPageClientProps) {
   }, []);
 
   // Split fields into pages based on page_break fields
-  const getPages = (fields: FormField[]): FormField[][] => {
+  const getPages = (fields: FormField[]): { pages: FormField[][]; breaks: (FormField | null)[] } => {
     const pages: FormField[][] = [];
+    const breaks: (FormField | null)[] = [null]; // first page has no page_break
     let currentPage: FormField[] = [];
 
     fields.forEach((field) => {
@@ -132,6 +137,7 @@ export default function FormPageClient({ formId }: FormPageClientProps) {
           pages.push(currentPage);
           currentPage = [];
         }
+        breaks.push(field);
       } else {
         currentPage.push(field);
       }
@@ -141,14 +147,29 @@ export default function FormPageClient({ formId }: FormPageClientProps) {
       pages.push(currentPage);
     }
 
-    return pages.length > 0 ? pages : [[]];
+    return { pages: pages.length > 0 ? pages : [[]], breaks };
   };
 
-  const pages = form ? getPages(form.fields) : [[]];
+  const { pages, breaks: pageBreaks } = form ? getPages(form.fields) : { pages: [[]], breaks: [null] };
   const totalSteps = pages.length;
   const isMultiStep = totalSteps > 1;
   const isLastStep = currentStep === totalSteps - 1;
   const currentPageFields = pages[currentStep] || [];
+
+  const goToNextPage = () => {
+    // Check if the current page's trailing page_break has a branch target
+    const nextBreak = pageBreaks[currentStep + 1];
+    if (nextBreak?.nextPage === -1) {
+      // Skip to submit
+      return true; // signal to submit
+    }
+    if (nextBreak?.nextPage !== undefined && nextBreak.nextPage !== null) {
+      setCurrentStep(nextBreak.nextPage);
+    } else {
+      setCurrentStep((prev) => prev + 1);
+    }
+    return false;
+  };
 
   useEffect(() => {
     if (formId) {
@@ -233,6 +254,14 @@ export default function FormPageClient({ formId }: FormPageClientProps) {
       if (!response.ok) {
         const data = await response.json();
         setError(data.error || 'Failed to submit form');
+        return;
+      }
+
+      const result = await response.json();
+
+      // If payment is required, redirect to Stripe Checkout
+      if (result.paymentUrl) {
+        window.location.href = result.paymentUrl;
         return;
       }
 
@@ -483,7 +512,8 @@ export default function FormPageClient({ formId }: FormPageClientProps) {
                     if (isLastStep) {
                       handleSubmit(e);
                     } else {
-                      setCurrentStep((prev) => prev + 1);
+                      const shouldSubmit = goToNextPage();
+                      if (shouldSubmit) handleSubmit(e);
                     }
                   }}
                   className="rounded-2xl p-6 sm:p-8 space-y-7"
@@ -739,6 +769,59 @@ function renderField(
           ))}
         </div>
       );
+    case 'image':
+      return field.mediaUrl ? (
+        <div className="rounded-xl overflow-hidden">
+          <img
+            src={field.mediaUrl}
+            alt={field.label}
+            className="w-full h-auto max-h-80 object-cover rounded-xl"
+            loading="lazy"
+          />
+        </div>
+      ) : (
+        <div className="rounded-xl border-2 border-dashed border-current/10 p-8 text-center opacity-50">
+          <p className="text-sm">No image URL configured</p>
+        </div>
+      );
+    case 'video': {
+      const videoUrl = field.mediaUrl || '';
+      let embedUrl = '';
+      // YouTube
+      const ytMatch = videoUrl.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]+)/);
+      if (ytMatch) embedUrl = `https://www.youtube.com/embed/${ytMatch[1]}`;
+      // Vimeo
+      const vimeoMatch = videoUrl.match(/vimeo\.com\/(\d+)/);
+      if (vimeoMatch) embedUrl = `https://player.vimeo.com/video/${vimeoMatch[1]}`;
+
+      return embedUrl ? (
+        <div className="rounded-xl overflow-hidden aspect-video">
+          <iframe
+            src={embedUrl}
+            className="w-full h-full"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
+            title={field.label}
+          />
+        </div>
+      ) : (
+        <div className="rounded-xl border-2 border-dashed border-current/10 p-8 text-center opacity-50">
+          <p className="text-sm">No valid video URL configured</p>
+        </div>
+      );
+    }
+    case 'payment': {
+      const currencySymbols: Record<string, string> = { usd: '$', eur: '€', gbp: '£', cad: 'C$', aud: 'A$' };
+      const symbol = currencySymbols[field.currency || 'usd'] || '$';
+      return (
+        <div className="rounded-xl p-5 text-center" style={{ backgroundColor: 'rgba(0,0,0,0.03)', border: '1px solid rgba(0,0,0,0.06)' }}>
+          <div className="text-3xl font-bold mb-1">{symbol}{(field.amount || 0).toFixed(2)}</div>
+          <p className="text-sm opacity-60 mb-3">{(field.currency || 'usd').toUpperCase()} · One-time payment</p>
+          <p className="text-xs opacity-40">Payment will be processed securely via Stripe after submission</p>
+          <input type="hidden" name={field.id} value="pending" />
+        </div>
+      );
+    }
     default:
       return null;
   }

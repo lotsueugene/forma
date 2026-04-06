@@ -9,6 +9,7 @@ import { deliverSubmissionCreatedWebhook } from '@/lib/webhooks';
 import { checkSpam, parseSpamSettings, cleanSpamFields } from '@/lib/spam-protection';
 import { sendSubmissionNotification, isEmailConfigured } from '@/lib/email';
 import { deliverToIntegrations } from '@/lib/integrations';
+import { stripe } from '@/lib/stripe';
 
 // Geolocation lookup using ip-api.com (free, no API key needed)
 async function fetchGeolocation(ip: string): Promise<{
@@ -383,6 +384,48 @@ export async function POST(
         }
       }
     });
+
+    // Check if form has a payment field and process payment
+    const formFields = JSON.parse(form.fields) as Array<{ type: string; amount?: number; currency?: string; label?: string }>;
+    const paymentField = formFields.find((f) => f.type === 'payment' && f.amount && f.amount > 0);
+
+    if (paymentField && stripe) {
+      try {
+        const session = await stripe.checkout.sessions.create({
+          payment_method_types: ['card'],
+          line_items: [{
+            price_data: {
+              currency: paymentField.currency || 'usd',
+              product_data: {
+                name: form.name,
+                description: paymentField.label || 'Form payment',
+              },
+              unit_amount: Math.round((paymentField.amount || 0) * 100),
+            },
+            quantity: 1,
+          }],
+          mode: 'payment',
+          success_url: `${request.nextUrl.origin}/f/${id}?payment=success&session_id={CHECKOUT_SESSION_ID}`,
+          cancel_url: `${request.nextUrl.origin}/f/${id}?payment=cancelled`,
+          metadata: {
+            submissionId: submission.id,
+            formId: form.id,
+          },
+        });
+
+        return NextResponse.json({
+          success: true,
+          submission: {
+            id: submission.id,
+            createdAt: submission.createdAt,
+          },
+          paymentUrl: session.url,
+        }, { headers: corsHeaders });
+      } catch (paymentErr) {
+        console.error('Error creating payment session:', paymentErr);
+        // Still return success - submission was created, payment just failed
+      }
+    }
 
     // Handle redirect for HTML form submissions
     if (redirectUrl) {

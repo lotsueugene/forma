@@ -34,6 +34,9 @@ import {
   Gear,
   Palette,
   CheckCircle,
+  Image as ImageIcon,
+  VideoCamera,
+  CreditCard,
 } from '@phosphor-icons/react';
 import { cn, generateId } from '@/lib/utils';
 import { useWorkspace } from '@/contexts/workspace-context';
@@ -66,7 +69,10 @@ type FieldType =
   | 'rating'
   | 'url'
   | 'page_break'
-  | 'hidden';
+  | 'hidden'
+  | 'image'
+  | 'video'
+  | 'payment';
 
 type ConditionOperator = 'equals' | 'not_equals' | 'contains' | 'not_empty' | 'is_empty';
 
@@ -85,6 +91,10 @@ interface FormField {
   options?: string[];
   condition?: FieldCondition;
   defaultValue?: string;
+  mediaUrl?: string;
+  amount?: number;
+  currency?: string;
+  nextPage?: number;
 }
 
 const fieldTypes: { type: FieldType; label: string; icon: typeof TextT }[] = [
@@ -102,6 +112,9 @@ const fieldTypes: { type: FieldType; label: string; icon: typeof TextT }[] = [
   { type: 'url', label: 'URL', icon: LinkIcon },
   { type: 'page_break', label: 'Page Break', icon: ArrowsDownUp },
   { type: 'hidden', label: 'Hidden Field', icon: EyeSlash },
+  { type: 'image', label: 'Image', icon: ImageIcon },
+  { type: 'video', label: 'Video', icon: VideoCamera },
+  { type: 'payment', label: 'Payment', icon: CreditCard },
 ];
 
 const getDefaultLabel = (type: FieldType) => {
@@ -120,6 +133,9 @@ const getDefaultLabel = (type: FieldType) => {
     url: 'Website URL',
     page_break: 'Page Break',
     hidden: 'Hidden Field',
+    image: 'Image',
+    video: 'Video',
+    payment: 'Payment',
   };
   return labels[type];
 };
@@ -164,10 +180,10 @@ function DraggableFieldItem({
       }}
       style={{ position: 'relative' }}
       className={cn(
-        (field.type === 'page_break' || field.type === 'hidden')
+        (['page_break', 'hidden', 'image', 'video'].includes(field.type))
           ? 'relative py-2'
           : 'card p-4',
-        field.type !== 'page_break' && field.type !== 'hidden' && (
+        !['page_break', 'hidden', 'image', 'video'].includes(field.type) && (
           isSelected
             ? 'ring-2 ring-safety-orange border-transparent'
             : 'hover:border-gray-300'
@@ -175,7 +191,24 @@ function DraggableFieldItem({
       )}
       onClick={onSelect}
     >
-      {field.type === 'hidden' ? (
+      {(field.type === 'image' || field.type === 'video') ? (
+        <div className={cn(
+          'flex items-center gap-3 py-2 px-4 rounded-lg border-2 border-dashed transition-all',
+          isSelected ? 'border-safety-orange bg-safety-orange/5' : 'border-gray-300 hover:border-gray-400'
+        )}>
+          <div onPointerDown={(e) => dragControls.start(e)} className="cursor-grab active:cursor-grabbing text-gray-400 hover:text-gray-600 touch-none">
+            <DotsSixVertical size={20} />
+          </div>
+          <div className="flex-1 flex items-center gap-3 min-w-0">
+            {field.type === 'image' ? <ImageIcon size={18} className="text-blue-500 shrink-0" /> : <VideoCamera size={18} className="text-purple-500 shrink-0" />}
+            <span className="text-sm font-medium text-gray-600">{field.label}</span>
+            {field.mediaUrl && <span className="text-xs text-gray-400 truncate">{field.mediaUrl}</span>}
+          </div>
+          <button onClick={(e) => { e.stopPropagation(); onDelete(); }} className="p-1.5 text-gray-400 hover:text-red-500 rounded hover:bg-gray-100" title="Delete">
+            <Trash size={16} />
+          </button>
+        </div>
+      ) : field.type === 'hidden' ? (
         <div className={cn(
           'flex items-center gap-3 py-2 px-4 rounded-lg border-2 border-dashed transition-all',
           isSelected
@@ -716,8 +749,45 @@ export default function NewFormPage() {
                   </div>
                 )}
 
+                {/* Media URL (for image/video fields) */}
+                {(selectedField.type === 'image' || selectedField.type === 'video') && (
+                  <div className="form-field">
+                    <label className="form-label">{selectedField.type === 'image' ? 'Image URL' : 'Video URL'}</label>
+                    <input
+                      type="url"
+                      value={selectedField.mediaUrl || ''}
+                      onChange={(e) => updateField(selectedField.id, { mediaUrl: e.target.value })}
+                      className="input"
+                      placeholder={selectedField.type === 'image' ? 'https://example.com/photo.jpg' : 'https://youtube.com/watch?v=...'}
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      {selectedField.type === 'image' ? 'Direct link to an image (JPG, PNG, GIF, WebP)' : 'YouTube or Vimeo URL'}
+                    </p>
+                  </div>
+                )}
+
+                {/* Payment settings */}
+                {selectedField.type === 'payment' && (
+                  <div className="space-y-3">
+                    <div className="form-field">
+                      <label className="form-label">Amount</label>
+                      <input type="number" min="0.50" step="0.01" value={selectedField.amount || ''} onChange={(e) => updateField(selectedField.id, { amount: parseFloat(e.target.value) || 0 })} className="input" placeholder="10.00" />
+                    </div>
+                    <div className="form-field">
+                      <label className="form-label">Currency</label>
+                      <select value={selectedField.currency || 'usd'} onChange={(e) => updateField(selectedField.id, { currency: e.target.value })} className="input">
+                        <option value="usd">USD ($)</option>
+                        <option value="eur">EUR (€)</option>
+                        <option value="gbp">GBP (£)</option>
+                        <option value="cad">CAD ($)</option>
+                        <option value="aud">AUD ($)</option>
+                      </select>
+                    </div>
+                  </div>
+                )}
+
                 {/* Placeholder */}
-                {!['checkbox', 'radio', 'file', 'rating', 'hidden'].includes(selectedField.type) && (
+                {!['checkbox', 'radio', 'file', 'rating', 'hidden', 'image', 'video', 'payment'].includes(selectedField.type) && (
                   <div className="form-field">
                     <label className="form-label">Placeholder</label>
                     <input
