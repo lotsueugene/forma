@@ -30,9 +30,27 @@ import {
   ArrowsDownUp,
   Sparkle,
   Spinner,
+  EyeSlash,
+  Gear,
+  Palette,
+  CheckCircle,
 } from '@phosphor-icons/react';
 import { cn, generateId } from '@/lib/utils';
 import { useWorkspace } from '@/contexts/workspace-context';
+
+interface FormSettings {
+  branding?: {
+    accentColor?: string;
+    backgroundColor?: string;
+    textColor?: string;
+  };
+  thankYou?: {
+    heading?: string;
+    message?: string;
+    redirectUrl?: string;
+    showBranding?: boolean;
+  };
+}
 
 type FieldType =
   | 'text'
@@ -47,7 +65,8 @@ type FieldType =
   | 'file'
   | 'rating'
   | 'url'
-  | 'page_break';
+  | 'page_break'
+  | 'hidden';
 
 type ConditionOperator = 'equals' | 'not_equals' | 'contains' | 'not_empty' | 'is_empty';
 
@@ -65,6 +84,7 @@ interface FormField {
   required: boolean;
   options?: string[];
   condition?: FieldCondition;
+  defaultValue?: string;
 }
 
 const fieldTypes: { type: FieldType; label: string; icon: typeof TextT }[] = [
@@ -81,6 +101,7 @@ const fieldTypes: { type: FieldType; label: string; icon: typeof TextT }[] = [
   { type: 'rating', label: 'Rating', icon: Star },
   { type: 'url', label: 'URL', icon: LinkIcon },
   { type: 'page_break', label: 'Page Break', icon: ArrowsDownUp },
+  { type: 'hidden', label: 'Hidden Field', icon: EyeSlash },
 ];
 
 const getDefaultLabel = (type: FieldType) => {
@@ -98,6 +119,7 @@ const getDefaultLabel = (type: FieldType) => {
     rating: 'Rating',
     url: 'Website URL',
     page_break: 'Page Break',
+    hidden: 'Hidden Field',
   };
   return labels[type];
 };
@@ -142,10 +164,10 @@ function DraggableFieldItem({
       }}
       style={{ position: 'relative' }}
       className={cn(
-        field.type === 'page_break'
+        (field.type === 'page_break' || field.type === 'hidden')
           ? 'relative py-2'
           : 'card p-4',
-        field.type !== 'page_break' && (
+        field.type !== 'page_break' && field.type !== 'hidden' && (
           isSelected
             ? 'ring-2 ring-safety-orange border-transparent'
             : 'hover:border-gray-300'
@@ -153,7 +175,35 @@ function DraggableFieldItem({
       )}
       onClick={onSelect}
     >
-      {field.type === 'page_break' ? (
+      {field.type === 'hidden' ? (
+        <div className={cn(
+          'flex items-center gap-3 py-2 px-4 rounded-lg border-2 border-dashed transition-all',
+          isSelected
+            ? 'border-safety-orange bg-safety-orange/5'
+            : 'border-gray-300 hover:border-gray-400'
+        )}>
+          <div
+            onPointerDown={(e) => dragControls.start(e)}
+            className="cursor-grab active:cursor-grabbing text-gray-400 hover:text-gray-600 touch-none"
+          >
+            <DotsSixVertical size={20} />
+          </div>
+          <div className="flex-1 flex items-center gap-3">
+            <EyeSlash size={18} className="text-gray-400" />
+            <span className="text-sm font-medium text-gray-600">{field.label}</span>
+            {field.defaultValue && (
+              <span className="text-xs text-gray-400">= {field.defaultValue.startsWith('{{') ? field.defaultValue : `"${field.defaultValue}"`}</span>
+            )}
+          </div>
+          <button
+            onClick={(e) => { e.stopPropagation(); onDelete(); }}
+            className="p-1.5 text-gray-400 hover:text-red-500 rounded hover:bg-gray-100"
+            title="Delete"
+          >
+            <Trash size={16} />
+          </button>
+        </div>
+      ) : field.type === 'page_break' ? (
         /* Page Break Divider */
         <div className={cn(
           'flex items-center gap-3 py-2 px-4 rounded-lg border-2 border-dashed transition-all',
@@ -271,6 +321,8 @@ export default function NewFormPage() {
   const [showAIModal, setShowAIModal] = useState(false);
   const [aiPrompt, setAIPrompt] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
+  const [formSettings, setFormSettings] = useState<FormSettings>({});
+  const [showFormSettings, setShowFormSettings] = useState(false);
 
   const fieldPickerRef = useRef<HTMLDivElement>(null);
   const aiModalRef = useRef<HTMLDivElement>(null);
@@ -381,6 +433,7 @@ export default function NewFormPage() {
           description: formDescription,
           fields,
           status,
+          settings: formSettings,
           workspaceId: currentWorkspace?.id,
         }),
       });
@@ -424,6 +477,17 @@ export default function NewFormPage() {
           {error && (
             <span className="text-red-600 text-sm mr-2 hidden sm:block">{error}</span>
           )}
+          <button
+            onClick={() => { setShowFormSettings(true); setSelectedFieldId(null); }}
+            className={cn(
+              'btn btn-secondary px-2 sm:px-3',
+              showFormSettings && 'ring-2 ring-safety-orange'
+            )}
+            title="Form Settings"
+          >
+            <Gear size={18} />
+            <span className="hidden sm:inline">Settings</span>
+          </button>
           <button
             onClick={() => setShowAIModal(true)}
             className="btn btn-secondary bg-safety-orange/10 border-safety-orange/30 text-safety-orange hover:bg-safety-orange/20 px-2 sm:px-3 hidden sm:flex"
@@ -496,7 +560,7 @@ export default function NewFormPage() {
                   index={index}
                   fields={fields}
                   isSelected={selectedFieldId === field.id}
-                  onSelect={() => setSelectedFieldId(field.id)}
+                  onSelect={() => { setSelectedFieldId(field.id); setShowFormSettings(false); }}
                   onDuplicate={() => duplicateField(field.id)}
                   onDelete={() => deleteField(field.id)}
                 />
@@ -623,8 +687,27 @@ export default function NewFormPage() {
                   />
                 </div>
 
+                {/* Default Value / URL Parameter (for hidden fields) */}
+                {selectedField.type === 'hidden' && (
+                  <div className="form-field">
+                    <label className="form-label">Default Value</label>
+                    <input
+                      type="text"
+                      value={selectedField.defaultValue || ''}
+                      onChange={(e) =>
+                        updateField(selectedField.id, { defaultValue: e.target.value })
+                      }
+                      className="input"
+                      placeholder="e.g. {{utm_source}} or static value"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      Use <code className="bg-gray-100 px-1 rounded">{'{{param}}'}</code> to capture URL parameters
+                    </p>
+                  </div>
+                )}
+
                 {/* Placeholder */}
-                {!['checkbox', 'radio', 'file', 'rating'].includes(selectedField.type) && (
+                {!['checkbox', 'radio', 'file', 'rating', 'hidden'].includes(selectedField.type) && (
                   <div className="form-field">
                     <label className="form-label">Placeholder</label>
                     <input
@@ -855,6 +938,107 @@ export default function NewFormPage() {
                 </button>
               </div>
             </motion.div>
+            </>
+          )}
+        </AnimatePresence>
+
+        {/* Form Settings Panel */}
+        <AnimatePresence mode="wait">
+          {showFormSettings && !selectedField && (
+            <>
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="fixed inset-0 bg-black/30 z-40 lg:hidden"
+                onClick={() => setShowFormSettings(false)}
+              />
+              <motion.div
+                initial={{ opacity: 0, y: '100%' }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: '100%' }}
+                transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+                className="fixed bottom-0 left-0 right-0 z-50 lg:relative lg:z-auto lg:bottom-auto lg:left-auto lg:right-auto w-full lg:w-80 max-h-[70vh] lg:max-h-none border-t lg:border-t-0 lg:border-l border-gray-200 bg-white overflow-y-auto shrink-0 rounded-t-2xl lg:rounded-none shadow-xl lg:shadow-none"
+              >
+                <div className="lg:hidden flex justify-center pt-3 pb-1">
+                  <div className="w-10 h-1 bg-gray-300 rounded-full" />
+                </div>
+                <div className="p-4 border-b border-gray-200 flex items-center justify-between sticky top-0 bg-white z-10">
+                  <h3 className="font-medium text-gray-900">Form Settings</h3>
+                  <button onClick={() => setShowFormSettings(false)} className="p-1 text-gray-500 hover:text-gray-900">
+                    <X size={18} />
+                  </button>
+                </div>
+                <div className="p-4 space-y-6">
+                  {/* Branding */}
+                  <div>
+                    <div className="flex items-center gap-2 mb-3">
+                      <Palette size={16} className="text-gray-500" />
+                      <h4 className="text-sm font-medium text-gray-900">Branding</h4>
+                    </div>
+                    <div className="space-y-3">
+                      <div className="form-field">
+                        <label className="form-label">Accent Color</label>
+                        <div className="flex items-center gap-2">
+                          <input type="color" value={formSettings.branding?.accentColor || '#ef6f2e'} onChange={(e) => setFormSettings({ ...formSettings, branding: { ...formSettings.branding, accentColor: e.target.value } })} className="w-10 h-10 rounded-lg border border-gray-200 cursor-pointer p-0.5" />
+                          <input type="text" value={formSettings.branding?.accentColor || '#ef6f2e'} onChange={(e) => setFormSettings({ ...formSettings, branding: { ...formSettings.branding, accentColor: e.target.value } })} className="input flex-1 text-sm" placeholder="#ef6f2e" />
+                        </div>
+                      </div>
+                      <div className="form-field">
+                        <label className="form-label">Background Color</label>
+                        <div className="flex items-center gap-2">
+                          <input type="color" value={formSettings.branding?.backgroundColor || '#ffffff'} onChange={(e) => setFormSettings({ ...formSettings, branding: { ...formSettings.branding, backgroundColor: e.target.value } })} className="w-10 h-10 rounded-lg border border-gray-200 cursor-pointer p-0.5" />
+                          <input type="text" value={formSettings.branding?.backgroundColor || '#ffffff'} onChange={(e) => setFormSettings({ ...formSettings, branding: { ...formSettings.branding, backgroundColor: e.target.value } })} className="input flex-1 text-sm" placeholder="#ffffff" />
+                        </div>
+                      </div>
+                      <div className="form-field">
+                        <label className="form-label">Text Color</label>
+                        <div className="flex items-center gap-2">
+                          <input type="color" value={formSettings.branding?.textColor || '#111827'} onChange={(e) => setFormSettings({ ...formSettings, branding: { ...formSettings.branding, textColor: e.target.value } })} className="w-10 h-10 rounded-lg border border-gray-200 cursor-pointer p-0.5" />
+                          <input type="text" value={formSettings.branding?.textColor || '#111827'} onChange={(e) => setFormSettings({ ...formSettings, branding: { ...formSettings.branding, textColor: e.target.value } })} className="input flex-1 text-sm" placeholder="#111827" />
+                        </div>
+                      </div>
+                      {formSettings.branding?.accentColor && (
+                        <button onClick={() => setFormSettings({ ...formSettings, branding: undefined })} className="text-xs text-gray-500 hover:text-gray-700">Reset to defaults</button>
+                      )}
+                    </div>
+                  </div>
+                  {/* Thank You Screen */}
+                  <div className="border-t border-gray-200 pt-4">
+                    <div className="flex items-center gap-2 mb-3">
+                      <CheckCircle size={16} className="text-gray-500" />
+                      <h4 className="text-sm font-medium text-gray-900">Thank You Screen</h4>
+                    </div>
+                    <div className="space-y-3">
+                      <div className="form-field">
+                        <label className="form-label">Heading</label>
+                        <input type="text" value={formSettings.thankYou?.heading || ''} onChange={(e) => setFormSettings({ ...formSettings, thankYou: { ...formSettings.thankYou, heading: e.target.value } })} className="input" placeholder="Thank you!" />
+                      </div>
+                      <div className="form-field">
+                        <label className="form-label">Message</label>
+                        <textarea value={formSettings.thankYou?.message || ''} onChange={(e) => setFormSettings({ ...formSettings, thankYou: { ...formSettings.thankYou, message: e.target.value } })} className="input min-h-20" placeholder="Your response has been submitted successfully." />
+                      </div>
+                      <div className="form-field">
+                        <label className="form-label">Redirect URL</label>
+                        <input type="url" value={formSettings.thankYou?.redirectUrl || ''} onChange={(e) => setFormSettings({ ...formSettings, thankYou: { ...formSettings.thankYou, redirectUrl: e.target.value } })} className="input" placeholder="https://example.com/thanks" />
+                        <p className="text-xs text-gray-500 mt-1">Redirect after submission instead of showing thank you screen</p>
+                      </div>
+                      <div className="flex items-center justify-between py-2">
+                        <div>
+                          <label className="text-sm text-gray-900">Show Forma branding</label>
+                          <p className="text-xs text-gray-500">Display &quot;Powered by Forma&quot;</p>
+                        </div>
+                        <button
+                          onClick={() => setFormSettings({ ...formSettings, thankYou: { ...formSettings.thankYou, showBranding: formSettings.thankYou?.showBranding === false ? true : false } })}
+                          className={cn('w-11 h-6 rounded-full transition-colors relative', formSettings.thankYou?.showBranding !== false ? 'bg-safety-orange' : 'bg-gray-300')}
+                        >
+                          <div className={cn('w-5 h-5 rounded-full bg-white absolute top-0.5 transition-transform shadow', formSettings.thankYou?.showBranding !== false ? 'translate-x-5' : 'translate-x-0.5')} />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
             </>
           )}
         </AnimatePresence>
