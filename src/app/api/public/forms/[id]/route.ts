@@ -32,10 +32,10 @@ export async function GET(
 
     const settings = form.settings ? JSON.parse(form.settings) : null;
 
-    // Enforce branding for non-Pro users — only Pro can remove "Powered by Forma"
+    // Enforce branding for free users — Trial and Pro can remove "Powered by Forma"
     if (settings?.thankYou?.showBranding === false) {
       const info = await getSubscriptionInfo(form.workspaceId);
-      if (info.plan !== 'pro') {
+      if (info.plan === 'free') {
         settings.thankYou.showBranding = true;
       }
     }

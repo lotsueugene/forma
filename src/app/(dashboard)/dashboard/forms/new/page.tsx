@@ -323,6 +323,16 @@ export default function NewFormPage() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [formSettings, setFormSettings] = useState<FormSettings>({});
   const [showFormSettings, setShowFormSettings] = useState(false);
+  const [planType, setPlanType] = useState<string>('free');
+
+  // Fetch workspace plan
+  useEffect(() => {
+    if (!currentWorkspace) return;
+    fetch(`/api/workspaces/${currentWorkspace.id}/subscription`)
+      .then((res) => res.ok ? res.json() : null)
+      .then((data) => { if (data?.subscription?.plan) setPlanType(data.subscription.plan); })
+      .catch(() => {});
+  }, [currentWorkspace]);
 
   const fieldPickerRef = useRef<HTMLDivElement>(null);
   const aiModalRef = useRef<HTMLDivElement>(null);
@@ -1026,11 +1036,12 @@ export default function NewFormPage() {
                       <div className="flex items-center justify-between py-2">
                         <div>
                           <label className="text-sm text-gray-900">Show Forma branding</label>
-                          <p className="text-xs text-gray-500">Display &quot;Powered by Forma&quot;</p>
+                          <p className="text-xs text-gray-500">{planType === 'free' ? 'Upgrade to remove branding' : 'Display "Powered by Forma"'}</p>
                         </div>
                         <button
+                          disabled={planType === 'free'}
                           onClick={() => setFormSettings({ ...formSettings, thankYou: { ...formSettings.thankYou, showBranding: formSettings.thankYou?.showBranding === false ? true : false } })}
-                          className={cn('w-11 h-6 rounded-full transition-colors relative', formSettings.thankYou?.showBranding !== false ? 'bg-safety-orange' : 'bg-gray-300')}
+                          className={cn('w-11 h-6 rounded-full transition-colors relative', formSettings.thankYou?.showBranding !== false ? 'bg-safety-orange' : 'bg-gray-300', planType === 'free' && 'opacity-50 cursor-not-allowed')}
                         >
                           <div className={cn('w-5 h-5 rounded-full bg-white absolute top-0.5 transition-transform shadow', formSettings.thankYou?.showBranding !== false ? 'translate-x-5' : 'translate-x-0.5')} />
                         </button>

@@ -34,6 +34,7 @@ import {
   CheckCircle,
 } from '@phosphor-icons/react';
 import { cn, generateId } from '@/lib/utils';
+import { useWorkspace } from '@/contexts/workspace-context';
 
 interface FormSettings {
   branding?: {
@@ -298,6 +299,8 @@ function DraggableFieldItem({
 export default function EditFormPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const router = useRouter();
+  const { currentWorkspace } = useWorkspace();
+  const [planType, setPlanType] = useState<string>('free');
   const [isLoading, setIsLoading] = useState(true);
   const [formName, setFormName] = useState('');
   const [formDescription, setFormDescription] = useState('');
@@ -356,6 +359,15 @@ export default function EditFormPage({ params }: { params: Promise<{ id: string 
 
     fetchForm();
   }, [id]);
+
+  // Fetch workspace plan
+  useEffect(() => {
+    if (!currentWorkspace) return;
+    fetch(`/api/workspaces/${currentWorkspace.id}/subscription`)
+      .then((res) => res.ok ? res.json() : null)
+      .then((data) => { if (data?.subscription?.plan) setPlanType(data.subscription.plan); })
+      .catch(() => {});
+  }, [currentWorkspace]);
 
   const handleAIGenerate = async () => {
     if (!aiPrompt.trim()) return;
@@ -1132,9 +1144,10 @@ export default function EditFormPage({ params }: { params: Promise<{ id: string 
                       <div className="flex items-center justify-between py-2">
                         <div>
                           <label className="text-sm text-gray-900">Show Forma branding</label>
-                          <p className="text-xs text-gray-500">Display &quot;Powered by Forma&quot;</p>
+                          <p className="text-xs text-gray-500">{planType === 'free' ? 'Upgrade to remove branding' : 'Display "Powered by Forma"'}</p>
                         </div>
                         <button
+                          disabled={planType === 'free'}
                           onClick={() => setFormSettings({
                             ...formSettings,
                             thankYou: {
@@ -1144,7 +1157,8 @@ export default function EditFormPage({ params }: { params: Promise<{ id: string 
                           })}
                           className={cn(
                             'w-11 h-6 rounded-full transition-colors relative',
-                            formSettings.thankYou?.showBranding !== false ? 'bg-safety-orange' : 'bg-gray-300'
+                            formSettings.thankYou?.showBranding !== false ? 'bg-safety-orange' : 'bg-gray-300',
+                            planType === 'free' && 'opacity-50 cursor-not-allowed'
                           )}
                         >
                           <div
