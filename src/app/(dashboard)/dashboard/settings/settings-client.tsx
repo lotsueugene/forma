@@ -168,7 +168,7 @@ function StripeConnectSection({ workspaceId }: { workspaceId: string }) {
         <button
           onClick={handleDisconnect}
           disabled={disconnecting}
-          className="text-xs text-red-500 hover:text-red-700"
+          className="text-xs text-red-500 hover:text-red-700 cursor-pointer"
         >
           {disconnecting ? 'Disconnecting...' : 'Disconnect Stripe account'}
         </button>
