@@ -51,7 +51,12 @@ export async function POST(request: NextRequest) {
     }
 
     // Create an account link for onboarding
-    const origin = request.nextUrl.origin;
+    // Use NEXTAUTH_URL or X-Forwarded-Host to get the real domain (not localhost from reverse proxy)
+    const forwardedHost = request.headers.get('x-forwarded-host');
+    const proto = request.headers.get('x-forwarded-proto') || 'https';
+    const origin = forwardedHost
+      ? `${proto}://${forwardedHost}`
+      : process.env.NEXTAUTH_URL || request.nextUrl.origin;
     const accountLink = await stripe.accountLinks.create({
       account: accountId,
       refresh_url: `${origin}/dashboard/settings?tab=billing&stripe_connect=refresh`,
