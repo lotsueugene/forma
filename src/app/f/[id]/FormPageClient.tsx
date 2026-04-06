@@ -370,136 +370,216 @@ export default function FormPageClient({ formId }: FormPageClientProps) {
         />
       )}
 
-      <div className="min-h-screen py-8 px-4" style={{ backgroundColor: form?.settings?.branding?.backgroundColor || '#ffffff' }}>
-        <div className="max-w-2xl mx-auto">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mb-8"
-          >
-            <h1 className="text-3xl font-semibold mb-2" style={{ color: form?.settings?.branding?.textColor || '#111827' }}>
-              {form?.name}
-            </h1>
-            {form?.description && (
-              <p style={{ color: form?.settings?.branding?.textColor ? `${form.settings.branding.textColor}99` : '#4b5563' }}>{form.description}</p>
-            )}
-          </motion.div>
+      {(() => {
+        const accent = form?.settings?.branding?.accentColor || '#ef6f2e';
+        const bg = form?.settings?.branding?.backgroundColor || '#ffffff';
+        const text = form?.settings?.branding?.textColor || '#111827';
+        const textMuted = `${text}88`;
+        const textFaint = `${text}44`;
+        const isLightBg = parseInt(bg.slice(1, 3), 16) * 0.299 + parseInt(bg.slice(3, 5), 16) * 0.587 + parseInt(bg.slice(5, 7), 16) * 0.114 > 150;
+        const cardBg = isLightBg ? 'rgba(255,255,255,0.7)' : 'rgba(255,255,255,0.08)';
+        const cardBorder = isLightBg ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.1)';
+        const cardShadow = isLightBg
+          ? '0 1px 3px rgba(0,0,0,0.04), 0 8px 32px rgba(0,0,0,0.06)'
+          : '0 1px 3px rgba(0,0,0,0.2), 0 8px 32px rgba(0,0,0,0.3)';
+        const inputBg = isLightBg ? 'rgba(0,0,0,0.03)' : 'rgba(255,255,255,0.06)';
+        const inputBorder = isLightBg ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.12)';
+        const inputFocusBorder = accent;
 
-          {error && (
-            <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-red-600">
-              {error}
-            </div>
-          )}
-
-          {isMultiStep && (
-            <div className="mb-6">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm" style={{ color: form?.settings?.branding?.textColor ? `${form.settings.branding.textColor}99` : '#4b5563' }}>
-                  Step {currentStep + 1} of {totalSteps}
-                </span>
-                <span className="text-sm" style={{ color: form?.settings?.branding?.textColor ? `${form.settings.branding.textColor}99` : '#4b5563' }}>
-                  {Math.round(((currentStep + 1) / totalSteps) * 100)}%
-                </span>
-              </div>
-              <div className="h-2 rounded-full overflow-hidden" style={{ backgroundColor: form?.settings?.branding?.textColor ? `${form.settings.branding.textColor}20` : '#e5e7eb' }}>
-                <motion.div
-                  className="h-full rounded-full"
-                  style={{ backgroundColor: form?.settings?.branding?.accentColor || 'var(--accent-100)' }}
-                  initial={{ width: 0 }}
-                  animate={{ width: `${((currentStep + 1) / totalSteps) * 100}%` }}
-                  transition={{ duration: 0.3 }}
-                />
-              </div>
-            </div>
-          )}
-
-          <motion.form
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            onSubmit={(e) => {
-              e.preventDefault();
-              if (isLastStep) {
-                handleSubmit(e);
-              } else {
-                setCurrentStep((prev) => prev + 1);
+        return (
+          <>
+            <style>{`
+              .forma-input {
+                width: 100%;
+                padding: 14px 16px;
+                border-radius: 12px;
+                border: 1.5px solid ${inputBorder};
+                background: ${inputBg};
+                color: ${text};
+                font-size: 16px;
+                line-height: 1.5;
+                outline: none;
+                transition: all 0.2s ease;
+                backdrop-filter: blur(4px);
               }
-            }}
-            className="rounded-xl border p-6 space-y-6"
-            style={{
-              backgroundColor: form?.settings?.branding?.backgroundColor || '#ffffff',
-              borderColor: form?.settings?.branding?.textColor ? `${form.settings.branding.textColor}15` : '#e5e7eb',
-              color: form?.settings?.branding?.textColor || undefined,
-            }}
-          >
-            <AnimatePresence mode="sync">
-              {currentPageFields
-                .filter((field) => field.type !== 'hidden' && evaluateCondition(field.condition, formData))
-                .map((field) => (
+              .forma-input::placeholder { color: ${textFaint}; }
+              .forma-input:focus {
+                border-color: ${inputFocusBorder};
+                box-shadow: 0 0 0 3px ${accent}22;
+                background: ${isLightBg ? 'rgba(255,255,255,0.9)' : 'rgba(255,255,255,0.1)'};
+              }
+              .forma-input:hover:not(:focus) {
+                border-color: ${isLightBg ? 'rgba(0,0,0,0.15)' : 'rgba(255,255,255,0.2)'};
+              }
+              textarea.forma-input { min-height: 130px; resize: vertical; }
+            `}</style>
+            <div
+              className="min-h-screen py-10 px-4 sm:py-16"
+              style={{
+                background: bg === '#ffffff'
+                  ? `linear-gradient(135deg, #fafafa 0%, #f5f5f5 50%, #fafafa 100%)`
+                  : `linear-gradient(135deg, ${bg} 0%, ${bg}ee 50%, ${bg} 100%)`,
+              }}
+            >
+              <div className="max-w-xl mx-auto">
                 <motion.div
-                  key={field.id}
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: 'auto' }}
-                  exit={{ opacity: 0, height: 0 }}
-                  transition={{ duration: 0.2 }}
-                  className="form-field overflow-hidden"
+                  initial={{ opacity: 0, y: 24 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] }}
+                  className="mb-10 text-center"
                 >
-                  <label className="form-label" style={{ color: form?.settings?.branding?.textColor || undefined }}>
-                    {field.label}
-                    {field.required && <span className="text-red-600 ml-1">*</span>}
-                  </label>
-
-                  {renderField(field, formData, handleFieldChange, handleCheckboxChange, handleFileChange)}
+                  <h1 className="text-3xl sm:text-4xl font-bold tracking-tight mb-3" style={{ color: text }}>
+                    {form?.name}
+                  </h1>
+                  {form?.description && (
+                    <p className="text-base sm:text-lg leading-relaxed max-w-md mx-auto" style={{ color: textMuted }}>{form.description}</p>
+                  )}
                 </motion.div>
-              ))}
-            </AnimatePresence>
 
-            <div className={cn('flex gap-3', isMultiStep && currentStep > 0 ? 'justify-between' : 'justify-end')}>
-              {isMultiStep && currentStep > 0 && (
-                <button
-                  type="button"
-                  onClick={() => setCurrentStep((prev) => prev - 1)}
-                  className="btn btn-secondary flex items-center gap-2"
+                {error && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="mb-6 p-4 rounded-xl text-red-600"
+                    style={{ backgroundColor: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.15)' }}
+                  >
+                    {error}
+                  </motion.div>
+                )}
+
+                {isMultiStep && (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.2 }}
+                    className="mb-8"
+                  >
+                    <div className="flex items-center justify-between mb-2.5">
+                      <span className="text-sm font-medium" style={{ color: textMuted }}>
+                        Step {currentStep + 1} of {totalSteps}
+                      </span>
+                      <span className="text-sm font-medium" style={{ color: accent }}>
+                        {Math.round(((currentStep + 1) / totalSteps) * 100)}%
+                      </span>
+                    </div>
+                    <div className="h-2 rounded-full overflow-hidden" style={{ backgroundColor: textFaint }}>
+                      <motion.div
+                        className="h-full rounded-full"
+                        style={{ backgroundColor: accent }}
+                        initial={{ width: 0 }}
+                        animate={{ width: `${((currentStep + 1) / totalSteps) * 100}%` }}
+                        transition={{ duration: 0.4, ease: 'easeOut' }}
+                      />
+                    </div>
+                  </motion.div>
+                )}
+
+                <motion.form
+                  initial={{ opacity: 0, y: 24 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: 0.1, ease: [0.25, 0.46, 0.45, 0.94] }}
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    if (isLastStep) {
+                      handleSubmit(e);
+                    } else {
+                      setCurrentStep((prev) => prev + 1);
+                    }
+                  }}
+                  className="rounded-2xl p-6 sm:p-8 space-y-7"
+                  style={{
+                    backgroundColor: cardBg,
+                    border: `1px solid ${cardBorder}`,
+                    boxShadow: cardShadow,
+                    backdropFilter: 'blur(12px)',
+                    WebkitBackdropFilter: 'blur(12px)',
+                  }}
                 >
-                  <ArrowLeft size={18} />
-                  Back
-                </button>
-              )}
+                  <AnimatePresence mode="sync">
+                    {currentPageFields
+                      .filter((field) => field.type !== 'hidden' && evaluateCondition(field.condition, formData))
+                      .map((field, i) => (
+                      <motion.div
+                        key={field.id}
+                        initial={{ opacity: 0, y: 12 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -8 }}
+                        transition={{ duration: 0.3, delay: i * 0.04 }}
+                        className="space-y-2"
+                      >
+                        <label className="block text-sm font-semibold tracking-wide" style={{ color: text }}>
+                          {field.label}
+                          {field.required && <span style={{ color: accent }} className="ml-1">*</span>}
+                        </label>
 
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className={cn(
-                  'btn btn-primary flex-1 justify-center flex items-center gap-2',
-                  isSubmitting && 'opacity-70 cursor-not-allowed'
+                        {renderField(field, formData, handleFieldChange, handleCheckboxChange, handleFileChange)}
+                      </motion.div>
+                    ))}
+                  </AnimatePresence>
+
+                  <div className={cn('flex gap-3 pt-2', isMultiStep && currentStep > 0 ? 'justify-between' : 'justify-end')}>
+                    {isMultiStep && currentStep > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => setCurrentStep((prev) => prev - 1)}
+                        className="px-6 py-3 rounded-xl font-medium flex items-center gap-2 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
+                        style={{
+                          color: textMuted,
+                          backgroundColor: inputBg,
+                          border: `1.5px solid ${inputBorder}`,
+                        }}
+                      >
+                        <ArrowLeft size={18} />
+                        Back
+                      </button>
+                    )}
+
+                    <button
+                      type="submit"
+                      disabled={isSubmitting}
+                      className={cn(
+                        'flex-1 px-8 py-3.5 rounded-xl font-semibold text-white flex items-center justify-center gap-2 transition-all duration-200',
+                        isSubmitting ? 'opacity-70 cursor-not-allowed' : 'hover:scale-[1.02] hover:shadow-lg active:scale-[0.98]'
+                      )}
+                      style={{
+                        backgroundColor: accent,
+                        boxShadow: `0 4px 14px ${accent}40`,
+                      }}
+                    >
+                      {isSubmitting ? (
+                        <Spinner size={20} className="animate-spin" />
+                      ) : isLastStep ? (
+                        'Submit'
+                      ) : (
+                        <>
+                          Next
+                          <ArrowRight size={18} />
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </motion.form>
+
+                {form?.settings?.thankYou?.showBranding !== false && (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.6 }}
+                    className="mt-10 flex items-center justify-center gap-2 text-sm"
+                    style={{ color: textFaint }}
+                  >
+                    <span>Powered by</span>
+                    <Link href="/" className="flex items-center gap-1 font-medium transition-colors hover:opacity-80" style={{ color: accent }}>
+                      <Stack size={16} weight="fill" />
+                      Forma
+                    </Link>
+                  </motion.div>
                 )}
-                style={form?.settings?.branding?.accentColor ? { backgroundColor: form.settings.branding.accentColor, borderColor: form.settings.branding.accentColor } : undefined}
-              >
-                {isSubmitting ? (
-                  <Spinner size={20} className="animate-spin" />
-                ) : isLastStep ? (
-                  'Submit'
-                ) : (
-                  <>
-                    Next
-                    <ArrowRight size={18} />
-                  </>
-                )}
-              </button>
+              </div>
             </div>
-          </motion.form>
-
-          {form?.settings?.thankYou?.showBranding !== false && (
-          <div className="mt-8 flex items-center justify-center gap-2 text-sm text-gray-500">
-            <span>Powered by</span>
-            <Link href="/" className="flex items-center gap-1 text-safety-orange hover:text-safety-orange/80">
-              <Stack size={16} weight="fill" />
-              Forma
-            </Link>
-          </div>
-          )}
-        </div>
-      </div>
+          </>
+        );
+      })()}
     </>
   );
 }
@@ -523,7 +603,7 @@ function renderField(
           placeholder={field.placeholder}
           value={formData[field.id] as string}
           onChange={(e) => onChange(field.id, e.target.value)}
-          className="input"
+          className="forma-input"
           required={field.required}
         />
       );
@@ -533,7 +613,7 @@ function renderField(
           type="date"
           value={formData[field.id] as string}
           onChange={(e) => onChange(field.id, e.target.value)}
-          className="input"
+          className="forma-input"
           required={field.required}
         />
       );
@@ -543,40 +623,40 @@ function renderField(
           placeholder={field.placeholder}
           value={formData[field.id] as string}
           onChange={(e) => onChange(field.id, e.target.value)}
-          className="input min-h-[120px]"
+          className="forma-input"
           required={field.required}
         />
       );
     case 'checkbox':
       return (
-        <div className="space-y-2">
+        <div className="space-y-2.5">
           {(field.options || []).map((option, index) => (
-            <label key={index} className="flex items-center gap-2 text-gray-700 cursor-pointer">
+            <label key={index} className="flex items-center gap-3 cursor-pointer group">
               <input
                 type="checkbox"
-                className="rounded border-gray-300"
+                className="w-4.5 h-4.5 rounded border-2 border-current/20 accent-current"
                 checked={(formData[field.id] as string[] || []).includes(option)}
                 onChange={(e) => onCheckboxChange(field.id, option, e.target.checked)}
               />
-              {option}
+              <span className="text-sm">{option}</span>
             </label>
           ))}
         </div>
       );
     case 'radio':
       return (
-        <div className="space-y-2">
+        <div className="space-y-2.5">
           {(field.options || []).map((option, index) => (
-            <label key={index} className="flex items-center gap-2 text-gray-700 cursor-pointer">
+            <label key={index} className="flex items-center gap-3 cursor-pointer group">
               <input
                 type="radio"
                 name={field.id}
-                className="border-gray-300"
+                className="w-4.5 h-4.5 border-2 border-current/20 accent-current"
                 checked={formData[field.id] === option}
                 onChange={() => onChange(field.id, option)}
                 required={field.required && index === 0}
               />
-              {option}
+              <span className="text-sm">{option}</span>
             </label>
           ))}
         </div>
@@ -584,7 +664,7 @@ function renderField(
     case 'select':
       return (
         <select
-          className="input"
+          className="forma-input"
           value={formData[field.id] as string}
           onChange={(e) => onChange(field.id, e.target.value)}
           required={field.required}
