@@ -40,6 +40,9 @@ export const metadata: Metadata = {
     title: 'Forma - The Modern Form Builder',
     description: 'Build powerful forms, collect submissions, accept payments, and integrate with your favorite tools.',
   },
+  verification: {
+    google: 'JzO0nFZZ2-_OhGl1g2SdjyW3d-P5qP4Eb6dlhJoq78E',
+  },
   robots: {
     index: true,
     follow: true,
