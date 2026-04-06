@@ -106,7 +106,16 @@ export default function FormDetailPage() {
       return val;
     };
 
-    const header = columns.map(escapeCSV).join(',');
+    // Map field IDs to labels
+    const fieldLabels = new Map<string, string>();
+    form.fields.forEach((field: { id: string; label: string }) => {
+      fieldLabels.set(field.id, field.label);
+    });
+    const header = columns.map((col) => escapeCSV(
+      col === 'id' ? 'Submission ID' :
+      col === 'createdAt' ? 'Submitted At' :
+      fieldLabels.get(col) || col
+    )).join(',');
     const rows = filteredSubmissions.map((sub) => {
       return columns.map((col) => {
         if (col === 'id') return escapeCSV(sub.id);
