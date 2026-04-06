@@ -838,7 +838,22 @@ export default function FormDetailPage() {
                                   className="overflow-hidden"
                                 >
                                   <div className="pt-4 mt-4 border-t border-gray-100 space-y-3">
-                                    {Object.entries(submission.data).map(([key, value]) => (
+                                    {Object.entries(submission.data).map(([key, value]) => {
+                                      const mobileFieldDef = form.fields.find((f: { id: string; type: string }) => f.id === key);
+                                      if (mobileFieldDef?.type === 'payment' && submission.metadata?.payment) {
+                                        const p = submission.metadata.payment;
+                                        const symbols: Record<string, string> = { usd: '$', eur: '€', gbp: '£', cad: 'C$', aud: 'A$' };
+                                        const sym = symbols[p.currency || 'usd'] || '$';
+                                        return (
+                                          <div key={key}>
+                                            <div className="text-xs text-gray-500 uppercase tracking-wider mb-1">{getFieldLabel(key)}</div>
+                                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700">
+                                              {sym}{Number(p.amount).toFixed(2)} Paid
+                                            </span>
+                                          </div>
+                                        );
+                                      }
+                                      return (
                                       <div key={key}>
                                         <div className="text-xs text-gray-500 uppercase tracking-wider mb-1">
                                           {getFieldLabel(key)}
@@ -849,7 +864,8 @@ export default function FormDetailPage() {
                                             : formatCellValue(value)}
                                         </div>
                                       </div>
-                                    ))}
+                                      );
+                                    })}
                                     <div className="pt-2 border-t border-gray-100">
                                       <div className="text-xs text-gray-500 uppercase tracking-wider mb-1">
                                         Submitted At
