@@ -47,7 +47,7 @@ interface Form {
 interface Submission {
   id: string;
   data: Record<string, string | string[]>;
-  metadata: { userAgent?: string; ip?: string; submittedAt?: string } | null;
+  metadata: { userAgent?: string; ip?: string; submittedAt?: string; payment?: { status: string; amount: number; currency: string; stripeSessionId?: string; paidAt?: string } } | null;
   createdAt: string;
 }
 
