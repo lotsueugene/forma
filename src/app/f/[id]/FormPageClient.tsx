@@ -552,7 +552,7 @@ export default function FormPageClient({ formId }: FormPageClientProps) {
                       <button
                         type="button"
                         onClick={() => setCurrentStep((prev) => prev - 1)}
-                        className="px-6 py-3 rounded-xl font-medium flex items-center gap-2 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
+                        className="px-6 py-3 rounded-xl font-medium flex items-center gap-2 transition-all duration-200"
                         style={{
                           color: textMuted,
                           backgroundColor: inputBg,
@@ -569,7 +569,7 @@ export default function FormPageClient({ formId }: FormPageClientProps) {
                       disabled={isSubmitting}
                       className={cn(
                         'flex-1 px-8 py-3.5 rounded-xl font-semibold text-white flex items-center justify-center gap-2 transition-all duration-200',
-                        isSubmitting ? 'opacity-70 cursor-not-allowed' : 'hover:scale-[1.02] hover:shadow-lg active:scale-[0.98]'
+                        isSubmitting && 'opacity-70 cursor-not-allowed'
                       )}
                       style={{
                         backgroundColor: accent,
