@@ -486,7 +486,18 @@ export default function FormDetailPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      {(() => {
+        const hasPaymentField = form.fields.some((f: { type: string }) => f.type === 'payment');
+        const totalRevenue = submissions.reduce((sum, sub) => {
+          return sum + (sub.metadata?.payment?.amount || 0);
+        }, 0);
+        const paidCount = submissions.filter(s => s.metadata?.payment?.status === 'paid').length;
+        const currency = submissions.find(s => s.metadata?.payment?.currency)?.metadata?.payment?.currency || 'usd';
+        const symbols: Record<string, string> = { usd: '$', eur: '€', gbp: '£', cad: 'C$', aud: 'A$' };
+        const sym = symbols[currency] || '$';
+
+        return (
+      <div className={cn('grid grid-cols-1 sm:grid-cols-2 gap-4', hasPaymentField ? 'lg:grid-cols-5' : 'lg:grid-cols-4')}>
         <div className="card p-4">
           <div className="text-sm text-gray-500 mb-1">Total Submissions</div>
           <div className="text-2xl font-semibold text-gray-900">
@@ -505,6 +516,15 @@ export default function FormDetailPage() {
             {form.views > 0 ? ((submissions.length / form.views) * 100).toFixed(1) : 0}%
           </div>
         </div>
+        {hasPaymentField && (
+        <div className="card p-4">
+          <div className="text-sm text-gray-500 mb-1">Revenue</div>
+          <div className="text-2xl font-semibold text-emerald-600">
+            {sym}{totalRevenue.toFixed(2)}
+          </div>
+          <div className="text-xs text-gray-400 mt-1">{paidCount} paid</div>
+        </div>
+        )}
         <div className="card p-4">
           <div className="text-sm text-gray-500 mb-1">Form Status</div>
           <div className={cn(
@@ -521,6 +541,8 @@ export default function FormDetailPage() {
           </div>
         </div>
       </div>
+        );
+      })()}
 
       {/* Quick Share Section - Visible for active and paused forms */}
       {(form.status === 'active' || form.status === 'paused') && (
