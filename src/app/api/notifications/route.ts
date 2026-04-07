@@ -140,3 +140,31 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+
+// DELETE /api/notifications - Clear read notifications (soft delete)
+export async function DELETE(request: NextRequest) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const { searchParams } = new URL(request.url);
+    const workspaceId = searchParams.get('workspaceId');
+
+    const result = await prisma.notification.updateMany({
+      where: {
+        userId: session.user.id,
+        readAt: { not: null },
+        deletedAt: null,
+        ...(workspaceId ? { workspaceId } : {}),
+      },
+      data: { deletedAt: new Date() },
+    });
+
+    return NextResponse.json({ success: true, cleared: result.count });
+  } catch (error) {
+    console.error('DELETE /api/notifications:', error);
+    return NextResponse.json({ error: 'Failed to clear notifications' }, { status: 500 });
+  }
+}

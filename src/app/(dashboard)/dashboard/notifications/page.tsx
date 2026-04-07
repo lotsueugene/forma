@@ -103,6 +103,13 @@ export default function NotificationsPage() {
     setUnreadCount(0);
   };
 
+  const clearRead = async () => {
+    const params = new URLSearchParams();
+    if (effectiveWorkspaceId) params.set('workspaceId', effectiveWorkspaceId);
+    await fetch(`/api/notifications?${params.toString()}`, { method: 'DELETE' }).catch(() => {});
+    setItems((prev) => prev.filter((n) => !n.read));
+  };
+
   const toggleRead = async (id: string, read: boolean) => {
     await fetch(`/api/notifications/${id}`, {
       method: 'PATCH',
@@ -145,6 +152,15 @@ export default function NotificationsPage() {
           <Check size={18} />
           <span className="hidden sm:inline">Mark all read</span>
           <span className="sm:hidden">Mark read</span>
+        </button>
+        <button
+          type="button"
+          onClick={clearRead}
+          disabled={items.filter(n => n.read).length === 0}
+          className="btn btn-ghost text-red-500 hover:text-red-700 hover:bg-red-50 disabled:opacity-50 self-start"
+        >
+          <Trash size={18} />
+          <span className="hidden sm:inline">Clear read</span>
         </button>
       </div>
 
