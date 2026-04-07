@@ -351,8 +351,9 @@ export async function POST(
       console.error('Error creating submission notifications:', notifyErr);
     }
 
-    // Send email notification if configured (non-blocking)
-    if (isEmailConfigured()) {
+    // Send email notification if configured and plan allows it (non-blocking)
+    const subInfo = await getSubscriptionInfo(form.workspaceId);
+    if (isEmailConfigured() && subInfo.features.emailNotifications) {
       (async () => {
         try {
           // Get workspace with notification email and all members' emails as fallback
