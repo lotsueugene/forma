@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
+import { prisma } from '@/lib/prisma';
+import { getSubscriptionInfo } from '@/lib/subscription';
 import crypto from 'crypto';
 
 const s3 = new S3Client({
@@ -11,7 +13,8 @@ const s3 = new S3Client({
 });
 
 const BUCKET = process.env.AWS_S3_BUCKET || 'withforma-uploads';
-const MAX_SIZE = 10 * 1024 * 1024; // 10MB for form uploads
+const FREE_MAX_SIZE = 5 * 1024 * 1024;  // 5MB
+const PRO_MAX_SIZE = 50 * 1024 * 1024;  // 50MB
 const ALLOWED_TYPES = [
   'image/jpeg', 'image/png', 'image/gif', 'image/webp',
   'application/pdf',
@@ -38,8 +41,19 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Form ID required' }, { status: 400 });
     }
 
-    if (file.size > MAX_SIZE) {
-      return NextResponse.json({ error: 'File must be under 10MB' }, { status: 400 });
+    // Look up workspace plan to determine size limit
+    let maxSize = FREE_MAX_SIZE;
+    try {
+      const form = await prisma.form.findUnique({ where: { id: formId }, select: { workspaceId: true } });
+      if (form) {
+        const info = await getSubscriptionInfo(form.workspaceId);
+        if (info.plan !== 'free') maxSize = PRO_MAX_SIZE;
+      }
+    } catch { /* fall back to free limit */ }
+
+    if (file.size > maxSize) {
+      const limitMB = Math.round(maxSize / (1024 * 1024));
+      return NextResponse.json({ error: `File must be under ${limitMB}MB` }, { status: 400 });
     }
 
     if (!ALLOWED_TYPES.includes(file.type)) {

@@ -320,9 +320,9 @@ export default function FormPageClient({ formId }: FormPageClientProps) {
       return;
     }
 
-    const maxSize = 10 * 1024 * 1024;
+    const maxSize = 50 * 1024 * 1024; // Server enforces actual limit per plan
     if (file.size > maxSize) {
-      setError('File size must be less than 10MB');
+      setError('File size must be less than 50MB');
       return;
     }
 
