@@ -12,6 +12,8 @@ import {
   Star,
   Check,
   X,
+  ArrowUp,
+  ArrowDown,
 } from '@phosphor-icons/react';
 import { cn } from '@/lib/utils';
 
@@ -214,6 +216,14 @@ export default function AdminPricingPage() {
     setFormData({ ...formData, features: newFeatures });
   };
 
+  const moveFeature = (index: number, direction: 'up' | 'down') => {
+    const newFeatures = [...formData.features];
+    const targetIndex = direction === 'up' ? index - 1 : index + 1;
+    if (targetIndex < 0 || targetIndex >= newFeatures.length) return;
+    [newFeatures[index], newFeatures[targetIndex]] = [newFeatures[targetIndex], newFeatures[index]];
+    setFormData({ ...formData, features: newFeatures });
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -369,6 +379,24 @@ export default function AdminPricingPage() {
             <div className="space-y-2">
               {formData.features.map((feature, index) => (
                 <div key={index} className="flex items-center gap-2">
+                  <div className="flex flex-col">
+                    <button
+                      type="button"
+                      onClick={() => moveFeature(index, 'up')}
+                      disabled={index === 0}
+                      className="p-0.5 text-gray-400 hover:text-gray-700 disabled:opacity-20 disabled:cursor-not-allowed"
+                    >
+                      <ArrowUp size={14} />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => moveFeature(index, 'down')}
+                      disabled={index === formData.features.length - 1}
+                      className="p-0.5 text-gray-400 hover:text-gray-700 disabled:opacity-20 disabled:cursor-not-allowed"
+                    >
+                      <ArrowDown size={14} />
+                    </button>
+                  </div>
                   <input
                     type="text"
                     value={feature.text}
