@@ -14,6 +14,7 @@ import {
   Gear,
   Users,
   Bell,
+  Megaphone,
   CaretDown,
   CaretUpDown,
   SignOut,
@@ -36,6 +37,7 @@ const navigation = [
   { name: 'Analytics', href: '/dashboard/analytics', icon: ChartLineUp },
   { name: 'Integrations', href: '/dashboard/integrations', icon: Lightning },
   { name: 'Team', href: '/dashboard/team', icon: Users },
+  { name: 'Broadcasts', href: '/dashboard/broadcasts', icon: Megaphone },
   { name: 'Notifications', href: '/dashboard/notifications', icon: Bell },
   { name: 'Settings', href: '/dashboard/settings', icon: Gear },
 ];

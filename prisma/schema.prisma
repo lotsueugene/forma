@@ -96,6 +96,7 @@ model Workspace {
   notifications Notification[]
   webhookEndpoints WebhookEndpoint[]
   customDomain CustomDomain?
+  respondentBroadcasts RespondentBroadcast[]
 }
 
 model Notification {
@@ -221,6 +222,7 @@ model Form {
 
   submissions Submission[]
   integrations Integration[]
+  respondentBroadcasts RespondentBroadcast[]
   defaultForDomains CustomDomain[] @relation("DefaultForm")
 
   views       Int      @default(0)
@@ -398,6 +400,34 @@ model EmailBroadcast {
   updatedAt   DateTime  @updatedAt
 
   replies     BroadcastReply[]
+}
+
+// Workspace broadcasts to form respondents
+model RespondentBroadcast {
+  id          String    @id @default(cuid())
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  subject     String
+  content     String    // HTML content
+  fromName    String?   // Sender display name
+
+  // Targeting
+  formId      String?   // null = all forms
+  form        Form?     @relation(fields: [formId], references: [id], onDelete: SetNull)
+
+  // Stats
+  recipientCount Int    @default(0)
+  sentCount      Int    @default(0)
+  failedCount    Int    @default(0)
+
+  // Status
+  status      String    @default("draft") // draft, sending, sent, failed
+  sentAt      DateTime?
+  createdBy   String?
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 }
 
 // Replies to email broadcasts (via Resend inbound)
