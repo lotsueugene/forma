@@ -12,10 +12,7 @@ const COMPETITORS = [
     id: 'typeform',
     name: 'Typeform',
     logo: (
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-        <rect width="24" height="24" rx="4" fill="#262627"/>
-        <path d="M7 8.5h10M7 8.5v1M17 8.5v1M9.5 9.5v7" stroke="#fff" strokeWidth="2" strokeLinecap="round"/>
-      </svg>
+      <img src="https://images.ctfassets.net/co0pvta7hzrh/E1MiFAPdfhZrWqaMKi0C2/d7da6e8a9e34b47fd0c7a9d2b4afbe39/favicon-32x32.png" alt="Typeform" width={18} height={18} className="rounded" />
     ),
     pricing: [
       { threshold: 0, price: 29 },
@@ -28,10 +25,7 @@ const COMPETITORS = [
     id: 'jotform',
     name: 'Jotform',
     logo: (
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-        <rect width="24" height="24" rx="4" fill="#FF6100"/>
-        <path d="M12 6v12M8 10v4" stroke="#fff" strokeWidth="2" strokeLinecap="round"/>
-      </svg>
+      <img src="https://www.jotform.com/favicon-32x32.png" alt="Jotform" width={18} height={18} className="rounded" />
     ),
     pricing: [
       { threshold: 0, price: 0 },
@@ -44,10 +38,7 @@ const COMPETITORS = [
     id: 'tally',
     name: 'Tally',
     logo: (
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-        <rect width="24" height="24" rx="4" fill="#1E1E1E"/>
-        <path d="M7 12h10M12 7v10" stroke="#fff" strokeWidth="2" strokeLinecap="round"/>
-      </svg>
+      <img src="https://tally.so/favicon.ico" alt="Tally" width={18} height={18} className="rounded" />
     ),
     pricing: [
       { threshold: 0, price: 0 },
