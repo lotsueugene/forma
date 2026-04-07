@@ -611,16 +611,17 @@ function verifySignature(payload, signature, secret) {
 }`}</code></pre>
 
         <h4>Submit Button</h4>
-        <pre><code>{`button[type="submit"] {
+        <p>The submit button uses the <code>.forma-submit</code> class.</p>
+        <pre><code>{`.forma-submit {
   border-radius: 999px;
   font-size: 18px;
   padding: 16px 32px;
-  text-transform: uppercase;
-  letter-spacing: 1px;
+  background: #8b5cf6;
 }`}</code></pre>
 
         <h4>Field Labels</h4>
-        <pre><code>{`label {
+        <p>Labels use the <code>.forma-label</code> class.</p>
+        <pre><code>{`.forma-label {
   font-family: 'Georgia', serif;
   font-size: 16px;
   text-transform: none;
@@ -635,13 +636,13 @@ function verifySignature(payload, signature, secret) {
 }`}</code></pre>
 
         <h4>Page Title & Description</h4>
-        <pre><code>{`h1 {
+        <p>Title uses <code>.forma-title</code>, description uses <code>.forma-description</code>.</p>
+        <pre><code>{`.forma-title {
   font-size: 48px;
   font-family: 'Playfair Display', serif;
 }
 
-/* Description text below title */
-h1 + p {
+.forma-description {
   font-size: 20px;
   opacity: 0.7;
 }`}</code></pre>
@@ -663,25 +664,29 @@ input[type="radio"] {
 }`}</code></pre>
 
         <h3>Full Example</h3>
-        <p>Here's a complete example that gives your form a modern, rounded look:</p>
-        <pre><code>{`.forma-input {
+        <p>Here's a complete example that gives your form a purple, rounded look:</p>
+        <pre><code>{`/* Override the accent color for the whole form */
+.forma-page {
+  --forma-accent: #8b5cf6;
+}
+
+.forma-input {
   border-radius: 16px;
   border: 2px solid #e5e7eb;
   font-family: 'Inter', sans-serif;
 }
 
 .forma-input:focus {
-  border-color: #8b5cf6;
+  border-color: var(--forma-accent);
   box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.1);
 }
 
-button[type="submit"] {
+.forma-submit {
   border-radius: 999px;
-  background: #8b5cf6;
   font-weight: 700;
 }
 
-label {
+.forma-label {
   font-weight: 600;
   letter-spacing: 0;
   text-transform: none;
