@@ -752,7 +752,7 @@ export default function FormDetailPage() {
                   if (typeof value !== 'string') return false;
                   try {
                     const parsed = JSON.parse(value);
-                    return parsed && typeof parsed === 'object' && 'name' in parsed && 'data' in parsed;
+                    return parsed && typeof parsed === 'object' && 'name' in parsed && ('data' in parsed || 'url' in parsed);
                   } catch {
                     return false;
                   }
@@ -771,10 +771,13 @@ export default function FormDetailPage() {
 
                 const renderFileDownload = (value: string) => {
                   const fileData = JSON.parse(value);
+                  const href = fileData.url || fileData.data;
                   return (
                     <a
-                      href={fileData.data}
+                      href={href}
                       download={fileData.name}
+                      target={fileData.url ? '_blank' : undefined}
+                      rel={fileData.url ? 'noopener noreferrer' : undefined}
                       className="inline-flex items-center gap-2 text-safety-orange hover:underline"
                     >
                       <span>📎</span>

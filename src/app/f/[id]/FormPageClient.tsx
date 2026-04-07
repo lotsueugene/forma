@@ -320,29 +320,34 @@ export default function FormPageClient({ formId }: FormPageClientProps) {
       return;
     }
 
-    const maxSize = 5 * 1024 * 1024;
+    const maxSize = 10 * 1024 * 1024;
     if (file.size > maxSize) {
-      setError('File size must be less than 5MB');
+      setError('File size must be less than 10MB');
       return;
     }
 
-    const reader = new FileReader();
-    reader.onload = () => {
-      const base64 = reader.result as string;
+    try {
+      const fd = new FormData();
+      fd.append('file', file);
+      fd.append('formId', formId);
+      const res = await fetch('/api/upload/public', { method: 'POST', body: fd });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error || 'Failed to upload file');
+        return;
+      }
       setFormData((prev) => ({
         ...prev,
         [fieldId]: JSON.stringify({
-          name: file.name,
-          type: file.type,
-          size: file.size,
-          data: base64,
+          name: data.name,
+          type: data.type,
+          size: data.size,
+          url: data.url,
         }),
       }));
-    };
-    reader.onerror = () => {
-      setError('Failed to read file');
-    };
-    reader.readAsDataURL(file);
+    } catch {
+      setError('Failed to upload file');
+    }
   };
 
   if (paymentConfirming) {
@@ -767,11 +772,11 @@ function renderField(
             <label className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center bg-gray-50 hover:bg-gray-100 hover:border-safety-orange/50 transition-colors cursor-pointer block">
               <UploadSimple size={32} className="mx-auto mb-2 text-gray-400" />
               <p className="text-sm font-medium text-gray-700">Click to upload</p>
-              <p className="text-xs text-gray-500 mt-1">PDF, DOC, DOCX up to 5MB</p>
+              <p className="text-xs text-gray-500 mt-1">PDF, DOC, DOCX, images up to 10MB</p>
               <input
                 type="file"
                 className="hidden"
-                accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.txt,.jpg,.jpeg,.png,.gif,.webp,image/*,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
                 onChange={(e) => onFileChange(field.id, e.target.files?.[0] || null)}
                 required={field.required}
               />
