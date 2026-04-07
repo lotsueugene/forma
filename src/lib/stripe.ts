@@ -41,12 +41,12 @@ export const PLAN_LIMITS = {
       analytics: true,
       teamMembers: true,
       apiAccess: true,
-      customDomain: false,
+      customDomain: true,
       webhooks: true,
       integrations: true,
       emailNotifications: true,
       spamProtection: true, // Full (honeypot + rate limit + reCAPTCHA)
-      payments: false,
+      payments: true,
     },
   },
   pro: {
