@@ -516,33 +516,52 @@ export default function FormPageClient({ formId }: FormPageClientProps) {
         return (
           <>
             <style>{`
+              .forma-page {
+                --forma-accent: ${accent};
+                --forma-bg: ${bg};
+                --forma-text: ${text};
+                --forma-text-muted: ${textMuted};
+                --forma-text-faint: ${textFaint};
+                --forma-input-bg: ${inputBg};
+                --forma-input-border: ${inputBorder};
+                --forma-card-bg: ${cardBg};
+                --forma-card-border: ${cardBorder};
+                --forma-card-shadow: ${cardShadow};
+              }
               .forma-input {
                 width: 100%;
                 padding: 14px 16px;
                 border-radius: 12px;
-                border: 1.5px solid ${inputBorder};
-                background: ${inputBg};
-                color: ${text};
+                border: 1.5px solid var(--forma-input-border);
+                background: var(--forma-input-bg);
+                color: var(--forma-text);
                 font-size: 16px;
                 line-height: 1.5;
                 outline: none;
                 transition: all 0.2s ease;
                 backdrop-filter: blur(4px);
               }
-              .forma-input::placeholder { color: ${textFaint}; }
+              .forma-input::placeholder { color: var(--forma-text-faint); }
               .forma-input:focus {
-                border-color: ${inputFocusBorder};
-                box-shadow: 0 0 0 3px ${accent}22;
+                border-color: var(--forma-accent);
+                box-shadow: 0 0 0 3px color-mix(in srgb, var(--forma-accent) 12%, transparent);
                 background: ${isLightBg ? 'rgba(255,255,255,0.9)' : 'rgba(255,255,255,0.1)'};
               }
               .forma-input:hover:not(:focus) {
                 border-color: ${isLightBg ? 'rgba(0,0,0,0.15)' : 'rgba(255,255,255,0.2)'};
               }
               textarea.forma-input { min-height: 130px; resize: vertical; }
+              .forma-submit {
+                background: var(--forma-accent);
+                box-shadow: 0 4px 14px color-mix(in srgb, var(--forma-accent) 25%, transparent);
+              }
+              .forma-label { color: var(--forma-text); }
+              .forma-title { color: var(--forma-text); }
+              .forma-description { color: var(--forma-text-muted); }
             `}</style>
             {form?.settings?.customCss && <style>{form.settings.customCss}</style>}
             <div
-              className="min-h-screen py-10 px-4 sm:py-16"
+              className="forma-page min-h-screen py-10 px-4 sm:py-16"
               style={{
                 background: bg === '#ffffff'
                   ? `linear-gradient(135deg, #fafafa 0%, #f5f5f5 50%, #fafafa 100%)`
@@ -556,11 +575,11 @@ export default function FormPageClient({ formId }: FormPageClientProps) {
                   transition={{ duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] }}
                   className="mb-10 text-center"
                 >
-                  <h1 className="text-3xl sm:text-4xl font-bold tracking-tight mb-3" style={{ color: text }}>
+                  <h1 className="forma-title text-3xl sm:text-4xl font-bold tracking-tight mb-3">
                     {form?.name}
                   </h1>
                   {form?.description && (
-                    <p className="text-base sm:text-lg leading-relaxed max-w-md mx-auto" style={{ color: textMuted }}>{form.description}</p>
+                    <p className="forma-description text-base sm:text-lg leading-relaxed max-w-md mx-auto">{form.description}</p>
                   )}
                 </motion.div>
 
@@ -617,9 +636,9 @@ export default function FormPageClient({ formId }: FormPageClientProps) {
                   }}
                   className="rounded-2xl p-6 sm:p-8 space-y-7"
                   style={{
-                    backgroundColor: cardBg,
-                    border: `1px solid ${cardBorder}`,
-                    boxShadow: cardShadow,
+                    backgroundColor: 'var(--forma-card-bg)',
+                    border: '1px solid var(--forma-card-border)',
+                    boxShadow: 'var(--forma-card-shadow)',
                     backdropFilter: 'blur(12px)',
                     WebkitBackdropFilter: 'blur(12px)',
                   }}
@@ -637,7 +656,7 @@ export default function FormPageClient({ formId }: FormPageClientProps) {
                         className="space-y-2"
                         onFocusCapture={() => trackFieldInteraction(field.id)}
                       >
-                        <label className="block text-sm font-semibold tracking-wide" style={{ color: text }}>
+                        <label className="forma-label block text-sm font-semibold tracking-wide">
                           {field.label}
                           {field.required && <span style={{ color: accent }} className="ml-1">*</span>}
                         </label>
@@ -668,13 +687,9 @@ export default function FormPageClient({ formId }: FormPageClientProps) {
                       type="submit"
                       disabled={isSubmitting}
                       className={cn(
-                        'flex-1 px-8 py-3.5 rounded-xl font-semibold text-white flex items-center justify-center gap-2 transition-all duration-200',
+                        'forma-submit flex-1 px-8 py-3.5 rounded-xl font-semibold text-white flex items-center justify-center gap-2 transition-all duration-200',
                         isSubmitting && 'opacity-70 cursor-not-allowed'
                       )}
-                      style={{
-                        backgroundColor: accent,
-                        boxShadow: `0 4px 14px ${accent}40`,
-                      }}
                     >
                       {isSubmitting ? (
                         <Spinner size={20} className="animate-spin" />

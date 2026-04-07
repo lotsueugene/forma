@@ -687,11 +687,29 @@ label {
   text-transform: none;
 }`}</code></pre>
 
+        <h3>CSS Variables</h3>
+        <p>Forma exposes CSS variables for all branding colors. You can override them or use them in your custom CSS:</p>
+        <pre><code>{`/* Available variables */
+--forma-accent      /* Accent/button color */
+--forma-bg          /* Page background */
+--forma-text        /* Primary text color */
+--forma-text-muted  /* Secondary text color */
+--forma-text-faint  /* Placeholder/hint color */
+--forma-input-bg    /* Input background */
+--forma-input-border /* Input border color */
+--forma-card-bg     /* Form card background */
+--forma-card-border /* Form card border */
+
+/* Example: override accent color */
+.forma-page {
+  --forma-accent: #8b5cf6;
+}`}</code></pre>
+
         <h3>Tips</h3>
         <ul>
           <li>Use browser DevTools (F12) to inspect the form and find exact selectors</li>
-          <li>Custom CSS overrides Forma's default styles</li>
-          <li>Branding colors (set in Form Settings &gt; Branding) are applied via inline styles, so use <code>!important</code> to override them if needed</li>
+          <li>Custom CSS overrides Forma's default styles — no <code>!important</code> needed</li>
+          <li>Override CSS variables to change colors without targeting individual elements</li>
           <li>Google Fonts can be imported with <code>@import url('https://fonts.googleapis.com/css2?family=...')</code></li>
         </ul>
       </>

@@ -82,7 +82,6 @@ export default function FormSettingsPanel({
   const { currentWorkspace } = useWorkspace();
   const [activeTab, setActiveTab] = useState<SettingsTab>('general');
   const [saving, setSaving] = useState(false);
-  const [saved, setSaved] = useState(false);
   const [error, setError] = useState('');
   const [copied, setCopied] = useState<string | null>(null);
   const [planType, setPlanType] = useState('free');
@@ -104,7 +103,7 @@ export default function FormSettingsPanel({
   const [slug, setSlug] = useState(form.slug || '');
   const [status, setStatus] = useState(form.status);
   const [settings, setSettings] = useState<FormSettings>(form.settings || {});
-  const [originalState] = useState(() => JSON.stringify({ name: form.name, description: form.description || '', slug: form.slug || '', status: form.status, settings: form.settings || {} }));
+  const [originalState, setOriginalState] = useState(() => JSON.stringify({ name: form.name, description: form.description || '', slug: form.slug || '', status: form.status, settings: form.settings || {} }));
 
   const hasChanges = JSON.stringify({ name, description, slug, status, settings }) !== originalState;
 
@@ -146,8 +145,7 @@ export default function FormSettingsPanel({
         const data = await res.json().catch(() => ({}));
         throw new Error(data.error || 'Failed to save');
       }
-      setSaved(true);
-      setTimeout(() => setSaved(false), 2000);
+      setOriginalState(JSON.stringify({ name, description, slug, status, settings }));
       onFormUpdate();
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to save');
@@ -245,8 +243,8 @@ export default function FormSettingsPanel({
                 />
               </div>
 
-              <button onClick={saveSettings} disabled={saving || saved || !hasChanges} className={cn('btn btn-primary', (!hasChanges || saved) && 'opacity-50')}>
-                {saving ? <><Spinner size={16} className="animate-spin" /> Saving...</> : saved ? <>Saved <Check size={16} /></> : 'Save Changes'}
+              <button onClick={saveSettings} disabled={saving || !hasChanges} className={cn('btn btn-primary', !hasChanges && 'opacity-50')}>
+                {saving ? <><Spinner size={16} className="animate-spin" /> Saving...</> : 'Save Changes'}
               </button>
             </div>
           </div>
@@ -319,8 +317,8 @@ export default function FormSettingsPanel({
                 </button>
               </div>
 
-              <button onClick={saveSettings} disabled={saving || saved || !hasChanges} className={cn('btn btn-primary', (!hasChanges || saved) && 'opacity-50')}>
-                {saving ? <><Spinner size={16} className="animate-spin" /> Saving...</> : saved ? <>Saved <Check size={16} /></> : 'Save Changes'}
+              <button onClick={saveSettings} disabled={saving || !hasChanges} className={cn('btn btn-primary', !hasChanges && 'opacity-50')}>
+                {saving ? <><Spinner size={16} className="animate-spin" /> Saving...</> : 'Save Changes'}
               </button>
             </div>
           </div>
@@ -474,8 +472,8 @@ export default function FormSettingsPanel({
                 )}
               </div>
 
-              <button onClick={saveSettings} disabled={saving || saved || !hasChanges} className={cn('btn btn-primary', (!hasChanges || saved) && 'opacity-50')}>
-                {saving ? <><Spinner size={16} className="animate-spin" /> Saving...</> : saved ? <>Saved <Check size={16} /></> : 'Save Changes'}
+              <button onClick={saveSettings} disabled={saving || !hasChanges} className={cn('btn btn-primary', !hasChanges && 'opacity-50')}>
+                {saving ? <><Spinner size={16} className="animate-spin" /> Saving...</> : 'Save Changes'}
               </button>
             </div>
           </div>
