@@ -354,6 +354,7 @@ export default function FormSettingsPanel({
                         const fd = new FormData();
                         fd.append('file', file);
                         fd.append('folder', 'og-images');
+                        if (currentWorkspace?.id) fd.append('workspaceId', currentWorkspace.id);
                         try {
                           const res = await fetch('/api/upload', { method: 'POST', body: fd });
                           const data = await res.json();
@@ -396,6 +397,7 @@ export default function FormSettingsPanel({
                         const fd = new FormData();
                         fd.append('file', file);
                         fd.append('folder', 'favicons');
+                        if (currentWorkspace?.id) fd.append('workspaceId', currentWorkspace.id);
                         try {
                           const res = await fetch('/api/upload', { method: 'POST', body: fd });
                           const data = await res.json();

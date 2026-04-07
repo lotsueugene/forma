@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
+import { getSubscriptionInfo } from '@/lib/subscription';
 import crypto from 'crypto';
 
 const s3 = new S3Client({
@@ -31,6 +32,15 @@ export async function POST(request: NextRequest) {
     const formData = await request.formData();
     const file = formData.get('file') as File | null;
     const folder = (formData.get('folder') as string) || 'uploads';
+    const workspaceId = formData.get('workspaceId') as string | null;
+
+    // Gate file uploads behind paid plan
+    if (workspaceId) {
+      const info = await getSubscriptionInfo(workspaceId);
+      if (info.plan === 'free') {
+        return NextResponse.json({ error: 'File uploads require Trial or Pro plan.' }, { status: 402 });
+      }
+    }
 
     if (!file) {
       return NextResponse.json({ error: 'No file provided' }, { status: 400 });
