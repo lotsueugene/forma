@@ -22,6 +22,7 @@ import {
   Warning,
   CaretDown,
   Buildings,
+  UploadSimple,
 } from '@phosphor-icons/react';
 import { cn } from '@/lib/utils';
 import { useWorkspace } from '@/contexts/workspace-context';
@@ -920,6 +921,7 @@ export default function SettingsPage() {
                           }}
                           className="border-2 border-dashed border-gray-300 rounded-lg px-6 py-4 text-center cursor-pointer hover:border-safety-orange/50 transition-colors"
                         >
+                          <UploadSimple size={24} className="mx-auto mb-2 text-gray-400" />
                           <p className="text-sm text-gray-500">Click to upload logo</p>
                           <input
                             type="file"
