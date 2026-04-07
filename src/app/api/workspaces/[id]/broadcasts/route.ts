@@ -127,7 +127,7 @@ export async function POST(
       // Get workspace branding
       const workspace = await prisma.workspace.findUnique({
         where: { id },
-        select: { name: true, logoUrl: true },
+        select: { name: true, logoUrl: true, notificationEmail: true },
       });
 
       const senderName = fromName || workspace?.name || 'Forma';
