@@ -17,7 +17,7 @@ import {
 } from '@phosphor-icons/react';
 import { cn } from '@/lib/utils';
 import { useWorkspace } from '@/contexts/workspace-context';
-import { CTA_UPGRADE_PRO_MONTHLY, CTA_VIEW_PLANS } from '@/lib/plan-catalog';
+import UpgradeModal from '@/components/dashboard/UpgradeModal';
 
 interface TeamMember {
   id: string;
@@ -297,6 +297,8 @@ export default function TeamPage() {
     subscriptionSummary !== null &&
     !subscriptionSummary.canInviteMembers;
 
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -320,16 +322,14 @@ export default function TeamPage() {
           <button
             type="button"
             onClick={() => {
+              if (inviteBlockedByPlan) {
+                setShowUpgradeModal(true);
+                return;
+              }
               setInviteError(null);
               setShowInviteModal(true);
             }}
-            disabled={inviteBlockedByPlan}
-            title={
-              inviteBlockedByPlan
-                ? 'Upgrade your plan or free seats to invite more members'
-                : undefined
-            }
-            className="btn btn-primary w-fit disabled:opacity-60 disabled:pointer-events-auto"
+            className="btn btn-primary w-fit"
           >
             <Plus size={18} weight="bold" />
             Invite Member
@@ -337,34 +337,11 @@ export default function TeamPage() {
         )}
       </div>
 
-      {inviteBlockedByPlan && (
-        <div
-          className="rounded-xl border border-amber-500/25 bg-amber-500/5 px-4 py-3 text-sm text-amber-800 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3"
-          role="status"
-        >
-          <p>
-            {subscriptionSummary?.features.teamMembers === false
-              ? 'Team invites are not included on your current plan.'
-              : 'You have reached your team seat limit (members plus pending invites).'}
-          </p>
-          <div className="flex flex-wrap gap-2 shrink-0">
-            <Link
-              href="/dashboard/settings?tab=billing#plans"
-              scroll={false}
-              className="btn btn-secondary border-amber-500/30 text-amber-800 hover:bg-amber-500/10"
-            >
-              {CTA_VIEW_PLANS}
-            </Link>
-            <Link
-              href="/dashboard/settings?tab=billing#pro-monthly"
-              scroll={false}
-              className="btn btn-primary"
-            >
-              {CTA_UPGRADE_PRO_MONTHLY}
-            </Link>
-          </div>
-        </div>
-      )}
+      <UpgradeModal
+        open={showUpgradeModal}
+        onClose={() => setShowUpgradeModal(false)}
+        feature="Team collaboration"
+      />
 
       {/* Search */}
       <div className="relative max-w-md">
