@@ -51,21 +51,21 @@ export default async function TemplatePage({ params }: Props) {
 
       <main className="py-16">
         <div className="mx-auto max-w-4xl px-4">
-          <div className="mb-4">
+          <div className="text-center mb-12">
             <span className="text-xs font-medium text-safety-orange uppercase tracking-wider">{template.category}</span>
-          </div>
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">{template.title}</h1>
-          <p className="text-lg text-gray-600 mb-8 max-w-2xl">{template.description}</p>
+            <h1 className="text-4xl font-bold text-gray-900 mb-4 mt-2">{template.title}</h1>
+            <p className="text-lg text-gray-600 mb-8 max-w-2xl mx-auto">{template.description}</p>
 
-          <div className="flex gap-3 mb-12">
+            <div className="flex gap-3 justify-center">
             <TemplateUseButton template={template} />
             <Link href="/templates" className="btn btn-secondary">
               Browse All Templates
             </Link>
+            </div>
           </div>
 
           {/* Preview */}
-          <div className="card p-8 max-w-xl">
+          <div className="card p-8 max-w-xl mx-auto">
             <h2 className="text-sm font-medium text-gray-500 uppercase tracking-wider mb-6">Form Preview</h2>
             <div className="space-y-5">
               {template.fields.map((field) => (
