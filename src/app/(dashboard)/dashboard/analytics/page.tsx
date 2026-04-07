@@ -109,7 +109,7 @@ export default function AnalyticsPage() {
         <ChartLineUp size={48} className="mx-auto text-gray-400 mb-4" />
         <h2 className="text-xl font-semibold text-gray-900 mb-2">Analytics requires Trial or Pro</h2>
         <p className="text-gray-600 mb-6">Upgrade your plan to access detailed analytics, charts, and insights for your forms.</p>
-        <Link href="/dashboard/settings" className="btn btn-primary">
+        <Link href="/dashboard/settings?tab=billing" className="btn btn-primary">
           Upgrade Plan
         </Link>
       </div>

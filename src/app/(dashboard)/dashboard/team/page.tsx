@@ -659,7 +659,7 @@ export default function TeamPage() {
                           className="inline-flex font-medium text-amber-800 hover:underline"
                           onClick={() => setShowInviteModal(false)}
                         >
-                          {CTA_VIEW_PLANS}
+                          View Plans
                         </Link>
                         <Link
                           href="/dashboard/settings?tab=billing#pro-monthly"
@@ -667,7 +667,7 @@ export default function TeamPage() {
                           className="inline-flex font-semibold text-accent-100 hover:underline"
                           onClick={() => setShowInviteModal(false)}
                         >
-                          {CTA_UPGRADE_PRO_MONTHLY}
+                          Upgrade to Pro
                         </Link>
                       </div>
                     )}
