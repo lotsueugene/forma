@@ -585,7 +585,7 @@ function verifySignature(payload, signature, secret) {
       <>
         <h2>Custom CSS</h2>
         <p>
-          Add custom CSS to any form via <strong>Form Settings &gt; General &gt; Custom CSS</strong>.
+          Add custom CSS to any form via <strong>Form Settings &gt; Link &amp; Customizations &gt; Custom CSS</strong>.
           Your styles are injected after Forma's default styles, so they override the defaults.
         </p>
         <p><em>Custom CSS is available on Trial and Pro plans.</em></p>
