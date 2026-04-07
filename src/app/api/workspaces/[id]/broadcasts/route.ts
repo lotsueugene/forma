@@ -62,7 +62,7 @@ export async function POST(
     }
 
     const body = await request.json();
-    const { subject, content, formId, fromName, sendNow } = body;
+    const { subject, content, formId, fromName, sendNow, previewOnly } = body;
 
     if (!subject || !content) {
       return NextResponse.json({ error: 'Subject and content are required' }, { status: 400 });
@@ -93,20 +93,45 @@ export async function POST(
       emailFieldMap.set(form.id, emailFieldIds);
     }
 
-    // Extract unique emails
-    const emails = new Set<string>();
+    // Extract unique emails with names for personalization
+    const recipientMap = new Map<string, string>(); // email -> name
     for (const sub of submissions) {
       const data = JSON.parse(sub.data) as Record<string, unknown>;
       const fieldIds = emailFieldMap.get(sub.formId) || [];
       for (const fieldId of fieldIds) {
         const val = data[fieldId];
         if (typeof val === 'string' && val.includes('@') && val.includes('.')) {
-          emails.add(val.toLowerCase().trim());
+          const email = val.toLowerCase().trim();
+          if (!recipientMap.has(email)) {
+            // Try to find a name field (first text field that's not email)
+            const formFields = JSON.parse(forms.find(f => f.id === sub.formId)?.fields || '[]') as Array<{ id: string; type: string }>;
+            const nameField = formFields.find(f => f.type === 'text');
+            const name = nameField ? String(data[nameField.id] || '') : '';
+            recipientMap.set(email, name);
+          }
         }
       }
     }
 
-    const recipientList = [...emails];
+    // Filter out unsubscribed emails
+    const allEmails = [...recipientMap.keys()];
+    if (allEmails.length > 0) {
+      const unsubscribed = await prisma.emailUnsubscribe.findMany({
+        where: { email: { in: allEmails }, scope: id },
+        select: { email: true },
+      });
+      for (const unsub of unsubscribed) recipientMap.delete(unsub.email);
+    }
+
+    const recipientList = [...recipientMap.keys()];
+
+    // Preview only — return recipients without sending
+    if (previewOnly) {
+      return NextResponse.json({
+        recipientCount: recipientList.length,
+        recipients: recipientList.slice(0, 20),
+      });
+    }
 
     // Create broadcast record
     const broadcast = await prisma.respondentBroadcast.create({
@@ -150,12 +175,18 @@ export async function POST(
           const batch = recipientList.slice(i, i + batchSize);
           const promises = batch.map(async (email) => {
             try {
+              const recipientName = recipientMap.get(email) || '';
+              const baseUrl = process.env.NEXTAUTH_URL || 'https://withforma.io';
+              const unsubUrl = `${baseUrl}/unsubscribe?email=${encodeURIComponent(email)}&scope=${encodeURIComponent(id)}`;
+              const personalizedContent = content
+                .replace(/\{\{name\}\}/gi, recipientName || 'there')
+                .replace(/\{\{email\}\}/gi, email);
               await resend.emails.send({
                 from: fromEmail,
                 replyTo,
                 to: email,
-                subject,
-                html: buildBroadcastEmail(content, senderName, workspace?.logoUrl),
+                subject: subject.replace(/\{\{name\}\}/gi, recipientName || 'there'),
+                html: buildBroadcastEmail(personalizedContent, senderName, workspace?.logoUrl, unsubUrl),
               });
               sent++;
             } catch {
@@ -195,7 +226,7 @@ export async function POST(
   }
 }
 
-function buildBroadcastEmail(content: string, senderName: string, logoUrl?: string | null): string {
+function buildBroadcastEmail(content: string, senderName: string, logoUrl?: string | null, unsubscribeUrl?: string): string {
   return `
 <!DOCTYPE html>
 <html>
@@ -221,6 +252,7 @@ function buildBroadcastEmail(content: string, senderName: string, logoUrl?: stri
     <!-- Footer -->
     <div style="text-align:center;padding:24px 0;color:#9ca3af;font-size:12px;">
       Sent by ${senderName} via <a href="https://withforma.io" style="color:#ef6f2e;text-decoration:none;">Forma</a>
+      ${unsubscribeUrl ? `<br><a href="${unsubscribeUrl}" style="color:#9ca3af;text-decoration:underline;font-size:11px;">Unsubscribe</a>` : ''}
     </div>
   </div>
 </body>

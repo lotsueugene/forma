@@ -9,7 +9,7 @@ const EMAIL_FROM = process.env.EMAIL_FROM || 'Forma <updates@forma.app>';
 /**
  * Generate broadcast email HTML with Forma branding
  */
-function generateBroadcastHtml(content: string, userName: string): string {
+function generateBroadcastHtml(content: string, userName: string, unsubscribeUrl?: string): string {
   // Convert plain text to HTML paragraphs
   const htmlContent = content
     .replace(/{{name}}/g, userName)
@@ -48,6 +48,7 @@ function generateBroadcastHtml(content: string, userName: string): string {
       <p style="margin: 0; color: #9ca3af; font-size: 12px; text-align: center;">
         <a href="https://withforma.io" style="color: #ef6f2e; text-decoration: none;">Forma</a> — The modern way to build forms<br>
         <span style="color: #d1d5db;">You're receiving this because you signed up for Forma.</span>
+        ${unsubscribeUrl ? `<br><a href="${unsubscribeUrl}" style="color: #d1d5db; text-decoration: underline; font-size: 11px;">Unsubscribe</a>` : ''}
       </p>
     </div>
   </div>
@@ -190,15 +191,26 @@ async function sendBroadcastEmails(
           return planFilter?.some(plan => userPlans.includes(plan));
         });
 
+    // Filter out unsubscribed users
+    const targetEmails = targetUsers.map(u => u.email).filter(Boolean) as string[];
+    const unsubscribed = targetEmails.length > 0
+      ? await prisma.emailUnsubscribe.findMany({
+          where: { email: { in: targetEmails }, scope: 'platform' },
+          select: { email: true },
+        })
+      : [];
+    const unsubSet = new Set(unsubscribed.map(u => u.email));
+    const filteredUsers = targetUsers.filter(u => u.email && !unsubSet.has(u.email));
+
     let sentCount = 0;
     let failedCount = 0;
 
-    console.log(`[Broadcast] Sending to ${targetUsers.length} users`);
+    console.log(`[Broadcast] Sending to ${filteredUsers.length} users (${unsubSet.size} unsubscribed)`);
 
     // Send emails in batches
     const batchSize = 50;
-    for (let i = 0; i < targetUsers.length; i += batchSize) {
-      const batch = targetUsers.slice(i, i + batchSize);
+    for (let i = 0; i < filteredUsers.length; i += batchSize) {
+      const batch = filteredUsers.slice(i, i + batchSize);
 
       await Promise.all(
         batch.map(async (user) => {
@@ -206,7 +218,9 @@ async function sendBroadcastEmails(
 
           try {
             const userName = user.name || 'there';
-            const html = generateBroadcastHtml(content, userName);
+            const baseUrl = process.env.NEXTAUTH_URL || 'https://withforma.io';
+            const unsubUrl = `${baseUrl}/unsubscribe?email=${encodeURIComponent(user.email)}&scope=platform`;
+            const html = generateBroadcastHtml(content, userName, unsubUrl);
             await resend.emails.send({
               from: EMAIL_FROM,
               to: user.email,

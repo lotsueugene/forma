@@ -56,6 +56,7 @@ export default function BroadcastsPage() {
   const [fromName, setFromName] = useState('');
   const [previewRecipients, setPreviewRecipients] = useState<string[]>([]);
   const [recipientCount, setRecipientCount] = useState(0);
+  const [loadingPreview, setLoadingPreview] = useState(false);
 
   useEffect(() => {
     if (!currentWorkspace) return;
@@ -85,6 +86,30 @@ export default function BroadcastsPage() {
     setRecipientCount(0);
     setSent(false);
     setError('');
+  };
+
+  const handlePreview = async () => {
+    if (!currentWorkspace) return;
+    setLoadingPreview(true);
+    try {
+      const res = await fetch(`/api/workspaces/${currentWorkspace.id}/broadcasts`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          subject: subject || 'Preview',
+          content: content || 'Preview',
+          formId: selectedForm || null,
+          previewOnly: true,
+        }),
+      });
+      const data = await res.json();
+      setRecipientCount(data.recipientCount || 0);
+      setPreviewRecipients(data.recipients || []);
+    } catch {
+      setError('Failed to load recipients');
+    } finally {
+      setLoadingPreview(false);
+    }
   };
 
   const handleSend = async () => {
@@ -254,33 +279,71 @@ export default function BroadcastsPage() {
                         value={content}
                         onChange={(e) => setContent(e.target.value)}
                         className="input min-h-40"
-                        placeholder="Write your message here... HTML is supported."
+                        placeholder="Hi {{name}}, thanks for your submission!"
                       />
-                      <p className="text-xs text-gray-400">HTML formatting supported. Keep it concise.</p>
+                      <div className="flex flex-wrap gap-2 mt-2">
+                        <span className="text-xs text-gray-400">Personalization:</span>
+                        {['{{name}}', '{{email}}'].map(tag => (
+                          <button
+                            key={tag}
+                            type="button"
+                            onClick={() => setContent(prev => prev + tag)}
+                            className="text-xs px-2 py-0.5 bg-safety-orange/10 text-safety-orange rounded-full hover:bg-safety-orange/20 transition-colors"
+                          >
+                            {tag}
+                          </button>
+                        ))}
+                      </div>
                     </div>
+
+                    {/* Recipient preview */}
+                    {recipientCount > 0 && (
+                      <div className="p-3 bg-gray-50 rounded-lg">
+                        <div className="flex items-center gap-2 mb-1">
+                          <Users size={14} className="text-gray-500" />
+                          <span className="text-sm font-medium text-gray-700">{recipientCount} recipient{recipientCount !== 1 ? 's' : ''}</span>
+                        </div>
+                        {previewRecipients.length > 0 && (
+                          <p className="text-xs text-gray-400 truncate">
+                            {previewRecipients.slice(0, 5).join(', ')}
+                            {recipientCount > 5 && ` +${recipientCount - 5} more`}
+                          </p>
+                        )}
+                      </div>
+                    )}
                   </div>
 
                   <div className="p-6 border-t border-gray-100 flex items-center justify-between">
                     <button onClick={() => setShowCompose(false)} className="btn btn-ghost">
                       Cancel
                     </button>
-                    <button
-                      onClick={handleSend}
-                      disabled={sending || !subject.trim() || !content.trim()}
-                      className="btn btn-primary disabled:opacity-50"
-                    >
-                      {sending ? (
-                        <>
-                          <Spinner size={16} className="animate-spin" />
-                          Sending...
-                        </>
-                      ) : (
-                        <>
-                          <PaperPlaneTilt size={16} />
-                          Send Broadcast
-                        </>
-                      )}
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={handlePreview}
+                        disabled={loadingPreview}
+                        className="btn btn-secondary"
+                      >
+                        {loadingPreview ? <Spinner size={16} className="animate-spin" /> : <Users size={16} />}
+                        Preview Recipients
+                      </button>
+                      <button
+                        onClick={handleSend}
+                        disabled={sending || !subject.trim() || !content.trim()}
+                        className="btn btn-primary disabled:opacity-50"
+                      >
+                        {sending ? (
+                          <>
+                            <Spinner size={16} className="animate-spin" />
+                            Sending...
+                          </>
+                        ) : (
+                          <>
+                            <PaperPlaneTilt size={16} />
+                            Send Broadcast
+                          </>
+                        )}
+                      </button>
+                    </div>
                   </div>
                 </>
               )}

@@ -591,3 +591,14 @@ model JobPosting {
   @@index([published, publishedAt])
   @@index([department, published])
 }
+
+// Email unsubscribe tracking
+model EmailUnsubscribe {
+  id        String   @id @default(cuid())
+  email     String
+  scope     String   // "platform" (admin broadcasts) or workspaceId (workspace broadcasts)
+  createdAt DateTime @default(now())
+
+  @@unique([email, scope])
+  @@index([email])
+}
