@@ -74,11 +74,15 @@ export async function deliverToIntegrations(
   const results: DeliveryResult[] = [];
 
   try {
-    // Fetch all active integrations for this workspace
+    // Fetch active integrations for this workspace, filtered by form
     const integrations = await prisma.integration.findMany({
       where: {
         workspaceId: payload.workspaceId,
         enabled: true,
+        OR: [
+          { formId: null },           // Workspace-wide integrations
+          { formId: payload.formId },  // Form-specific integrations
+        ],
       },
     });
 

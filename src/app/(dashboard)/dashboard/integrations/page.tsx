@@ -58,6 +58,8 @@ interface IntegrationState {
   type: string;
   name: string;
   enabled: boolean;
+  formId?: string | null;
+  formName?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -332,7 +334,7 @@ export default function IntegrationsPage() {
       const res = await fetch(`/api/workspaces/${currentWorkspace.id}/integrations`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ type, config, testConnection: true }),
+        body: JSON.stringify({ type, config, testConnection: true, formId: integrationConfig.formId || null }),
       });
 
       const data = await res.json().catch(() => ({}));
@@ -523,6 +525,21 @@ export default function IntegrationsPage() {
                   </p>
                 )}
 
+                {/* Form selector — which form triggers this integration */}
+                <div>
+                  <label className="text-xs text-gray-500 mb-1 block">Trigger on</label>
+                  <select
+                    className="input text-sm"
+                    value={integrationConfig.formId || ''}
+                    onChange={(e) => setIntegrationConfig({ ...integrationConfig, formId: e.target.value })}
+                  >
+                    <option value="">All forms</option>
+                    {availableForms.map((form) => (
+                      <option key={form.id} value={form.id}>{form.name}</option>
+                    ))}
+                  </select>
+                </div>
+
                 <button
                   type="button"
                   className="btn btn-primary"
@@ -547,7 +564,10 @@ export default function IntegrationsPage() {
                         <Icon size={20} className={integration.enabled ? 'text-emerald-600' : 'text-gray-600'} />
                         <div>
                           <div className="text-sm text-gray-900">{integration.name}</div>
-                          <div className="text-xs text-gray-600">{integration.type}</div>
+                          <div className="text-xs text-gray-600">
+                            {integration.type}
+                            {integration.formId ? ` · ${availableForms.find(f => f.id === integration.formId)?.name || 'Specific form'}` : ' · All forms'}
+                          </div>
                         </div>
                       </div>
                       <div className="flex items-center gap-2">

@@ -42,6 +42,7 @@ export async function GET(
         type: true,
         name: true,
         enabled: true,
+        formId: true,
         createdAt: true,
         updatedAt: true,
         // Don't expose the full config (contains secrets)
@@ -87,11 +88,12 @@ export async function POST(
     }
 
     const body = await request.json();
-    const { type, name, config, testConnection } = body as {
+    const { type, name, config, testConnection, formId } = body as {
       type: string;
       name?: string;
       config: IntegrationConfig;
       testConnection?: boolean;
+      formId?: string;
     };
 
     // Validate type
@@ -128,6 +130,7 @@ export async function POST(
         name: name || getDefaultName(type),
         config: JSON.stringify(config),
         enabled: true,
+        formId: formId || null,
       },
     });
 

@@ -220,6 +220,7 @@ model Form {
   workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
 
   submissions Submission[]
+  integrations Integration[]
   defaultForDomains CustomDomain[] @relation("DefaultForm")
 
   views       Int      @default(0)
@@ -247,6 +248,9 @@ model Integration {
 
   workspaceId String
   workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  formId      String?  // Optional: only trigger for this specific form (null = all forms)
+  form        Form?    @relation(fields: [formId], references: [id], onDelete: SetNull)
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
