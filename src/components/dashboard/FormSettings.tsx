@@ -325,7 +325,7 @@ export default function FormSettingsPanel({
                 />
               </div>
               <div className="form-field">
-                <label className="form-label">Social Preview Image <span className="badge badge-accent ml-1">Pro</span></label>
+                <label className="form-label">Social Preview Image {planType === 'free' && <span className="badge badge-accent ml-1">Pro</span>}</label>
                 <p className="text-xs text-gray-500 mb-2">Recommended size 1200x630. Should be less than 5MB.</p>
                 {settings.social?.ogImage ? (
                   <div className="relative">
@@ -367,7 +367,7 @@ export default function FormSettingsPanel({
                 )}
               </div>
               <div className="form-field">
-                <label className="form-label">Favicon <span className="badge badge-accent ml-1">Pro</span></label>
+                <label className="form-label">Favicon {planType === 'free' && <span className="badge badge-accent ml-1">Pro</span>}</label>
                 <p className="text-xs text-gray-500 mb-2">Recommended size 60x60. Ideally .ico or .png image.</p>
                 {settings.social?.favicon ? (
                   <div className="flex items-center gap-3">
