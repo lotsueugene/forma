@@ -27,6 +27,7 @@ import {
   Pause,
   Archive,
   DotsThree,
+  Gear,
 } from '@phosphor-icons/react';
 import { cn } from '@/lib/utils';
 import FormAnalytics from '@/components/dashboard/FormAnalytics';
@@ -615,7 +616,7 @@ export default function FormDetailPage() {
           {[
             { id: 'submissions', label: 'Submissions', icon: EnvelopeSimple, count: submissions.length },
             { id: 'analytics', label: 'Analytics', icon: ChartLineUp },
-            { id: 'settings', label: 'Embed', icon: Code },
+            { id: 'settings', label: 'Settings', icon: Gear },
           ].map((tab) => (
             <button
               key={tab.id}
@@ -629,7 +630,7 @@ export default function FormDetailPage() {
             >
               <tab.icon size={18} />
               <span className="hidden sm:inline">{tab.label}</span>
-              <span className="sm:hidden">{tab.id === 'settings' ? 'Embed' : tab.label.split(' ')[0]}</span>
+              <span className="sm:hidden">{tab.label.split(' ')[0]}</span>
               {tab.count !== undefined && (
                 <span className="text-xs bg-gray-100 px-1.5 sm:px-2 py-0.5 rounded-full">
                   {tab.count}
