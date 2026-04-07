@@ -70,9 +70,9 @@ export function UpgradeBanner() {
         <Sparkle size={20} className="text-safety-orange" weight="fill" />
       </div>
       <div className="flex-1 min-w-0">
-        <div className="font-medium text-gray-900">You're on the Free plan</div>
+        <div className="font-medium text-gray-900">Try all Pro features free for 14 days</div>
         <p className="text-sm text-gray-600 mt-0.5">
-          Upgrade to Pro for unlimited forms, advanced analytics, team collaboration, and more.
+          Get analytics, email notifications, integrations, payments, custom domains, and more. No credit card required.
         </p>
       </div>
       <div className="flex items-center gap-2 flex-shrink-0">
@@ -80,8 +80,8 @@ export function UpgradeBanner() {
           href="/dashboard/settings?tab=billing"
           className="btn btn-primary text-sm py-2 px-4 whitespace-nowrap"
         >
-          <span className="hidden sm:inline">Upgrade to Pro</span>
-          <span className="sm:hidden">Upgrade</span>
+          <span className="hidden sm:inline">Start Free Trial</span>
+          <span className="sm:hidden">Try Free</span>
           <ArrowRight size={16} className="hidden sm:inline" />
         </Link>
         <button
