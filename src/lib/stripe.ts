@@ -24,7 +24,7 @@ export const PLAN_LIMITS = {
     features: {
       analytics: false,
       teamMembers: false,
-      apiAccess: true,
+      apiAccess: false,
       customDomain: false,
       webhooks: false,
       integrations: false,
@@ -69,6 +69,35 @@ export const PLAN_LIMITS = {
 
 export type PlanType = keyof typeof PLAN_LIMITS;
 export type PlanFeatures = typeof PLAN_LIMITS.free.features;
+
+// Dynamic plan limits — read from SiteSetting, cached for 60 seconds
+let cachedLimits: { value: typeof PLAN_LIMITS; fetchedAt: number } | null = null;
+
+export async function getPlanLimits(): Promise<typeof PLAN_LIMITS> {
+  if (cachedLimits && Date.now() - cachedLimits.fetchedAt < 60_000) {
+    return cachedLimits.value;
+  }
+  try {
+    const setting = await prisma.siteSetting.findUnique({
+      where: { key: 'plan_limits' },
+    });
+    if (setting) {
+      const parsed = JSON.parse(setting.value);
+      // Deep merge with defaults to ensure new fields are always present
+      const merged = {
+        free: { ...PLAN_LIMITS.free, ...parsed.free, features: { ...PLAN_LIMITS.free.features, ...parsed.free?.features } },
+        trial: { ...PLAN_LIMITS.trial, ...parsed.trial, features: { ...PLAN_LIMITS.trial.features, ...parsed.trial?.features } },
+        pro: { ...PLAN_LIMITS.pro, ...parsed.pro, features: { ...PLAN_LIMITS.pro.features, ...parsed.pro?.features } },
+      };
+      cachedLimits = { value: merged, fetchedAt: Date.now() };
+      return merged;
+    }
+  } catch {
+    // Fall back to defaults
+  }
+  cachedLimits = { value: PLAN_LIMITS, fetchedAt: Date.now() };
+  return PLAN_LIMITS;
+}
 
 // Platform fee percentage — read from SiteSetting, cached for 60 seconds
 let cachedFee: { value: number; fetchedAt: number } | null = null;

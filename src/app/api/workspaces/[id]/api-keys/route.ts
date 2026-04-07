@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { verifyWorkspaceAccess } from '@/lib/workspace-auth';
+import { getSubscriptionInfo } from '@/lib/subscription';
 import crypto from 'crypto';
 
 // Generate a random API key
@@ -80,6 +81,15 @@ export async function POST(
 
     if (!access.allowed) {
       return NextResponse.json({ error: access.error }, { status: 403 });
+    }
+
+    // Check subscription - API access requires Trial or Pro
+    const info = await getSubscriptionInfo(id);
+    if (!info.features.apiAccess) {
+      return NextResponse.json(
+        { error: 'API access requires Trial or Pro plan.' },
+        { status: 402 }
+      );
     }
 
     const { name, type = 'live' } = await request.json();
