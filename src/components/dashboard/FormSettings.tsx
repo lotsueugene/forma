@@ -13,6 +13,7 @@ import {
   Check,
   Spinner,
   Copy,
+  UploadSimple,
 } from '@phosphor-icons/react';
 import { cn } from '@/lib/utils';
 import { useWorkspace } from '@/contexts/workspace-context';
@@ -351,17 +352,21 @@ export default function FormSettingsPanel({
                     </button>
                   </div>
                 ) : (
-                  <label className={cn(
-                    'block border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors',
-                    'border-gray-300 hover:border-safety-orange/50'
-                  )}>
+                  <div
+                    onClick={(e) => {
+                      if (requirePro('Social preview image')) return;
+                      const input = (e.currentTarget as HTMLElement).querySelector('input');
+                      input?.click();
+                    }}
+                    className="border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors border-gray-300 hover:border-safety-orange/50"
+                  >
+                    <UploadSimple size={24} className="mx-auto mb-2 text-gray-400" />
                     <p className="text-sm text-gray-500">Click to upload image</p>
                     <input
                       type="file"
                       accept="image/*"
                       className="hidden"
                       onChange={async (e) => {
-                        if (requirePro('Social preview image')) { e.target.value = ''; return; }
                         const file = e.target.files?.[0];
                         if (!file) return;
                         const fd = new FormData();
@@ -377,7 +382,7 @@ export default function FormSettingsPanel({
                         } catch { /* ignore */ }
                       }}
                     />
-                  </label>
+                  </div>
                 )}
               </div>
               <div className="form-field">
@@ -394,17 +399,21 @@ export default function FormSettingsPanel({
                     </button>
                   </div>
                 ) : (
-                  <label className={cn(
-                    'inline-flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg cursor-pointer text-sm text-gray-600 transition-colors',
-                    'hover:border-safety-orange/50'
-                  )}>
+                  <div
+                    onClick={(e) => {
+                      if (requirePro('Favicon')) return;
+                      const input = (e.currentTarget as HTMLElement).querySelector('input');
+                      input?.click();
+                    }}
+                    className="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg cursor-pointer text-sm text-gray-600 transition-colors hover:border-safety-orange/50"
+                  >
+                    <UploadSimple size={16} />
                     Upload favicon
                     <input
                       type="file"
                       accept=".ico,.png,image/x-icon,image/png"
                       className="hidden"
                       onChange={async (e) => {
-                        if (requirePro('Favicon')) { e.target.value = ''; return; }
                         const file = e.target.files?.[0];
                         if (!file) return;
                         const fd = new FormData();
@@ -420,7 +429,7 @@ export default function FormSettingsPanel({
                         } catch { /* ignore */ }
                       }}
                     />
-                  </label>
+                  </div>
                 )}
               </div>
 
