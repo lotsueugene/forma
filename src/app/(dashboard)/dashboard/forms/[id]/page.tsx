@@ -31,6 +31,7 @@ import {
 } from '@phosphor-icons/react';
 import { cn } from '@/lib/utils';
 import FormAnalytics from '@/components/dashboard/FormAnalytics';
+import { useWorkspace } from '@/contexts/workspace-context';
 import FormSettingsPanel from '@/components/dashboard/FormSettings';
 
 interface Form {
@@ -59,6 +60,7 @@ type Tab = 'submissions' | 'analytics' | 'settings';
 export default function FormDetailPage() {
   const params = useParams();
   const formId = params.id as string;
+  const { currentWorkspace } = useWorkspace();
 
   const [form, setForm] = useState<Form | null>(null);
   const [submissions, setSubmissions] = useState<Submission[]>([]);
@@ -225,6 +227,39 @@ export default function FormDetailPage() {
     } finally {
       setIsUpdatingStatus(false);
       setShowStatusMenu(false);
+    }
+  };
+
+  const [isDuplicating, setIsDuplicating] = useState(false);
+
+  const handleDuplicate = async () => {
+    if (!form) return;
+    setIsDuplicating(true);
+    setShowMoreMenu(false);
+    try {
+      const response = await fetch('/api/forms', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: `${form.name} (Copy)`,
+          description: form.description,
+          fields: form.fields,
+          settings: form.settings,
+          status: 'draft',
+          workspaceId: currentWorkspace?.id,
+        }),
+      });
+      if (response.ok) {
+        const data = await response.json();
+        window.location.href = `/dashboard/forms/${data.form.id}`;
+      } else {
+        const data = await response.json();
+        alert(data.error || 'Failed to duplicate form');
+      }
+    } catch {
+      alert('Failed to duplicate form');
+    } finally {
+      setIsDuplicating(false);
     }
   };
 
@@ -477,6 +512,18 @@ export default function FormDetailPage() {
                     exit={{ opacity: 0, y: 8 }}
                     className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden z-20"
                   >
+                    <button
+                      onClick={handleDuplicate}
+                      disabled={isDuplicating}
+                      className="w-full px-4 py-3 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2 disabled:opacity-50"
+                    >
+                      {isDuplicating ? (
+                        <Spinner size={16} className="animate-spin" />
+                      ) : (
+                        <Copy size={16} />
+                      )}
+                      Duplicate Form
+                    </button>
                     <button
                       onClick={handleDelete}
                       disabled={isDeleting}

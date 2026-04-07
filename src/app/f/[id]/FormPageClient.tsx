@@ -92,6 +92,8 @@ interface FormSettings {
     redirectUrl?: string;
     showBranding?: boolean;
   };
+  saveAndResume?: boolean;
+  customCss?: string;
 }
 
 interface Form {
@@ -141,6 +143,62 @@ export default function FormPageClient({ formId }: FormPageClientProps) {
   const [formData, setFormData] = useState<Record<string, string | string[]>>({});
   const [currentStep, setCurrentStep] = useState(0);
   const [isCustomDomain, setIsCustomDomain] = useState(false);
+
+  // Save & Resume — persist form data to localStorage
+  useEffect(() => {
+    if (!form?.settings?.saveAndResume || !formId) return;
+    const saved = localStorage.getItem(`forma_draft_${formId}`);
+    if (saved) {
+      try {
+        const { data, step } = JSON.parse(saved);
+        if (data && typeof data === 'object') {
+          setFormData(prev => ({ ...prev, ...data }));
+          if (typeof step === 'number') setCurrentStep(step);
+        }
+      } catch { /* ignore */ }
+    }
+  }, [form?.settings?.saveAndResume, formId]);
+
+  useEffect(() => {
+    if (!form?.settings?.saveAndResume || !formId || isSubmitted) return;
+    const hasData = Object.values(formData).some(v => v && (typeof v === 'string' ? v.length > 0 : v.length > 0));
+    if (hasData) {
+      localStorage.setItem(`forma_draft_${formId}`, JSON.stringify({ data: formData, step: currentStep }));
+    }
+  }, [formData, currentStep, form?.settings?.saveAndResume, formId, isSubmitted]);
+
+  // Clear draft on successful submission
+  useEffect(() => {
+    if (isSubmitted && formId) {
+      localStorage.removeItem(`forma_draft_${formId}`);
+    }
+  }, [isSubmitted, formId]);
+
+  // Drop-off tracking — track which fields users interact with
+  const [fieldsInteracted, setFieldsInteracted] = useState<Set<string>>(new Set());
+  const [lastFieldId, setLastFieldId] = useState<string | null>(null);
+
+  const trackFieldInteraction = (fieldId: string) => {
+    setFieldsInteracted(prev => new Set(prev).add(fieldId));
+    setLastFieldId(fieldId);
+  };
+
+  useEffect(() => {
+    if (!formId || isSubmitted) return;
+    const sendTracking = () => {
+      if (fieldsInteracted.size === 0) return;
+      navigator.sendBeacon(
+        `/api/forms/${formId}/tracking`,
+        JSON.stringify({
+          fieldsInteracted: [...fieldsInteracted],
+          lastFieldId,
+          completed: isSubmitted,
+        })
+      );
+    };
+    window.addEventListener('beforeunload', sendTracking);
+    return () => window.removeEventListener('beforeunload', sendTracking);
+  }, [formId, fieldsInteracted, lastFieldId, isSubmitted]);
 
   // Check if we're on a custom domain (reCAPTCHA won't work there)
   useEffect(() => {
@@ -482,6 +540,7 @@ export default function FormPageClient({ formId }: FormPageClientProps) {
               }
               textarea.forma-input { min-height: 130px; resize: vertical; }
             `}</style>
+            {form?.settings?.customCss && <style>{form.settings.customCss}</style>}
             <div
               className="min-h-screen py-10 px-4 sm:py-16"
               style={{
@@ -576,6 +635,7 @@ export default function FormPageClient({ formId }: FormPageClientProps) {
                         exit={{ opacity: 0, y: -8 }}
                         transition={{ duration: 0.3, delay: i * 0.04 }}
                         className="space-y-2"
+                        onFocusCapture={() => trackFieldInteraction(field.id)}
                       >
                         <label className="block text-sm font-semibold tracking-wide" style={{ color: text }}>
                           {field.label}
