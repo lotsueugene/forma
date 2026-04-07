@@ -1,5 +1,6 @@
 import { MetadataRoute } from 'next';
 import { prisma } from '@/lib/prisma';
+import { FORM_TEMPLATES } from '@/lib/form-templates';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = 'https://withforma.io';
@@ -67,5 +68,21 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // Table might not exist yet
   }
 
-  return [...staticPages, ...blogPages, ...careerPages];
+  // Template pages
+  const templatePages: MetadataRoute.Sitemap = FORM_TEMPLATES.map((t) => ({
+    url: `${baseUrl}/templates/${t.slug}`,
+    lastModified: new Date(),
+    changeFrequency: 'monthly' as const,
+    priority: 0.7,
+  }));
+
+  // Comparison pages
+  const comparePages: MetadataRoute.Sitemap = ['typeform', 'jotform', 'tally', 'google-forms'].map((c) => ({
+    url: `${baseUrl}/compare/${c}`,
+    lastModified: new Date(),
+    changeFrequency: 'monthly' as const,
+    priority: 0.8,
+  }));
+
+  return [...staticPages, ...blogPages, ...careerPages, ...templatePages, ...comparePages];
 }
