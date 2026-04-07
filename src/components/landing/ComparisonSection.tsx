@@ -7,17 +7,58 @@ import { Stack } from '@phosphor-icons/react';
 
 const SUBMISSION_LEVELS = [100, 500, 1000, 5000, 10000, 25000, 50000, 100000];
 
-// Typeform pricing tiers (as of 2026)
-const TYPEFORM_PRICING = [
-  { threshold: 0, price: 29 },
-  { threshold: 1000, price: 59 },
-  { threshold: 10000, price: 99 },
-  { threshold: 50000, price: 499 },
+const COMPETITORS = [
+  {
+    id: 'typeform',
+    name: 'Typeform',
+    logo: (
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+        <rect width="24" height="24" rx="4" fill="#262627"/>
+        <path d="M7 8.5h10M7 8.5v1M17 8.5v1M9.5 9.5v7" stroke="#fff" strokeWidth="2" strokeLinecap="round"/>
+      </svg>
+    ),
+    pricing: [
+      { threshold: 0, price: 29 },
+      { threshold: 1000, price: 59 },
+      { threshold: 10000, price: 99 },
+      { threshold: 50000, price: 499 },
+    ],
+  },
+  {
+    id: 'jotform',
+    name: 'Jotform',
+    logo: (
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+        <rect width="24" height="24" rx="4" fill="#FF6100"/>
+        <path d="M12 6v12M8 10v4" stroke="#fff" strokeWidth="2" strokeLinecap="round"/>
+      </svg>
+    ),
+    pricing: [
+      { threshold: 0, price: 0 },
+      { threshold: 100, price: 39 },
+      { threshold: 1000, price: 49 },
+      { threshold: 10000, price: 129 },
+    ],
+  },
+  {
+    id: 'tally',
+    name: 'Tally',
+    logo: (
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+        <rect width="24" height="24" rx="4" fill="#1E1E1E"/>
+        <path d="M7 12h10M12 7v10" stroke="#fff" strokeWidth="2" strokeLinecap="round"/>
+      </svg>
+    ),
+    pricing: [
+      { threshold: 0, price: 0 },
+      { threshold: 50000, price: 29 },
+    ],
+  },
 ];
 
-function getTypeformPrice(submissions: number): number {
-  let price = TYPEFORM_PRICING[0].price;
-  for (const tier of TYPEFORM_PRICING) {
+function getPrice(pricing: Array<{ threshold: number; price: number }>, submissions: number): number {
+  let price = pricing[0].price;
+  for (const tier of pricing) {
     if (submissions >= tier.threshold) price = tier.price;
   }
   return price;
@@ -25,9 +66,11 @@ function getTypeformPrice(submissions: number): number {
 
 export default function ComparisonSection() {
   const [sliderIndex, setSliderIndex] = useState(2);
+  const [competitorId, setCompetitorId] = useState('typeform');
   const submissions = SUBMISSION_LEVELS[sliderIndex];
-  const typeformPrice = getTypeformPrice(submissions);
-  const savings = typeformPrice;
+  const competitor = COMPETITORS.find(c => c.id === competitorId) || COMPETITORS[0];
+  const competitorPrice = getPrice(competitor.pricing, submissions);
+  const savings = competitorPrice;
 
   return (
     <section className="relative py-16 sm:py-24 lg:py-32 bg-white">
@@ -47,8 +90,26 @@ export default function ComparisonSection() {
           </div>
 
           <h2 className="font-normal text-[26px] sm:text-[32px] leading-[110%] tracking-[-0.06rem] lg:text-[48px] lg:tracking-[-0.12rem] mb-4 sm:mb-6 text-gray-900">
-            Forma vs Typeform<span className="text-safety-orange">.</span>
+            Forma vs {competitor.name}<span className="text-safety-orange">.</span>
           </h2>
+
+          {/* Competitor switcher */}
+          <div className="flex items-center gap-1 p-1 bg-gray-100 rounded-lg w-fit mb-6">
+            {COMPETITORS.map(c => (
+              <button
+                key={c.id}
+                onClick={() => setCompetitorId(c.id)}
+                className={`flex items-center gap-2 px-4 py-2 rounded-md text-[13px] font-mono uppercase tracking-[-0.015rem] transition-all ${
+                  competitorId === c.id
+                    ? 'bg-white text-gray-900 shadow-sm'
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                {c.logo}
+                {c.name}
+              </button>
+            ))}
+          </div>
 
           <p className="font-mono text-[14px] sm:text-[16px] leading-[140%] tracking-[-0.02rem] lg:text-[18px] text-gray-700 max-w-2xl">
             How much do you expect to spend per month?
@@ -101,21 +162,18 @@ export default function ComparisonSection() {
               </p>
             </div>
 
-            {/* Typeform */}
+            {/* Competitor */}
             <div className="border border-gray-200 rounded-xl p-6">
               <div className="flex items-center gap-2 mb-4">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                  <rect width="24" height="24" rx="4" fill="#262627"/>
-                  <path d="M7 8.5h10M7 8.5v1M17 8.5v1M9.5 9.5v7" stroke="#fff" strokeWidth="2" strokeLinecap="round"/>
-                </svg>
-                <span className="font-mono text-[13px] uppercase tracking-[-0.015rem] text-gray-900">Typeform</span>
+                {competitor.logo}
+                <span className="font-mono text-[13px] uppercase tracking-[-0.015rem] text-gray-900">{competitor.name}</span>
               </div>
               <div className="text-[36px] sm:text-[48px] font-semibold text-gray-900 leading-none mb-2">
-                ${typeformPrice}
+                ${competitorPrice}
               </div>
-              <div className="text-[24px] mb-3">😭</div>
+              <div className="text-[24px] mb-3">{competitorPrice > 0 ? '😭' : '🤝'}</div>
               <p className="font-mono text-[11px] text-gray-500 uppercase tracking-[-0.015rem]">
-                per month
+                {competitorPrice > 0 ? 'per month' : 'also free'}
               </p>
             </div>
           </div>
