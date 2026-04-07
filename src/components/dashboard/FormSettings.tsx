@@ -16,6 +16,7 @@ import {
 } from '@phosphor-icons/react';
 import { cn } from '@/lib/utils';
 import { useWorkspace } from '@/contexts/workspace-context';
+import UpgradeModal from './UpgradeModal';
 
 interface FormField {
   id: string;
@@ -82,6 +83,17 @@ export default function FormSettingsPanel({
   const [error, setError] = useState('');
   const [copied, setCopied] = useState<string | null>(null);
   const [planType, setPlanType] = useState('free');
+  const [showUpgrade, setShowUpgrade] = useState(false);
+  const [upgradeFeature, setUpgradeFeature] = useState('');
+
+  const requirePro = (feature: string) => {
+    if (planType === 'free') {
+      setUpgradeFeature(feature);
+      setShowUpgrade(true);
+      return true;
+    }
+    return false;
+  };
 
   // Form state
   const [name, setName] = useState(form.name);
@@ -248,15 +260,16 @@ export default function FormSettingsPanel({
               <div className="flex items-center justify-between py-2">
                 <div>
                   <label className="text-sm text-gray-900">Show &quot;Powered by Forma&quot;</label>
-                  <p className="text-xs text-gray-500">{planType === 'free' ? 'Upgrade to remove branding' : 'Display branding on form'}</p>
+                  <p className="text-xs text-gray-500">Display branding on form</p>
                 </div>
                 <button
-                  disabled={planType === 'free'}
-                  onClick={() => setSettings({ ...settings, thankYou: { ...settings.thankYou, showBranding: settings.thankYou?.showBranding === false ? true : false } })}
+                  onClick={() => {
+                    if (requirePro('Remove branding')) return;
+                    setSettings({ ...settings, thankYou: { ...settings.thankYou, showBranding: settings.thankYou?.showBranding === false ? true : false } });
+                  }}
                   className={cn(
                     'w-11 h-6 rounded-full transition-colors relative',
-                    settings.thankYou?.showBranding !== false ? 'bg-safety-orange' : 'bg-gray-300',
-                    planType === 'free' && 'opacity-50 cursor-not-allowed'
+                    settings.thankYou?.showBranding !== false ? 'bg-safety-orange' : 'bg-gray-300'
                   )}
                 >
                   <div className={cn('w-5 h-5 rounded-full bg-white absolute top-0.5 transition-transform shadow', settings.thankYou?.showBranding !== false ? 'translate-x-5' : 'translate-x-0.5')} />
@@ -340,15 +353,15 @@ export default function FormSettingsPanel({
                 ) : (
                   <label className={cn(
                     'block border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors',
-                    planType === 'free' ? 'opacity-50 cursor-not-allowed border-gray-200' : 'border-gray-300 hover:border-safety-orange/50'
+                    'border-gray-300 hover:border-safety-orange/50'
                   )}>
                     <p className="text-sm text-gray-500">Click to upload image</p>
                     <input
                       type="file"
                       accept="image/*"
                       className="hidden"
-                      disabled={planType === 'free'}
                       onChange={async (e) => {
+                        if (requirePro('Social preview image')) { e.target.value = ''; return; }
                         const file = e.target.files?.[0];
                         if (!file) return;
                         const fd = new FormData();
@@ -383,15 +396,15 @@ export default function FormSettingsPanel({
                 ) : (
                   <label className={cn(
                     'inline-flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg cursor-pointer text-sm text-gray-600 transition-colors',
-                    planType === 'free' ? 'opacity-50 cursor-not-allowed' : 'hover:border-safety-orange/50'
+                    'hover:border-safety-orange/50'
                   )}>
                     Upload favicon
                     <input
                       type="file"
                       accept=".ico,.png,image/x-icon,image/png"
                       className="hidden"
-                      disabled={planType === 'free'}
                       onChange={async (e) => {
+                        if (requirePro('Favicon')) { e.target.value = ''; return; }
                         const file = e.target.files?.[0];
                         if (!file) return;
                         const fd = new FormData();
@@ -526,6 +539,12 @@ export default function FormSettingsPanel({
           </div>
         )}
       </div>
+
+      <UpgradeModal
+        open={showUpgrade}
+        onClose={() => setShowUpgrade(false)}
+        feature={upgradeFeature}
+      />
     </div>
   );
 }
