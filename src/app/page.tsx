@@ -18,6 +18,14 @@ export default function LandingPage() {
       <FeaturesSection />
       <PricingSection />
       <ComparisonSection />
+
+      {/* Help CTA */}
+      <section className="py-12 bg-gray-50 text-center">
+        <p className="text-gray-600 mb-2">Need help?</p>
+        <p className="text-sm text-gray-500 mb-4">Can&apos;t find what you&apos;re looking for? Reach out to our support team.</p>
+        <a href="/contact" className="btn btn-secondary">Contact Support</a>
+      </section>
+
       <Footer />
     </main>
   );

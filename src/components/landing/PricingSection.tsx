@@ -338,29 +338,6 @@ export default function PricingSection() {
         )}
 
         {/* Enterprise callout */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ delay: 0.3 }}
-          className="mt-16 text-center"
-        >
-          <p className="text-gray-900 font-medium text-lg mb-2">
-            Need help?
-          </p>
-          <p className="text-gray-600 text-sm mb-4">
-            Can't find what you're looking for? Reach out to our support team.
-          </p>
-          <Magnetic pull={0.1}>
-            <a
-              href="/contact"
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-sm font-mono text-[13px] uppercase tracking-[-0.015rem] bg-safety-orange text-white hover:bg-accent-200 transition-all duration-150"
-            >
-              Contact Support
-              <ArrowRight size={16} weight="bold" />
-            </a>
-          </Magnetic>
-        </motion.div>
       </div>
     </section>
   );
