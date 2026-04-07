@@ -68,6 +68,10 @@ body {
   font-family: 'Geist Custom', ui-sans-serif, system-ui, sans-serif;
 }
 
+button, [role="button"] {
+  cursor: pointer;
+}
+
 ::selection {
   background: rgba(239, 111, 46, 0.3);
   color: var(--light-base-secondary);
