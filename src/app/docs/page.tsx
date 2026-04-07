@@ -357,6 +357,19 @@ Content-Type: application/json
           </>
         ),
       },
+      {
+        label: 'Custom CSS',
+        content: (
+          <>
+            <h3 className="text-lg font-semibold text-gray-900 mb-3">Custom CSS</h3>
+            <p className="text-gray-600 mb-4">
+              Style your forms with custom CSS. Available on Trial and Pro plans.
+              For full reference with examples, see the{' '}
+              <a href="/docs/custom-css" className="text-[#ef6f2e] hover:underline">Custom CSS Reference</a>.
+            </p>
+          </>
+        ),
+      },
     ],
   },
 ];

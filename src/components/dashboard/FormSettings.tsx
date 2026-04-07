@@ -228,7 +228,9 @@ export default function FormSettingsPanel({
               {/* Custom CSS */}
               <div className="form-field border-t border-gray-200 pt-3">
                 <label className="form-label">Custom CSS {planType === 'free' && <span className="badge badge-accent text-[10px] ml-1">Pro</span>}</label>
-                <p className="text-xs text-gray-500 mb-2">Add custom styles to your form. Applied to the public form page.</p>
+                <p className="text-xs text-gray-500 mb-2">
+                  Add custom styles to your form. <a href="/docs/custom-css" target="_blank" className="text-safety-orange hover:underline">View CSS reference</a>
+                </p>
                 <textarea
                   value={settings.customCss || ''}
                   onChange={(e) => {
@@ -237,7 +239,6 @@ export default function FormSettingsPanel({
                   }}
                   onFocus={() => { if (planType === 'free') requirePro('Custom CSS'); }}
                   className="input font-mono text-xs min-h-24"
-                  placeholder={`.forma-input {\n  border-radius: 20px;\n}`}
                 />
               </div>
 

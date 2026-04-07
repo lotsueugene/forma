@@ -578,6 +578,125 @@ function verifySignature(payload, signature, secret) {
       </>
     ),
   },
+  'custom-css': {
+    title: 'Custom CSS',
+    description: 'Style your forms with custom CSS to match your brand.',
+    content: (
+      <>
+        <h2>Custom CSS</h2>
+        <p>
+          Add custom CSS to any form via <strong>Form Settings &gt; General &gt; Custom CSS</strong>.
+          Your styles are injected after Forma's default styles, so they override the defaults.
+        </p>
+        <p><em>Custom CSS is available on Trial and Pro plans.</em></p>
+
+        <h3>Available Selectors</h3>
+
+        <h4>Inputs & Textareas</h4>
+        <p>All text inputs, textareas, selects, and date pickers use the <code>.forma-input</code> class.</p>
+        <pre><code>{`.forma-input {
+  border-radius: 20px;
+  font-size: 18px;
+  padding: 16px;
+}
+
+.forma-input:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
+.forma-input::placeholder {
+  color: #9ca3af;
+  font-style: italic;
+}`}</code></pre>
+
+        <h4>Submit Button</h4>
+        <pre><code>{`button[type="submit"] {
+  border-radius: 999px;
+  font-size: 18px;
+  padding: 16px 32px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}`}</code></pre>
+
+        <h4>Field Labels</h4>
+        <pre><code>{`label {
+  font-family: 'Georgia', serif;
+  font-size: 16px;
+  text-transform: none;
+}`}</code></pre>
+
+        <h4>Form Card</h4>
+        <p>The form content area is a <code>&lt;form&gt;</code> element with a card-like appearance.</p>
+        <pre><code>{`form {
+  border: 2px solid #000;
+  border-radius: 24px;
+  padding: 40px;
+}`}</code></pre>
+
+        <h4>Page Title & Description</h4>
+        <pre><code>{`h1 {
+  font-size: 48px;
+  font-family: 'Playfair Display', serif;
+}
+
+/* Description text below title */
+h1 + p {
+  font-size: 20px;
+  opacity: 0.7;
+}`}</code></pre>
+
+        <h4>Progress Bar (Multi-step forms)</h4>
+        <pre><code>{`/* Progress bar track */
+.h-2.rounded-full {
+  height: 6px;
+}
+
+/* Progress bar fill - use the style attribute */`}</code></pre>
+
+        <h4>Checkboxes & Radio Buttons</h4>
+        <pre><code>{`input[type="checkbox"],
+input[type="radio"] {
+  accent-color: #8b5cf6;
+  width: 20px;
+  height: 20px;
+}`}</code></pre>
+
+        <h3>Full Example</h3>
+        <p>Here's a complete example that gives your form a modern, rounded look:</p>
+        <pre><code>{`.forma-input {
+  border-radius: 16px;
+  border: 2px solid #e5e7eb;
+  font-family: 'Inter', sans-serif;
+}
+
+.forma-input:focus {
+  border-color: #8b5cf6;
+  box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.1);
+}
+
+button[type="submit"] {
+  border-radius: 999px;
+  background: #8b5cf6;
+  font-weight: 700;
+}
+
+label {
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+}`}</code></pre>
+
+        <h3>Tips</h3>
+        <ul>
+          <li>Use browser DevTools (F12) to inspect the form and find exact selectors</li>
+          <li>Custom CSS overrides Forma's default styles</li>
+          <li>Branding colors (set in Form Settings &gt; Branding) are applied via inline styles, so use <code>!important</code> to override them if needed</li>
+          <li>Google Fonts can be imported with <code>@import url('https://fonts.googleapis.com/css2?family=...')</code></li>
+        </ul>
+      </>
+    ),
+  },
 };
 
 function CodeBlock({ children, language }: { children: string; language?: string }) {
