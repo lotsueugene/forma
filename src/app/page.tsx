@@ -3,6 +3,7 @@ import Navigation from '@/components/landing/Navigation';
 import HeroSection from '@/components/landing/HeroSection';
 import FeaturesSection from '@/components/landing/FeaturesSection';
 import PricingSection from '@/components/landing/PricingSection';
+import ComparisonSection from '@/components/landing/ComparisonSection';
 import Footer from '@/components/landing/Footer';
 
 // Force dynamic rendering so Footer fetches fresh data from database
@@ -16,6 +17,7 @@ export default function LandingPage() {
       <HeroSection />
       <FeaturesSection />
       <PricingSection />
+      <ComparisonSection />
       <Footer />
     </main>
   );

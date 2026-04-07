@@ -76,13 +76,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.7,
   }));
 
-  // Comparison pages
-  const comparePages: MetadataRoute.Sitemap = ['typeform', 'jotform', 'tally', 'google-forms'].map((c) => ({
-    url: `${baseUrl}/compare/${c}`,
-    lastModified: new Date(),
-    changeFrequency: 'monthly' as const,
-    priority: 0.8,
-  }));
-
-  return [...staticPages, ...blogPages, ...careerPages, ...templatePages, ...comparePages];
+  return [...staticPages, ...blogPages, ...careerPages, ...templatePages];
 }
