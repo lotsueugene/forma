@@ -20,10 +20,19 @@ export default function LandingPage() {
       <ComparisonSection />
 
       {/* Help CTA */}
-      <section className="py-12 bg-gray-50 text-center">
-        <p className="text-gray-600 mb-2">Need help?</p>
-        <p className="text-sm text-gray-500 mb-4">Can&apos;t find what you&apos;re looking for? Reach out to our support team.</p>
-        <a href="/contact" className="btn btn-secondary">Contact Support</a>
+      <section className="py-16 sm:py-24 bg-gray-50 text-center">
+        <div className="mx-auto w-full max-w-[1400px] px-4 lg:px-9">
+          <p className="text-gray-900 font-medium text-lg mb-2">Need help?</p>
+          <p className="text-gray-600 text-sm mb-6">
+            Can&apos;t find what you&apos;re looking for? Reach out to our support team.
+          </p>
+          <a
+            href="/contact"
+            className="inline-flex items-center gap-2 px-6 py-3 rounded-sm font-mono text-[13px] uppercase tracking-[-0.015rem] bg-safety-orange text-white hover:bg-accent-200 transition-all duration-150"
+          >
+            Contact Support
+          </a>
+        </div>
       </section>
 
       <Footer />
