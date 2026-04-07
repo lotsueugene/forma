@@ -133,6 +133,13 @@ export async function POST(
       const senderName = fromName || workspace?.name || 'Forma';
       const fromEmail = process.env.EMAIL_FROM || 'Forma <notifications@withforma.io>';
 
+      // Get workspace owner's email for reply-to
+      const owner = await prisma.workspaceMember.findFirst({
+        where: { workspaceId: id, role: 'owner' },
+        select: { user: { select: { email: true } } },
+      });
+      const replyTo = workspace?.notificationEmail || owner?.user?.email || undefined;
+
       // Send in background
       (async () => {
         let sent = 0;
@@ -145,6 +152,7 @@ export async function POST(
             try {
               await resend.emails.send({
                 from: fromEmail,
+                replyTo,
                 to: email,
                 subject,
                 html: buildBroadcastEmail(content, senderName, workspace?.logoUrl),
