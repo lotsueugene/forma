@@ -48,6 +48,8 @@ export default function BroadcastsPage() {
   const [error, setError] = useState('');
   const [planType, setPlanType] = useState('free');
   const [showUpgrade, setShowUpgrade] = useState(false);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
 
   // Compose state
   const [subject, setSubject] = useState('');
@@ -62,15 +64,16 @@ export default function BroadcastsPage() {
     if (!currentWorkspace) return;
 
     Promise.all([
-      fetch(`/api/workspaces/${currentWorkspace.id}/broadcasts`).then(r => r.ok ? r.json() : null),
+      fetch(`/api/workspaces/${currentWorkspace.id}/broadcasts?page=${page}&limit=10`).then(r => r.ok ? r.json() : null),
       fetch(`/api/workspaces/${currentWorkspace.id}/custom-domain`).then(r => r.ok ? r.json() : null),
       fetch(`/api/workspaces/${currentWorkspace.id}/subscription`).then(r => r.ok ? r.json() : null),
     ]).then(([broadcastData, domainData, subData]) => {
       setBroadcasts(broadcastData?.broadcasts || []);
+      setTotalPages(broadcastData?.totalPages || 1);
       setForms(domainData?.forms || []);
       if (subData?.subscription?.plan) setPlanType(subData.subscription.plan);
     }).catch(() => {}).finally(() => setLoading(false));
-  }, [currentWorkspace]);
+  }, [currentWorkspace, page]);
 
   const handleCompose = () => {
     if (planType === 'free') {
@@ -413,6 +416,29 @@ export default function BroadcastsPage() {
               </span>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-center gap-2">
+          <button
+            onClick={() => setPage(p => Math.max(1, p - 1))}
+            disabled={page === 1}
+            className="btn btn-secondary text-sm disabled:opacity-40"
+          >
+            Previous
+          </button>
+          <span className="text-sm text-gray-500">
+            Page {page} of {totalPages}
+          </span>
+          <button
+            onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+            disabled={page === totalPages}
+            className="btn btn-secondary text-sm disabled:opacity-40"
+          >
+            Next
+          </button>
         </div>
       )}
 

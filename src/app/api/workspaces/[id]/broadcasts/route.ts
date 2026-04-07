@@ -25,13 +25,27 @@ export async function GET(
       return NextResponse.json({ error: access.error }, { status: 403 });
     }
 
-    const broadcasts = await prisma.respondentBroadcast.findMany({
-      where: { workspaceId: id },
-      orderBy: { createdAt: 'desc' },
-      include: { form: { select: { id: true, name: true } } },
-    });
+    const page = parseInt(request.nextUrl.searchParams.get('page') || '1');
+    const limit = Math.min(50, parseInt(request.nextUrl.searchParams.get('limit') || '10'));
+    const skip = (page - 1) * limit;
 
-    return NextResponse.json({ broadcasts });
+    const [broadcasts, total] = await Promise.all([
+      prisma.respondentBroadcast.findMany({
+        where: { workspaceId: id },
+        orderBy: { createdAt: 'desc' },
+        include: { form: { select: { id: true, name: true } } },
+        take: limit,
+        skip,
+      }),
+      prisma.respondentBroadcast.count({ where: { workspaceId: id } }),
+    ]);
+
+    return NextResponse.json({
+      broadcasts,
+      total,
+      page,
+      totalPages: Math.ceil(total / limit),
+    });
   } catch (error) {
     console.error('Error fetching broadcasts:', error);
     return NextResponse.json({ error: 'Failed to fetch broadcasts' }, { status: 500 });

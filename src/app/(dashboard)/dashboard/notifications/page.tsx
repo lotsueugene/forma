@@ -30,7 +30,7 @@ export default function NotificationsPage() {
   const buildUrl = useCallback(
     (cursor?: string | null) => {
       const params = new URLSearchParams();
-      params.set('limit', '30');
+      params.set('limit', '10');
       if (cursor) params.set('cursor', cursor);
       if (filter === 'unread') params.set('unreadOnly', 'true');
       if (effectiveWorkspaceId) params.set('workspaceId', effectiveWorkspaceId);
