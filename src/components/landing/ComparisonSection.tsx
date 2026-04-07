@@ -80,9 +80,9 @@ export default function ComparisonSection() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.5 }}
-          className="mb-12 sm:mb-16"
+          className="mb-12 sm:mb-16 text-center"
         >
-          <div className="text-pretty font-mono text-[15px] leading-[100%] tracking-[-0.0175rem] inline-flex items-center gap-3 uppercase mb-6 sm:mb-8">
+          <div className="text-pretty font-mono text-[15px] leading-[100%] tracking-[-0.0175rem] inline-flex items-center gap-3 uppercase mb-6 sm:mb-8 justify-center">
             <div className="size-2.5 transform-gpu rounded-full border bg-safety-orange border-transparent shadow-[0_0_8px_rgba(255,77,0,0.6)]" />
             <p className="whitespace-nowrap text-gray-700 text-pretty font-mono text-[11px] sm:text-[13px] leading-[100%] tracking-[-0.015rem] uppercase">
               Pricing Comparison
@@ -94,7 +94,7 @@ export default function ComparisonSection() {
           </h2>
 
           {/* Competitor switcher */}
-          <div className="flex items-center gap-1 p-1 bg-gray-100 rounded-lg w-fit mb-6">
+          <div className="flex items-center gap-1 p-1 bg-gray-100 rounded-lg w-fit mx-auto mb-6">
             {COMPETITORS.map(c => (
               <button
                 key={c.id}
@@ -121,7 +121,7 @@ export default function ComparisonSection() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.5, delay: 0.1 }}
-          className="max-w-2xl"
+          className="max-w-2xl mx-auto text-center"
         >
           {/* Slider */}
           <div className="mb-10">
