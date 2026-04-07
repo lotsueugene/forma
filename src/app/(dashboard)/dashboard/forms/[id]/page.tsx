@@ -39,7 +39,8 @@ interface Form {
   slug: string | null;
   status: string;
   formType: string;
-  fields: Array<{ id: string; label: string; type: string }>;
+  fields: Array<{ id: string; label: string; type: string; defaultValue?: string }>;
+  settings: Record<string, unknown> | null;
   submissions: number;
   views: number;
   createdAt: string;
