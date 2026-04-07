@@ -12,7 +12,7 @@ const COMPETITORS = [
     id: 'typeform',
     name: 'Typeform',
     logo: (
-      <img src="https://withforma-uploads.s3.us-east-1.amazonaws.com/logos/typeform-icon.svg" alt="Typeform" width={20} height={20} />
+      <img src="/logos/typeform.svg" alt="Typeform" width={20} height={20} />
     ),
     pricing: [
       { threshold: 0, price: 29 },
@@ -25,7 +25,7 @@ const COMPETITORS = [
     id: 'jotform',
     name: 'Jotform',
     logo: (
-      <img src="https://withforma-uploads.s3.us-east-1.amazonaws.com/logos/jotform-icon.svg" alt="Jotform" width={20} height={20} />
+      <img src="/logos/jotform.svg" alt="Jotform" width={20} height={20} />
     ),
     pricing: [
       { threshold: 0, price: 0 },
@@ -38,7 +38,7 @@ const COMPETITORS = [
     id: 'tally',
     name: 'Tally',
     logo: (
-      <svg width="20" height="20" viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="6" fill="#1E1E1E"/><path d="M8 16h16M16 8v16" stroke="#fff" strokeWidth="3" strokeLinecap="round"/></svg>
+      <img src="/logos/tally.svg" alt="Tally" width={20} height={20} />
     ),
     pricing: [
       { threshold: 0, price: 0 },
