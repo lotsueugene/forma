@@ -40,7 +40,7 @@ export default function UpgradeModal({
             initial={{ opacity: 0, scale: 0.95, y: 10 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 10 }}
-            className="relative w-full max-w-md bg-white rounded-2xl shadow-2xl overflow-hidden"
+            className="relative w-full max-w-md bg-white rounded-2xl shadow-2xl overflow-hidden max-h-[90vh] overflow-y-auto"
           >
             {/* Header with logo */}
             <div className="bg-gradient-to-br from-safety-orange to-[#d15010] px-6 py-8 text-center text-white">
@@ -71,7 +71,7 @@ export default function UpgradeModal({
             </div>
 
             {/* CTA */}
-            <div className="px-6 pb-6 space-y-3">
+            <div className="px-6 pb-5 space-y-2">
               <Link
                 href="/dashboard/settings?tab=billing"
                 className="block w-full text-center py-3 bg-safety-orange text-white font-semibold rounded-xl hover:bg-[#d15010] transition-colors"
