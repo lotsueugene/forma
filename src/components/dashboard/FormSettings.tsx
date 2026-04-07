@@ -1,0 +1,410 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import {
+  Gear,
+  Palette,
+  LinkSimple,
+  Code,
+  EyeSlash,
+  Bell,
+  Lock,
+  Trash,
+  Check,
+  Spinner,
+  Copy,
+} from '@phosphor-icons/react';
+import { cn } from '@/lib/utils';
+import { useWorkspace } from '@/contexts/workspace-context';
+
+interface FormField {
+  id: string;
+  type: string;
+  label: string;
+  defaultValue?: string;
+}
+
+interface FormSettings {
+  branding?: {
+    accentColor?: string;
+    backgroundColor?: string;
+    textColor?: string;
+  };
+  thankYou?: {
+    heading?: string;
+    message?: string;
+    redirectUrl?: string;
+    showBranding?: boolean;
+  };
+}
+
+interface Form {
+  id: string;
+  name: string;
+  description: string | null;
+  slug: string | null;
+  status: string;
+  fields: FormField[];
+  settings: FormSettings | null;
+  views: number;
+}
+
+type SettingsTab = 'general' | 'branding' | 'link' | 'hidden' | 'embed' | 'danger';
+
+const settingsTabs: { id: SettingsTab; label: string; icon: typeof Gear }[] = [
+  { id: 'general', label: 'General', icon: Gear },
+  { id: 'branding', label: 'Branding', icon: Palette },
+  { id: 'link', label: 'Link & Share', icon: LinkSimple },
+  { id: 'hidden', label: 'Hidden Fields', icon: EyeSlash },
+  { id: 'embed', label: 'Embed & API', icon: Code },
+  { id: 'danger', label: 'Danger Zone', icon: Trash },
+];
+
+export default function FormSettingsPanel({
+  form,
+  submissions,
+  onFormUpdate,
+}: {
+  form: Form;
+  submissions: { length: number };
+  onFormUpdate: () => void;
+}) {
+  const { currentWorkspace } = useWorkspace();
+  const [activeTab, setActiveTab] = useState<SettingsTab>('general');
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [error, setError] = useState('');
+  const [copied, setCopied] = useState<string | null>(null);
+  const [planType, setPlanType] = useState('free');
+
+  // Form state
+  const [name, setName] = useState(form.name);
+  const [description, setDescription] = useState(form.description || '');
+  const [slug, setSlug] = useState(form.slug || '');
+  const [status, setStatus] = useState(form.status);
+  const [settings, setSettings] = useState<FormSettings>(form.settings || {});
+
+  useEffect(() => {
+    if (!currentWorkspace) return;
+    fetch(`/api/workspaces/${currentWorkspace.id}/subscription`)
+      .then((res) => res.ok ? res.json() : null)
+      .then((data) => { if (data?.subscription?.plan) setPlanType(data.subscription.plan); })
+      .catch(() => {});
+  }, [currentWorkspace]);
+
+  const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
+  const formPageUrl = `${baseUrl}/f/${form.id}`;
+  const apiEndpoint = `${baseUrl}/api/forms/${form.id}/submissions`;
+
+  const copyToClipboard = (text: string, key: string) => {
+    navigator.clipboard.writeText(text);
+    setCopied(key);
+    setTimeout(() => setCopied(null), 2000);
+  };
+
+  const saveSettings = async () => {
+    setSaving(true);
+    setError('');
+    try {
+      const res = await fetch(`/api/forms/${form.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name,
+          description,
+          slug: slug || null,
+          status,
+          settings,
+          fields: form.fields,
+        }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || 'Failed to save');
+      }
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+      onFormUpdate();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed to save');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="flex flex-col lg:flex-row gap-6">
+      {/* Sidebar tabs */}
+      <div className="lg:w-48 flex lg:flex-col gap-1 overflow-x-auto lg:overflow-visible pb-2 lg:pb-0">
+        {settingsTabs.map((tab) => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id)}
+            className={cn(
+              'flex items-center gap-2 px-3 py-2 rounded-lg text-sm whitespace-nowrap transition-all',
+              activeTab === tab.id
+                ? 'bg-safety-orange/8 text-safety-orange font-medium'
+                : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'
+            )}
+          >
+            <tab.icon size={16} />
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Content */}
+      <div className="flex-1 min-w-0">
+        {error && (
+          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">
+            {error}
+          </div>
+        )}
+
+        {/* General */}
+        {activeTab === 'general' && (
+          <div className="card p-6 space-y-5">
+            <h3 className="font-medium text-gray-900">General Settings</h3>
+            <div className="space-y-4 max-w-lg">
+              <div className="form-field">
+                <label className="form-label">Form Name</label>
+                <input type="text" value={name} onChange={(e) => setName(e.target.value)} className="input" />
+              </div>
+              <div className="form-field">
+                <label className="form-label">Description</label>
+                <textarea value={description} onChange={(e) => setDescription(e.target.value)} className="input min-h-20" placeholder="Optional description shown to respondents" />
+              </div>
+              <div className="form-field">
+                <label className="form-label">Status</label>
+                <select value={status} onChange={(e) => setStatus(e.target.value)} className="input">
+                  <option value="active">Active (accepting submissions)</option>
+                  <option value="paused">Paused (visible but not accepting)</option>
+                  <option value="draft">Draft (not visible)</option>
+                  <option value="archived">Archived</option>
+                </select>
+              </div>
+              <button onClick={saveSettings} disabled={saving} className="btn btn-primary">
+                {saving ? <Spinner size={16} className="animate-spin" /> : saved ? <Check size={16} /> : null}
+                {saved ? 'Saved' : 'Save Changes'}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Branding */}
+        {activeTab === 'branding' && (
+          <div className="card p-6 space-y-5">
+            <h3 className="font-medium text-gray-900">Branding & Appearance</h3>
+            <div className="space-y-4 max-w-lg">
+              <div className="form-field">
+                <label className="form-label">Accent Color</label>
+                <div className="flex items-center gap-2">
+                  <input type="color" value={settings.branding?.accentColor || '#ef6f2e'} onChange={(e) => setSettings({ ...settings, branding: { ...settings.branding, accentColor: e.target.value } })} className="w-10 h-10 rounded-lg border border-gray-200 cursor-pointer p-0.5" />
+                  <input type="text" value={settings.branding?.accentColor || '#ef6f2e'} onChange={(e) => setSettings({ ...settings, branding: { ...settings.branding, accentColor: e.target.value } })} className="input flex-1 text-sm" />
+                </div>
+              </div>
+              <div className="form-field">
+                <label className="form-label">Background Color</label>
+                <div className="flex items-center gap-2">
+                  <input type="color" value={settings.branding?.backgroundColor || '#ffffff'} onChange={(e) => setSettings({ ...settings, branding: { ...settings.branding, backgroundColor: e.target.value } })} className="w-10 h-10 rounded-lg border border-gray-200 cursor-pointer p-0.5" />
+                  <input type="text" value={settings.branding?.backgroundColor || '#ffffff'} onChange={(e) => setSettings({ ...settings, branding: { ...settings.branding, backgroundColor: e.target.value } })} className="input flex-1 text-sm" />
+                </div>
+              </div>
+              <div className="form-field">
+                <label className="form-label">Text Color</label>
+                <div className="flex items-center gap-2">
+                  <input type="color" value={settings.branding?.textColor || '#111827'} onChange={(e) => setSettings({ ...settings, branding: { ...settings.branding, textColor: e.target.value } })} className="w-10 h-10 rounded-lg border border-gray-200 cursor-pointer p-0.5" />
+                  <input type="text" value={settings.branding?.textColor || '#111827'} onChange={(e) => setSettings({ ...settings, branding: { ...settings.branding, textColor: e.target.value } })} className="input flex-1 text-sm" />
+                </div>
+              </div>
+              {settings.branding?.accentColor && (
+                <button onClick={() => setSettings({ ...settings, branding: undefined })} className="text-xs text-gray-500 hover:text-gray-700">
+                  Reset to defaults
+                </button>
+              )}
+
+              <hr className="border-gray-200" />
+
+              <h4 className="text-sm font-medium text-gray-900">Thank You Screen</h4>
+              <div className="form-field">
+                <label className="form-label">Heading</label>
+                <input type="text" value={settings.thankYou?.heading || ''} onChange={(e) => setSettings({ ...settings, thankYou: { ...settings.thankYou, heading: e.target.value } })} className="input" placeholder="Thank you!" />
+              </div>
+              <div className="form-field">
+                <label className="form-label">Message</label>
+                <textarea value={settings.thankYou?.message || ''} onChange={(e) => setSettings({ ...settings, thankYou: { ...settings.thankYou, message: e.target.value } })} className="input min-h-20" placeholder="Your response has been submitted successfully." />
+              </div>
+              <div className="form-field">
+                <label className="form-label">Redirect URL</label>
+                <input type="url" value={settings.thankYou?.redirectUrl || ''} onChange={(e) => setSettings({ ...settings, thankYou: { ...settings.thankYou, redirectUrl: e.target.value } })} className="input" placeholder="https://example.com/thanks" />
+                <p className="text-xs text-gray-500 mt-1">Redirect after submission instead of showing thank you screen</p>
+              </div>
+              <div className="flex items-center justify-between py-2">
+                <div>
+                  <label className="text-sm text-gray-900">Show &quot;Powered by Forma&quot;</label>
+                  <p className="text-xs text-gray-500">{planType === 'free' ? 'Upgrade to remove branding' : 'Display branding on form'}</p>
+                </div>
+                <button
+                  disabled={planType === 'free'}
+                  onClick={() => setSettings({ ...settings, thankYou: { ...settings.thankYou, showBranding: settings.thankYou?.showBranding === false ? true : false } })}
+                  className={cn(
+                    'w-11 h-6 rounded-full transition-colors relative',
+                    settings.thankYou?.showBranding !== false ? 'bg-safety-orange' : 'bg-gray-300',
+                    planType === 'free' && 'opacity-50 cursor-not-allowed'
+                  )}
+                >
+                  <div className={cn('w-5 h-5 rounded-full bg-white absolute top-0.5 transition-transform shadow', settings.thankYou?.showBranding !== false ? 'translate-x-5' : 'translate-x-0.5')} />
+                </button>
+              </div>
+
+              <button onClick={saveSettings} disabled={saving} className="btn btn-primary">
+                {saving ? <Spinner size={16} className="animate-spin" /> : saved ? <Check size={16} /> : null}
+                {saved ? 'Saved' : 'Save Changes'}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Link & Share */}
+        {activeTab === 'link' && (
+          <div className="card p-6 space-y-5">
+            <h3 className="font-medium text-gray-900">Link & Share Settings</h3>
+            <div className="space-y-4 max-w-lg">
+              <div className="form-field">
+                <label className="form-label">Custom URL Slug</label>
+                <p className="text-xs text-gray-500 mb-2">For custom domains: forms.yourdomain.com/<strong>{slug || 'your-slug'}</strong></p>
+                <input
+                  type="text"
+                  value={slug}
+                  onChange={(e) => setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-'))}
+                  className="input"
+                  placeholder="e.g., contact, registration"
+                />
+              </div>
+              <div className="form-field">
+                <label className="form-label">Direct Link</label>
+                <div className="flex gap-2">
+                  <code className="input font-mono text-sm text-safety-orange flex-1 truncate">{formPageUrl}</code>
+                  <button onClick={() => copyToClipboard(formPageUrl, 'link')} className="btn btn-secondary">
+                    {copied === 'link' ? <Check size={16} /> : <Copy size={16} />}
+                  </button>
+                </div>
+              </div>
+              <button onClick={saveSettings} disabled={saving} className="btn btn-primary">
+                {saving ? <Spinner size={16} className="animate-spin" /> : saved ? <Check size={16} /> : null}
+                {saved ? 'Saved' : 'Save Changes'}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Hidden Fields */}
+        {activeTab === 'hidden' && (
+          <div className="card p-6 space-y-5">
+            <h3 className="font-medium text-gray-900">Hidden Fields & URL Parameters</h3>
+            <p className="text-sm text-gray-500">
+              Hidden fields capture data without showing them to respondents. Use <code className="bg-gray-100 px-1 rounded">{'{{param}}'}</code> to capture URL query parameters.
+            </p>
+            {(() => {
+              const hiddenFields = form.fields.filter(f => f.type === 'hidden');
+              if (hiddenFields.length === 0) {
+                return (
+                  <div className="py-8 text-center text-gray-400 text-sm">
+                    <EyeSlash size={32} className="mx-auto mb-2 opacity-50" />
+                    <p>No hidden fields</p>
+                    <p className="text-xs mt-1">Add hidden fields in the form editor</p>
+                  </div>
+                );
+              }
+              return (
+                <div className="space-y-3">
+                  {hiddenFields.map((field) => (
+                    <div key={field.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                      <div>
+                        <div className="text-sm font-medium text-gray-900">{field.label}</div>
+                        <div className="text-xs text-gray-500">
+                          {field.defaultValue
+                            ? `Value: ${field.defaultValue}`
+                            : 'No default value'}
+                        </div>
+                      </div>
+                      <code className="text-xs bg-gray-100 px-2 py-1 rounded">{field.id}</code>
+                    </div>
+                  ))}
+                  <p className="text-xs text-gray-400">
+                    Example: <code className="bg-gray-100 px-1 rounded">{formPageUrl}?utm_source=google</code>
+                  </p>
+                </div>
+              );
+            })()}
+          </div>
+        )}
+
+        {/* Embed & API */}
+        {activeTab === 'embed' && (
+          <div className="card p-6 space-y-5">
+            <h3 className="font-medium text-gray-900">Embed & API</h3>
+            <div className="space-y-5">
+              <div className="form-field">
+                <label className="form-label">API Endpoint</label>
+                <div className="flex gap-2">
+                  <code className="input font-mono text-xs text-safety-orange flex-1 truncate">POST {apiEndpoint}</code>
+                  <button onClick={() => copyToClipboard(apiEndpoint, 'api')} className="btn btn-secondary">
+                    {copied === 'api' ? <Check size={16} /> : <Copy size={16} />}
+                  </button>
+                </div>
+              </div>
+              <div className="form-field">
+                <label className="form-label">HTML Embed</label>
+                <textarea
+                  readOnly
+                  value={`<form action="${apiEndpoint}" method="POST">\n${form.fields.filter(f => !['page_break', 'hidden', 'image', 'video', 'payment'].includes(f.type)).map(f => `  <label>${f.label}</label>\n  <input type="${f.type === 'textarea' ? 'text' : f.type}" name="${f.id}">`).join('\n')}\n  <button type="submit">Submit</button>\n</form>`}
+                  className="input font-mono text-xs h-40 w-full"
+                />
+                <button
+                  onClick={() => copyToClipboard(`<form action="${apiEndpoint}" method="POST">\n${form.fields.filter(f => !['page_break', 'hidden', 'image', 'video', 'payment'].includes(f.type)).map(f => `  <label>${f.label}</label>\n  <input type="${f.type === 'textarea' ? 'text' : f.type}" name="${f.id}">`).join('\n')}\n  <button type="submit">Submit</button>\n</form>`, 'html')}
+                  className="btn btn-secondary mt-2"
+                >
+                  {copied === 'html' ? <Check size={16} /> : <Copy size={16} />}
+                  Copy HTML
+                </button>
+              </div>
+              <div className="form-field">
+                <label className="form-label">cURL Example</label>
+                <textarea
+                  readOnly
+                  value={`curl -X POST ${apiEndpoint} \\\n  -H "Content-Type: application/json" \\\n  -d '{\n${form.fields.filter(f => !['page_break', 'image', 'video'].includes(f.type)).map(f => `    "${f.id}": "value"`).join(',\n')}\n  }'`}
+                  className="input font-mono text-xs h-32 w-full"
+                />
+                <button
+                  onClick={() => copyToClipboard(`curl -X POST ${apiEndpoint} \\\n  -H "Content-Type: application/json" \\\n  -d '{\n${form.fields.filter(f => !['page_break', 'image', 'video'].includes(f.type)).map(f => `    "${f.id}": "value"`).join(',\n')}\n  }'`, 'curl')}
+                  className="btn btn-secondary mt-2"
+                >
+                  {copied === 'curl' ? <Check size={16} /> : <Copy size={16} />}
+                  Copy cURL
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Danger Zone */}
+        {activeTab === 'danger' && (
+          <div className="card p-6 border-red-500/20 space-y-4">
+            <h3 className="font-medium text-red-600">Danger Zone</h3>
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-gray-800">Delete this form</div>
+                <div className="text-sm text-gray-500">This will also delete all {submissions.length} submissions</div>
+              </div>
+              <button className="btn bg-red-500/10 text-red-600 hover:bg-red-500/20 border border-red-500/30">
+                <Trash size={18} />
+                Delete Form
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
