@@ -9,6 +9,7 @@ export interface Workspace {
   slug: string;
   isPersonal: boolean;
   role: string;
+  logoUrl?: string | null;
 }
 
 interface WorkspaceContextType {

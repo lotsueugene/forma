@@ -885,6 +885,73 @@ export default function SettingsPage() {
                 </div>
               </div>
 
+              {/* Workspace Logo */}
+              <div className="card p-6">
+                <h2 className="font-semibold text-gray-900 mb-2">Workspace Logo</h2>
+                <p className="text-sm text-gray-500 mb-4">Used in broadcast emails and branding. Recommended size: 200x50px.</p>
+                {(() => {
+                  const currentLogo = currentWorkspace?.logoUrl;
+                  return (
+                    <div className="flex items-center gap-4">
+                      {currentLogo ? (
+                        <div className="flex items-center gap-4">
+                          <img src={currentLogo} alt="Logo" className="h-10 max-w-[200px] object-contain border border-gray-200 rounded-lg p-1" />
+                          <button
+                            onClick={async () => {
+                              try {
+                                await fetch(`/api/workspaces/${currentWorkspace?.id}`, {
+                                  method: 'PATCH',
+                                  headers: { 'Content-Type': 'application/json' },
+                                  body: JSON.stringify({ logoUrl: null }),
+                                });
+                                window.location.reload();
+                              } catch {}
+                            }}
+                            className="text-xs text-red-500 hover:text-red-700"
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      ) : (
+                        <div
+                          onClick={async (e) => {
+                            const input = (e.currentTarget as HTMLElement).querySelector('input');
+                            input?.click();
+                          }}
+                          className="border-2 border-dashed border-gray-300 rounded-lg px-6 py-4 text-center cursor-pointer hover:border-safety-orange/50 transition-colors"
+                        >
+                          <p className="text-sm text-gray-500">Click to upload logo</p>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={async (e) => {
+                              const file = e.target.files?.[0];
+                              if (!file) return;
+                              const fd = new FormData();
+                              fd.append('file', file);
+                              fd.append('folder', 'logos');
+                              try {
+                                const uploadRes = await fetch('/api/upload', { method: 'POST', body: fd });
+                                const uploadData = await uploadRes.json();
+                                if (uploadData.url && currentWorkspace?.id) {
+                                  await fetch(`/api/workspaces/${currentWorkspace.id}`, {
+                                    method: 'PATCH',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ logoUrl: uploadData.url }),
+                                  });
+                                  window.location.reload();
+                                }
+                              } catch {}
+                            }}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
+              </div>
+
               {/* Workspace Settings */}
               <div className="card p-6">
                 <h2 className="font-semibold text-gray-900 mb-6">Workspace Settings</h2>
