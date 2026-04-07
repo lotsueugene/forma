@@ -36,6 +36,12 @@ interface FormSettings {
     redirectUrl?: string;
     showBranding?: boolean;
   };
+  social?: {
+    title?: string;
+    description?: string;
+    ogImage?: string;
+    favicon?: string;
+  };
 }
 
 interface Form {
@@ -290,6 +296,119 @@ export default function FormSettingsPanel({
                   </button>
                 </div>
               </div>
+
+              <hr className="border-gray-200" />
+
+              <h4 className="text-sm font-medium text-gray-900">Social Preview</h4>
+              <p className="text-xs text-gray-500">How your link appears when shared on social media.</p>
+
+              <div className="form-field">
+                <label className="form-label">Title <span className="text-gray-400 font-normal normal-case">(max 60 chars)</span></label>
+                <input
+                  type="text"
+                  maxLength={60}
+                  value={settings.social?.title || ''}
+                  onChange={(e) => setSettings({ ...settings, social: { ...settings.social, title: e.target.value } })}
+                  className="input"
+                  placeholder={name || 'Form title'}
+                />
+              </div>
+              <div className="form-field">
+                <label className="form-label">Description <span className="text-gray-400 font-normal normal-case">(max 110 chars)</span></label>
+                <input
+                  type="text"
+                  maxLength={110}
+                  value={settings.social?.description || ''}
+                  onChange={(e) => setSettings({ ...settings, social: { ...settings.social, description: e.target.value } })}
+                  className="input"
+                  placeholder="Fill out this form"
+                />
+              </div>
+              <div className="form-field">
+                <label className="form-label">Social Preview Image {planType === 'free' && <span className="badge badge-warning ml-1">Pro</span>}</label>
+                <p className="text-xs text-gray-500 mb-2">Recommended 1200x630. Max 5MB.</p>
+                {settings.social?.ogImage ? (
+                  <div className="relative">
+                    <img src={settings.social.ogImage} alt="OG Preview" className="w-full max-h-40 object-cover rounded-lg border border-gray-200" />
+                    <button
+                      onClick={() => setSettings({ ...settings, social: { ...settings.social, ogImage: undefined } })}
+                      className="absolute top-2 right-2 p-1 bg-white rounded-full shadow text-gray-500 hover:text-red-500"
+                    >
+                      <Trash size={14} />
+                    </button>
+                  </div>
+                ) : (
+                  <label className={cn(
+                    'block border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors',
+                    planType === 'free' ? 'opacity-50 cursor-not-allowed border-gray-200' : 'border-gray-300 hover:border-safety-orange/50'
+                  )}>
+                    <p className="text-sm text-gray-500">Click to upload image</p>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      disabled={planType === 'free'}
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        if (!file) return;
+                        const fd = new FormData();
+                        fd.append('file', file);
+                        fd.append('folder', 'og-images');
+                        try {
+                          const res = await fetch('/api/upload', { method: 'POST', body: fd });
+                          const data = await res.json();
+                          if (data.url) {
+                            setSettings({ ...settings, social: { ...settings.social, ogImage: data.url } });
+                          }
+                        } catch { /* ignore */ }
+                      }}
+                    />
+                  </label>
+                )}
+              </div>
+              <div className="form-field">
+                <label className="form-label">Favicon {planType === 'free' && <span className="badge badge-warning ml-1">Pro</span>}</label>
+                <p className="text-xs text-gray-500 mb-2">Recommended 60x60. .ico or .png.</p>
+                {settings.social?.favicon ? (
+                  <div className="flex items-center gap-3">
+                    <img src={settings.social.favicon} alt="Favicon" className="w-8 h-8 rounded border border-gray-200" />
+                    <button
+                      onClick={() => setSettings({ ...settings, social: { ...settings.social, favicon: undefined } })}
+                      className="text-xs text-red-500 hover:text-red-700"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                ) : (
+                  <label className={cn(
+                    'inline-flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg cursor-pointer text-sm text-gray-600 transition-colors',
+                    planType === 'free' ? 'opacity-50 cursor-not-allowed' : 'hover:border-safety-orange/50'
+                  )}>
+                    Upload favicon
+                    <input
+                      type="file"
+                      accept=".ico,.png,image/x-icon,image/png"
+                      className="hidden"
+                      disabled={planType === 'free'}
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        if (!file) return;
+                        const fd = new FormData();
+                        fd.append('file', file);
+                        fd.append('folder', 'favicons');
+                        try {
+                          const res = await fetch('/api/upload', { method: 'POST', body: fd });
+                          const data = await res.json();
+                          if (data.url) {
+                            setSettings({ ...settings, social: { ...settings.social, favicon: data.url } });
+                          }
+                        } catch { /* ignore */ }
+                      }}
+                    />
+                  </label>
+                )}
+              </div>
+
               <button onClick={saveSettings} disabled={saving} className="btn btn-primary">
                 {saving ? <Spinner size={16} className="animate-spin" /> : saved ? <Check size={16} /> : null}
                 {saved ? 'Saved' : 'Save Changes'}
