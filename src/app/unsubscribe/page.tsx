@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Stack, Check, Spinner } from '@phosphor-icons/react';
 
-export default function UnsubscribePage() {
+function UnsubscribeContent() {
   const searchParams = useSearchParams();
   const email = searchParams.get('email') || '';
   const scope = searchParams.get('scope') || 'platform';
@@ -93,5 +93,13 @@ export default function UnsubscribePage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function UnsubscribePage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-gray-50 flex items-center justify-center"><Spinner size={32} className="animate-spin text-gray-400" /></div>}>
+      <UnsubscribeContent />
+    </Suspense>
   );
 }
