@@ -64,7 +64,7 @@ type SettingsTab = 'general' | 'branding' | 'link' | 'hidden' | 'embed' | 'dange
 const settingsTabs: { id: SettingsTab; label: string; icon: typeof Gear }[] = [
   { id: 'general', label: 'General', icon: Gear },
   { id: 'branding', label: 'Branding', icon: Palette },
-  { id: 'link', label: 'Link & Share', icon: LinkSimple },
+  { id: 'link', label: 'Link & Customizations', icon: LinkSimple },
   { id: 'hidden', label: 'Hidden Fields', icon: EyeSlash },
   { id: 'embed', label: 'Embed & API', icon: Code },
   { id: 'danger', label: 'Danger Zone', icon: Trash },
@@ -226,23 +226,6 @@ export default function FormSettingsPanel({
                 </button>
               </div>
 
-              {/* Custom CSS */}
-              <div className="form-field border-t border-gray-200 pt-3">
-                <label className="form-label">Custom CSS {planType === 'free' && <span className="badge badge-accent text-[10px] ml-1">Pro</span>}</label>
-                <p className="text-xs text-gray-500 mb-2">
-                  Add custom styles to your form. <a href="/docs/custom-css" target="_blank" className="text-safety-orange hover:underline">View CSS reference</a>
-                </p>
-                <textarea
-                  value={settings.customCss || ''}
-                  onChange={(e) => {
-                    if (requirePro('Custom CSS')) return;
-                    setSettings({ ...settings, customCss: e.target.value });
-                  }}
-                  onFocus={() => { if (planType === 'free') requirePro('Custom CSS'); }}
-                  className="input font-mono text-xs min-h-24"
-                />
-              </div>
-
               <button onClick={saveSettings} disabled={saving || !hasChanges} className={cn('btn btn-primary', !hasChanges && 'opacity-50')}>
                 {saving ? <><Spinner size={16} className="animate-spin" /> Saving...</> : 'Save Changes'}
               </button>
@@ -324,10 +307,10 @@ export default function FormSettingsPanel({
           </div>
         )}
 
-        {/* Link & Share */}
+        {/* Link & Customizations */}
         {activeTab === 'link' && (
           <div className="card p-6 space-y-5">
-            <h3 className="font-medium text-gray-900">Link & Share Settings</h3>
+            <h3 className="font-medium text-gray-900">Link & Customizations Settings</h3>
             <div className="space-y-4 max-w-lg">
               <div className="form-field">
                 <label className="form-label">Custom URL Slug</label>
@@ -470,6 +453,25 @@ export default function FormSettingsPanel({
                     />
                   </div>
                 )}
+              </div>
+
+              <hr className="border-gray-200" />
+
+              {/* Custom CSS */}
+              <div className="form-field">
+                <label className="form-label">Custom CSS {planType === 'free' && <span className="badge badge-accent text-[10px] ml-1">Pro</span>}</label>
+                <p className="text-xs text-gray-500 mb-2">
+                  Add custom styles to your form. <a href="/docs/custom-css" target="_blank" className="text-safety-orange hover:underline">View CSS reference</a>
+                </p>
+                <textarea
+                  value={settings.customCss || ''}
+                  onChange={(e) => {
+                    if (requirePro('Custom CSS')) return;
+                    setSettings({ ...settings, customCss: e.target.value });
+                  }}
+                  onFocus={() => { if (planType === 'free') requirePro('Custom CSS'); }}
+                  className="input font-mono text-xs min-h-24"
+                />
               </div>
 
               <button onClick={saveSettings} disabled={saving || !hasChanges} className={cn('btn btn-primary', !hasChanges && 'opacity-50')}>
