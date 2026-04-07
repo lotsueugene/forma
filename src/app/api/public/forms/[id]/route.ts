@@ -32,11 +32,17 @@ export async function GET(
 
     const settings = form.settings ? JSON.parse(form.settings) : null;
 
-    // Enforce branding for free users — Trial and Pro can remove "Powered by Forma"
-    if (settings?.thankYou?.showBranding === false) {
-      const info = await getSubscriptionInfo(form.workspaceId);
-      if (info.plan === 'free') {
+    // Enforce plan restrictions for free users
+    const info = await getSubscriptionInfo(form.workspaceId);
+    if (info.plan === 'free') {
+      if (settings?.thankYou?.showBranding === false) {
         settings.thankYou.showBranding = true;
+      }
+      if (settings?.customCss) {
+        delete settings.customCss;
+      }
+      if (settings?.saveAndResume) {
+        settings.saveAndResume = false;
       }
     }
 
