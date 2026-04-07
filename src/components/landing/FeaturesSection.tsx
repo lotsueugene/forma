@@ -7,12 +7,12 @@ import {
   WebhooksLogo,
   ChartLineUp,
   ShieldCheck,
-  Lightning,
+  CreditCard,
   Database,
   Plugs,
   Users,
-  Globe,
-  DeviceMobile,
+  GlobeHemisphereWest,
+  UploadSimple,
   Robot,
 } from '@phosphor-icons/react';
 
@@ -21,73 +21,73 @@ const features = [
     icon: PencilSimple,
     title: 'Drag & Drop Builder',
     description:
-      'Create forms visually with conditional logic, multi-step flows, and 20+ field types.',
+      'Create forms visually with conditional logic, multi-step flows, branching, and 17+ field types.',
   },
   {
-    icon: Code,
-    title: 'Developer API',
+    icon: CreditCard,
+    title: 'Payment Collection',
     description:
-      'RESTful API with SDKs for JavaScript, Python, Go, and more. Full programmatic control.',
-  },
-  {
-    icon: WebhooksLogo,
-    title: 'Webhooks & Events',
-    description:
-      'Real-time webhooks with retry logic, HMAC signatures, and conditional triggers.',
+      'Accept one-time payments via Stripe directly in your forms. Money goes straight to your bank account.',
   },
   {
     icon: ChartLineUp,
     title: 'Analytics Dashboard',
     description:
-      'Track conversion rates, funnel drop-offs, geo data, and submission trends.',
+      'Track conversion rates, funnel drop-offs, geo data, submission trends, and revenue per form.',
   },
   {
-    icon: ShieldCheck,
-    title: 'Enterprise Security',
+    icon: GlobeHemisphereWest,
+    title: 'Custom Domains',
     description:
-      'SOC 2, GDPR, HIPAA compliant. Data encryption at rest and in transit.',
+      'Serve forms on your own domain with automatic SSL. Full white-label with branding removal.',
   },
   {
-    icon: Lightning,
-    title: 'Edge Performance',
+    icon: UploadSimple,
+    title: 'File Uploads',
     description:
-      'Forms served from 200+ global edge nodes. Sub-50ms response times.',
+      'Collect files, documents, and images directly through your forms with secure cloud storage.',
   },
   {
-    icon: Database,
-    title: 'Submission Storage',
+    icon: WebhooksLogo,
+    title: 'Webhooks & Events',
     description:
-      'Unlimited storage with full-text search, filtering, tagging, and export options.',
+      'Real-time webhooks with retry logic, HMAC signatures, and delivery to Slack, Notion, and more.',
+  },
+  {
+    icon: Code,
+    title: 'Developer API',
+    description:
+      'RESTful API with API keys, programmatic form creation, and submission management.',
   },
   {
     icon: Plugs,
-    title: '50+ Integrations',
+    title: '10+ Integrations',
     description:
-      'Connect to Slack, Salesforce, HubSpot, Zapier, and dozens more out of the box.',
+      'Connect to Slack, Notion, Airtable, HubSpot, Zapier, Make, and more out of the box.',
   },
   {
     icon: Users,
     title: 'Team Collaboration',
     description:
-      'Role-based access, shared workspaces, comments, and activity logging.',
+      'Role-based access with owner, admin, editor, and viewer roles. Invite up to 10 team members.',
   },
   {
-    icon: Globe,
-    title: 'Multi-Language',
+    icon: ShieldCheck,
+    title: 'Security & Spam Protection',
     description:
-      'Built-in i18n support. Translate forms and validation messages easily.',
+      'reCAPTCHA, honeypot fields, rate limiting, and data encryption. GDPR-friendly.',
   },
   {
-    icon: DeviceMobile,
-    title: 'Mobile Optimized',
+    icon: Database,
+    title: 'Unlimited Submissions',
     description:
-      'Responsive forms with touch-friendly inputs and native mobile keyboards.',
+      'No submission limits on any plan. Full-text search, filtering, CSV/JSON export.',
   },
   {
     icon: Robot,
     title: 'AI-Powered',
     description:
-      'Auto-generate forms from descriptions, smart field suggestions, spam detection.',
+      'Auto-generate entire forms from a text description. Smart field suggestions and spam detection.',
   },
 ];
 
