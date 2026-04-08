@@ -102,7 +102,7 @@ export default function ComparisonSection() {
             ))}
           </div>
 
-          <p className="font-mono text-[14px] sm:text-[16px] leading-[140%] tracking-[-0.02rem] lg:text-[18px] text-gray-700 max-w-2xl">
+          <p className="font-mono text-[14px] sm:text-[16px] leading-[140%] tracking-[-0.02rem] lg:text-[18px] text-gray-700 max-w-2xl mx-auto">
             How much do you expect to spend per month?
           </p>
         </motion.div>
