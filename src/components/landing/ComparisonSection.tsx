@@ -122,13 +122,18 @@ export default function ComparisonSection() {
             <div className="text-[28px] sm:text-[36px] font-semibold text-gray-900 mb-6">
               {submissions.toLocaleString()}
             </div>
+            <style>{`
+              .forma-slider { -webkit-appearance: none; appearance: none; width: 100%; height: 6px; border-radius: 999px; background: linear-gradient(to right, #ef6f2e ${(sliderIndex / (SUBMISSION_LEVELS.length - 1)) * 100}%, #e5e7eb ${(sliderIndex / (SUBMISSION_LEVELS.length - 1)) * 100}%); cursor: pointer; outline: none; }
+              .forma-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 22px; height: 22px; border-radius: 50%; background: #ef6f2e; border: 3px solid white; box-shadow: 0 1px 4px rgba(0,0,0,0.2); cursor: pointer; }
+              .forma-slider::-moz-range-thumb { width: 22px; height: 22px; border-radius: 50%; background: #ef6f2e; border: 3px solid white; box-shadow: 0 1px 4px rgba(0,0,0,0.2); cursor: pointer; }
+            `}</style>
             <input
               type="range"
               min={0}
               max={SUBMISSION_LEVELS.length - 1}
               value={sliderIndex}
               onChange={(e) => setSliderIndex(parseInt(e.target.value))}
-              className="w-full accent-safety-orange h-1.5 rounded-full appearance-none bg-gray-200 cursor-pointer"
+              className="forma-slider"
             />
             <div className="flex justify-between mt-2 font-mono text-[11px] text-gray-400 uppercase">
               <span>100</span>
