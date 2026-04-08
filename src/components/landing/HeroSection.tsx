@@ -193,17 +193,14 @@ export default function HeroSection() {
             {/* Main card */}
             <div className="relative rounded-xl border border-gray-200 bg-white p-6 space-y-5 shadow-xl">
               {/* Header */}
-              <div className="flex items-center justify-between pb-4 border-b border-gray-200">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-safety-orange/20 flex items-center justify-center">
-                    <Lightning size={20} className="text-safety-orange" />
+              <div className="flex items-center gap-3 pb-4 border-b border-gray-200">
+                  <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center">
+                    <Lightning size={20} className="text-gray-500" />
                   </div>
                   <div>
                     <div className="font-medium text-gray-900">Contact Form</div>
                     <div className="text-xs text-gray-500 font-mono uppercase">Pro Template</div>
                   </div>
-                </div>
-                <span className="badge badge-accent">Live</span>
               </div>
 
               {/* Form Fields Preview */}
