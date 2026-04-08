@@ -25,7 +25,7 @@ const COMPETITORS = [
     id: 'jotform',
     name: 'Jotform',
     logo: (
-      <img src="/logos/jotform.svg" alt="Jotform" width={20} height={20} />
+      <img src="/logos/jotform.png" alt="Jotform" width={20} height={20} className="rounded" />
     ),
     pricing: [
       { threshold: 0, price: 0 },
@@ -38,7 +38,7 @@ const COMPETITORS = [
     id: 'tally',
     name: 'Tally',
     logo: (
-      <img src="/logos/tally.svg" alt="Tally" width={20} height={20} />
+      <img src="https://tally.so/favicon.ico" alt="Tally" width={20} height={20} className="rounded" />
     ),
     pricing: [
       { threshold: 0, price: 0 },
