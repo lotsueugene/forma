@@ -20,7 +20,7 @@ export default function Navigation() {
   const isAuthenticated = status === 'authenticated' && session?.user;
 
   return (
-    <header className="fixed inset-x-0 top-0 z-50 px-4 md:border-b-0 lg:px-9 bg-white backdrop-blur-md">
+    <header className="fixed inset-x-0 top-0 z-50 px-4 lg:px-9 bg-white/80 backdrop-blur-md border-b border-gray-200/60">
       <div className="mx-auto flex items-center justify-between py-5 max-w-[1400px] relative">
         {/* Logo - Left */}
         <a href="/" className="z-50 flex items-center gap-2">

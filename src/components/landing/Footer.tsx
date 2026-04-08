@@ -84,7 +84,7 @@ export default async function Footer() {
 
   return (
     <footer className="bg-gray-50 py-16 sm:py-24 px-4 sm:px-6 relative z-10">
-      <div className="mx-auto max-w-7xl flex flex-col md:flex-row justify-between gap-10 sm:gap-16">
+      <div className="mx-auto max-w-[1400px] flex flex-col md:flex-row justify-between gap-10 sm:gap-16">
         {/* Left: System Health */}
         <div className="flex flex-col gap-6 sm:gap-8">
           <div className="flex items-center gap-3">
@@ -136,7 +136,7 @@ export default async function Footer() {
       </div>
 
       {/* Bottom Bar */}
-      <div className="mx-auto max-w-7xl mt-10 sm:mt-16 pt-6 sm:pt-8 border-t border-gray-200 flex flex-col md:flex-row items-center justify-between gap-4">
+      <div className="mx-auto max-w-[1400px] mt-10 sm:mt-16 pt-6 sm:pt-8 border-t border-gray-200 flex flex-col md:flex-row items-center justify-between gap-4">
         <p className="font-mono text-[10px] sm:text-xs text-gray-600 uppercase tracking-widest text-center md:text-left">
           {new Date().getFullYear()} Forma. All rights reserved.
         </p>

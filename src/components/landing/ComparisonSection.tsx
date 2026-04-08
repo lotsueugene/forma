@@ -64,7 +64,7 @@ export default function ComparisonSection() {
   const savings = competitorPrice;
 
   return (
-    <section className="relative py-16 sm:py-24 lg:py-32 bg-white">
+    <section className="relative py-16 sm:py-24 lg:py-32 bg-gray-50">
       <div className="mx-auto w-full max-w-[1400px] px-4 lg:px-9">
         <motion.div
           initial={{ opacity: 0, y: 20 }}

@@ -9,19 +9,11 @@ export default function GridOverlay() {
       {/* Grid lines */}
       <div className="absolute inset-0 grid-overlay opacity-50" />
 
-      {/* Gradient fade at bottom */}
-      <div
-        className="absolute inset-x-0 bottom-0 h-40"
-        style={{
-          background: 'linear-gradient(to top, var(--dark-base-primary) 0%, transparent 100%)'
-        }}
-      />
-
-      {/* Subtle radial gradient in center */}
+      {/* Subtle radial gradient in center - matches brand orange */}
       <div
         className="absolute inset-0"
         style={{
-          background: 'radial-gradient(ellipse 80% 50% at 50% -20%, rgba(16, 185, 129, 0.08) 0%, transparent 60%)'
+          background: 'radial-gradient(ellipse 80% 50% at 50% -20%, rgba(239, 111, 46, 0.04) 0%, transparent 60%)'
         }}
       />
     </div>

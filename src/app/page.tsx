@@ -20,7 +20,7 @@ export default function LandingPage() {
       <ComparisonSection />
 
       {/* Help CTA */}
-      <section className="py-16 sm:py-24 bg-gray-50 text-center">
+      <section className="py-16 sm:py-24 bg-white text-center">
         <div className="mx-auto w-full max-w-[1400px] px-4 lg:px-9">
           <p className="text-gray-900 font-medium text-lg mb-2">Need help?</p>
           <p className="text-gray-600 text-sm mb-6">

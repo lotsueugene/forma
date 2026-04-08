@@ -69,9 +69,9 @@ export default function HeroSection() {
   }, [charIndex, isDeleting, phIndex, PLACEHOLDERS]);
 
   return (
-    <section className="min-h-screen pt-24 pb-16 px-4 lg:px-9">
+    <section className="pt-28 sm:pt-32 pb-16 sm:pb-24 px-4 lg:px-9">
       <div className="mx-auto max-w-[1400px]">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center min-h-[calc(100vh-10rem)]">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
           {/* Left Column - Content */}
           <motion.div
             className="flex flex-col gap-8"
