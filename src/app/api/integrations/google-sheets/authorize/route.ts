@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
 
     const formId = request.nextUrl.searchParams.get('formId') || '';
 
-    const baseUrl = request.nextUrl.origin;
+    const baseUrl = process.env.NEXTAUTH_URL || request.nextUrl.origin;
     const redirectUri = `${baseUrl}/api/integrations/google-sheets/callback`;
 
     // Encode workspace + form + user in state

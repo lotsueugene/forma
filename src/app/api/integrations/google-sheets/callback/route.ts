@@ -55,7 +55,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Exchange code for tokens
-    const baseUrl = request.nextUrl.origin;
+    const baseUrl = process.env.NEXTAUTH_URL || request.nextUrl.origin;
     const redirectUri = `${baseUrl}/api/integrations/google-sheets/callback`;
     const tokens = await exchangeCodeForTokens(code, redirectUri);
 
