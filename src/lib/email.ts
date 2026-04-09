@@ -68,13 +68,24 @@ export async function sendSubmissionNotification(
     .map(([key, value]) => {
       // Use field label if available, otherwise use the key
       const displayKey = fieldLabels.get(key) || key;
-      const displayValue = typeof value === 'object'
-        ? JSON.stringify(value, null, 2)
-        : String(value);
+
+      // Check if value is a file upload object
+      let displayValue: string;
+      if (value && typeof value === 'object' && 'url' in (value as Record<string, unknown>)) {
+        const file = value as { name?: string; url?: string; size?: number; type?: string };
+        const fileName = file.name || 'Download file';
+        const fileSize = file.size ? ` (${(file.size / 1024 / 1024).toFixed(1)} MB)` : '';
+        displayValue = `<a href="${escapeHtml(file.url || '')}" style="color: #ef6f2e; text-decoration: none; font-weight: 500;">${escapeHtml(fileName)}</a><span style="color: #9ca3af;">${fileSize}</span>`;
+      } else if (value && typeof value === 'object') {
+        displayValue = escapeHtml(JSON.stringify(value, null, 2));
+      } else {
+        displayValue = escapeHtml(String(value ?? ''));
+      }
+
       return `
         <tr>
           <td style="padding: 12px 16px; border-bottom: 1px solid #e5e5e5; font-weight: 500; color: #1f2937;">${escapeHtml(displayKey)}</td>
-          <td style="padding: 12px 16px; border-bottom: 1px solid #e5e5e5; color: #6b7280;">${escapeHtml(displayValue)}</td>
+          <td style="padding: 12px 16px; border-bottom: 1px solid #e5e5e5; color: #6b7280;">${displayValue}</td>
         </tr>
       `;
     })

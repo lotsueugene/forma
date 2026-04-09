@@ -252,6 +252,11 @@ function formatValueForSheets(value: unknown): string {
   if (typeof value === 'boolean') {
     return value ? 'TRUE' : 'FALSE';
   }
+  // File upload objects — show the URL instead of raw JSON
+  if (value && typeof value === 'object' && 'url' in (value as Record<string, unknown>)) {
+    const file = value as { url?: string; name?: string };
+    return file.url || '';
+  }
   if (typeof value === 'object') {
     return JSON.stringify(value);
   }
