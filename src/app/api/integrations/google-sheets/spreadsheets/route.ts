@@ -41,10 +41,12 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ spreadsheets });
   } catch (error) {
-    console.error('Google Sheets spreadsheets error:', error);
+    console.error('Google Sheets spreadsheets error:', error instanceof Error ? error.message : error);
+
+    // If Drive API fails (scope not granted), return empty list so user can enter ID manually
     return NextResponse.json(
-      { error: 'Failed to list spreadsheets' },
-      { status: 500 }
+      { spreadsheets: [], error: String(error instanceof Error ? error.message : error) },
+      { status: 200 }
     );
   }
 }

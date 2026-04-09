@@ -514,16 +514,37 @@ function IntegrationsPageContent() {
             <>
               <div>
                 <label className="text-xs text-gray-500 mb-1 block">Select a spreadsheet</label>
-                <select
-                  className="input text-sm"
-                  value={gsSelectedSpreadsheet}
-                  onChange={(e) => setGsSelectedSpreadsheet(e.target.value)}
-                >
-                  <option value="">Choose a spreadsheet...</option>
-                  {gsSpreadsheets.map((s) => (
-                    <option key={s.id} value={s.id}>{s.name}</option>
-                  ))}
-                </select>
+                {gsSpreadsheets.length > 0 ? (
+                  <select
+                    className="input text-sm"
+                    value={gsSelectedSpreadsheet}
+                    onChange={(e) => setGsSelectedSpreadsheet(e.target.value)}
+                  >
+                    <option value="">Choose a spreadsheet...</option>
+                    {gsSpreadsheets.map((s) => (
+                      <option key={s.id} value={s.id}>{s.name}</option>
+                    ))}
+                  </select>
+                ) : (
+                  <>
+                    <input
+                      type="text"
+                      className="input text-sm"
+                      placeholder="Paste Google Sheets URL or spreadsheet ID"
+                      value={gsSelectedSpreadsheet}
+                      onChange={(e) => {
+                        let val = e.target.value;
+                        // Extract ID from URL: https://docs.google.com/spreadsheets/d/SPREADSHEET_ID/edit
+                        const match = val.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
+                        if (match) val = match[1];
+                        setGsSelectedSpreadsheet(val);
+                      }}
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      Open your spreadsheet and copy the URL from the browser address bar.
+                    </p>
+                  </>
+                )}
               </div>
               <div>
                 <label className="text-xs text-gray-500 mb-1 block">Sheet name (tab)</label>
