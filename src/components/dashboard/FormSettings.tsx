@@ -87,6 +87,8 @@ export default function FormSettingsPanel({
   const [planType, setPlanType] = useState('free');
   const [showUpgrade, setShowUpgrade] = useState(false);
   const [upgradeFeature, setUpgradeFeature] = useState('');
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [isDeletingForm, setIsDeletingForm] = useState(false);
 
   const requirePro = (feature: string) => {
     if (planType === 'free') {
@@ -580,11 +582,55 @@ export default function FormSettingsPanel({
                 <div className="text-gray-800">Delete this form</div>
                 <div className="text-sm text-gray-500">This will also delete all {submissions.length} submissions</div>
               </div>
-              <button className="btn bg-red-500/10 text-red-600 hover:bg-red-500/20 border border-red-500/30">
+              <button
+                onClick={() => setShowDeleteConfirm(true)}
+                className="btn bg-red-500/10 text-red-600 hover:bg-red-500/20 border border-red-500/30"
+              >
                 <Trash size={18} />
                 Delete Form
               </button>
             </div>
+
+            {/* Delete Confirmation */}
+            {showDeleteConfirm && (
+              <div className="mt-4 p-4 rounded-xl border border-red-200 bg-red-50 space-y-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
+                    <Trash size={20} className="text-red-600" />
+                  </div>
+                  <div>
+                    <p className="font-medium text-gray-900 text-sm">Are you sure?</p>
+                    <p className="text-xs text-gray-500">This will permanently delete <strong>{form.name}</strong> and all {submissions.length} submissions.</p>
+                  </div>
+                </div>
+                <div className="flex gap-2 justify-end">
+                  <button
+                    onClick={() => setShowDeleteConfirm(false)}
+                    className="btn btn-secondary text-sm"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={async () => {
+                      setIsDeletingForm(true);
+                      try {
+                        const res = await fetch(`/api/forms/${form.id}`, { method: 'DELETE' });
+                        if (res.ok) {
+                          window.location.href = '/dashboard/forms';
+                        }
+                      } finally {
+                        setIsDeletingForm(false);
+                      }
+                    }}
+                    disabled={isDeletingForm}
+                    className="px-4 py-2 rounded-lg font-medium text-sm text-white bg-red-600 hover:bg-red-700 transition-colors flex items-center gap-2 disabled:opacity-50"
+                  >
+                    {isDeletingForm ? <Spinner size={16} className="animate-spin" /> : <Trash size={16} />}
+                    Delete Forever
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>
