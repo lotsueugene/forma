@@ -201,6 +201,31 @@ async function refreshAccessToken(refreshToken: string): Promise<{ accessToken: 
 }
 
 /**
+ * Refresh and persist the new access token to the database
+ */
+export async function refreshAndSaveToken(
+  integrationId: string,
+  refreshToken: string
+): Promise<string> {
+  const { accessToken } = await refreshAccessToken(refreshToken);
+
+  // Save the new access token back to the integration
+  const integration = await prisma.integration.findUnique({
+    where: { id: integrationId },
+  });
+  if (integration) {
+    const config = JSON.parse(integration.config);
+    config.accessToken = accessToken;
+    await prisma.integration.update({
+      where: { id: integrationId },
+      data: { config: JSON.stringify(config) },
+    });
+  }
+
+  return accessToken;
+}
+
+/**
  * Format a value for Google Sheets
  */
 function formatValueForSheets(value: unknown): string {

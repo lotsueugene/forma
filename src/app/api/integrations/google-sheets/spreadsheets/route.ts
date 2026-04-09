@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
-import { listSpreadsheets } from '@/lib/integrations/google-sheets';
+import { listSpreadsheets, refreshAndSaveToken } from '@/lib/integrations/google-sheets';
 
 // GET /api/integrations/google-sheets/spreadsheets?integrationId=xxx
 export async function GET(request: NextRequest) {
@@ -26,11 +26,18 @@ export async function GET(request: NextRequest) {
     }
 
     const config = JSON.parse(integration.config) as { accessToken?: string; refreshToken?: string };
-    if (!config.accessToken) {
-      return NextResponse.json({ error: 'No access token' }, { status: 400 });
+
+    // Refresh the token before listing
+    let accessToken = config.accessToken;
+    if (config.refreshToken) {
+      accessToken = await refreshAndSaveToken(integrationId, config.refreshToken);
     }
 
-    const spreadsheets = await listSpreadsheets(config.accessToken);
+    if (!accessToken) {
+      return NextResponse.json({ error: 'No access token. Please reconnect Google Sheets.' }, { status: 400 });
+    }
+
+    const spreadsheets = await listSpreadsheets(accessToken);
 
     return NextResponse.json({ spreadsheets });
   } catch (error) {
