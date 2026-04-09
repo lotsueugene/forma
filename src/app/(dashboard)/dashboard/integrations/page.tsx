@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import {
   GlobeHemisphereWest,
   LinkSimple,
@@ -81,6 +81,14 @@ const INTEGRATION_TYPES = [
 ] as const;
 
 export default function IntegrationsPage() {
+  return (
+    <Suspense fallback={<div className="text-sm text-gray-600">Loading...</div>}>
+      <IntegrationsPageContent />
+    </Suspense>
+  );
+}
+
+function IntegrationsPageContent() {
   const { currentWorkspace } = useWorkspace();
 
   const [loading, setLoading] = useState(true);
