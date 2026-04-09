@@ -272,10 +272,9 @@ export default function FormDetailPage() {
     }
   };
 
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+
   const handleDelete = async () => {
-    if (!confirm('Are you sure you want to delete this form? This will also delete all submissions. This action cannot be undone.')) {
-      return;
-    }
     setIsDeleting(true);
     try {
       const response = await fetch(`/api/forms/${formId}`, {
@@ -285,9 +284,11 @@ export default function FormDetailPage() {
         window.location.href = '/dashboard/forms';
       } else {
         const data = await response.json();
+        setShowDeleteModal(false);
         alert(data.error || 'Failed to delete form');
       }
     } catch (err) {
+      setShowDeleteModal(false);
       alert('Failed to delete form');
     } finally {
       setIsDeleting(false);
@@ -534,7 +535,7 @@ export default function FormDetailPage() {
                       Duplicate Form
                     </button>
                     <button
-                      onClick={handleDelete}
+                      onClick={() => { setShowMoreMenu(false); setShowDeleteModal(true); }}
                       disabled={isDeleting}
                       className="w-full px-4 py-3 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2 disabled:opacity-50"
                     >
@@ -1134,6 +1135,60 @@ export default function FormDetailPage() {
       {activeTab === 'settings' && (
         <FormSettingsPanel form={form} submissions={submissions} onFormUpdate={fetchFormData} />
       )}
+
+      {/* Delete Confirmation Modal */}
+      <AnimatePresence>
+        {showDeleteModal && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/40 z-50"
+              onClick={() => setShowDeleteModal(false)}
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+              className="fixed inset-0 z-50 flex items-center justify-center p-4"
+            >
+              <div className="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6 relative" onClick={(e) => e.stopPropagation()}>
+                <div className="text-center mb-5">
+                  <div className="w-14 h-14 mx-auto mb-4 rounded-full bg-red-100 flex items-center justify-center">
+                    <Trash size={28} className="text-red-600" />
+                  </div>
+                  <h2 className="text-lg font-bold text-gray-900 mb-1">Delete this form?</h2>
+                  <p className="text-gray-500 text-sm">
+                    This will permanently delete <strong>{form?.name}</strong> and all its submissions. This action cannot be undone.
+                  </p>
+                </div>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setShowDeleteModal(false)}
+                    className="btn btn-secondary flex-1"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleDelete}
+                    disabled={isDeleting}
+                    className="flex-1 px-4 py-2.5 rounded-lg font-medium text-white bg-red-600 hover:bg-red-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+                  >
+                    {isDeleting ? (
+                      <Spinner size={18} className="animate-spin" />
+                    ) : (
+                      <Trash size={18} />
+                    )}
+                    Delete
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
 
       {/* Publish Success Modal */}
       <AnimatePresence>

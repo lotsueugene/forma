@@ -112,11 +112,9 @@ export default function FormsPage() {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this form? This action cannot be undone.')) {
-      return;
-    }
+  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
 
+  const handleDelete = async (id: string) => {
     setDeletingId(id);
     try {
       const response = await fetch(`/api/forms/${id}`, {
@@ -374,7 +372,7 @@ export default function FormsPage() {
                               </Link>
                             )}
                             <button
-                              onClick={() => handleDelete(form.id)}
+                              onClick={() => setDeleteTargetId(form.id)}
                               disabled={deletingId === form.id}
                               className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:text-red-700 hover:bg-red-50 disabled:opacity-50"
                             >
@@ -526,7 +524,7 @@ export default function FormsPage() {
                                 </Link>
                               )}
                               <button
-                                onClick={() => handleDelete(form.id)}
+                                onClick={() => setDeleteTargetId(form.id)}
                                 disabled={deletingId === form.id}
                                 className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:text-red-700 hover:bg-red-50 disabled:opacity-50"
                               >
@@ -662,6 +660,60 @@ export default function FormsPage() {
               </div>
             </motion.div>
           </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Delete Confirmation Modal */}
+      <AnimatePresence>
+        {deleteTargetId && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/40 z-50"
+              onClick={() => setDeleteTargetId(null)}
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+              className="fixed inset-0 z-50 flex items-center justify-center p-4"
+            >
+              <div className="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6 relative" onClick={(e) => e.stopPropagation()}>
+                <div className="text-center mb-5">
+                  <div className="w-14 h-14 mx-auto mb-4 rounded-full bg-red-100 flex items-center justify-center">
+                    <Trash size={28} className="text-red-600" />
+                  </div>
+                  <h2 className="text-lg font-bold text-gray-900 mb-1">Delete this form?</h2>
+                  <p className="text-gray-500 text-sm">
+                    This will permanently delete <strong>{forms.find(f => f.id === deleteTargetId)?.name}</strong> and all its submissions. This cannot be undone.
+                  </p>
+                </div>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setDeleteTargetId(null)}
+                    className="btn btn-secondary flex-1"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={() => { handleDelete(deleteTargetId); setDeleteTargetId(null); }}
+                    disabled={deletingId === deleteTargetId}
+                    className="flex-1 px-4 py-2.5 rounded-lg font-medium text-white bg-red-600 hover:bg-red-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+                  >
+                    {deletingId === deleteTargetId ? (
+                      <Spinner size={18} className="animate-spin" />
+                    ) : (
+                      <Trash size={18} />
+                    )}
+                    Delete
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </>
         )}
       </AnimatePresence>
     </div>
