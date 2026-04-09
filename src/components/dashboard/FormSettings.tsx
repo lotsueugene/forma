@@ -46,6 +46,7 @@ interface FormSettings {
   };
   saveAndResume?: boolean;
   customCss?: string;
+  displayMode?: 'classic' | 'conversational';
 }
 
 interface Form {
@@ -206,6 +207,42 @@ export default function FormSettingsPanel({
                   <option value="draft">Draft (not visible)</option>
                   <option value="archived">Archived</option>
                 </select>
+              </div>
+
+              {/* Display Mode */}
+              <div className="py-3 border-t border-gray-200">
+                <label className="text-sm text-gray-900 block mb-2">Display Mode</label>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setSettings({ ...settings, displayMode: 'conversational' })}
+                    className={cn(
+                      'flex-1 px-3 py-2.5 rounded-lg text-xs font-medium border transition-all',
+                      (settings.displayMode || 'conversational') === 'conversational'
+                        ? 'border-safety-orange bg-safety-orange/10 text-safety-orange'
+                        : 'border-gray-200 text-gray-600 hover:border-gray-300'
+                    )}
+                  >
+                    Conversational
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setSettings({ ...settings, displayMode: 'classic' })}
+                    className={cn(
+                      'flex-1 px-3 py-2.5 rounded-lg text-xs font-medium border transition-all',
+                      settings.displayMode === 'classic'
+                        ? 'border-safety-orange bg-safety-orange/10 text-safety-orange'
+                        : 'border-gray-200 text-gray-600 hover:border-gray-300'
+                    )}
+                  >
+                    Classic
+                  </button>
+                </div>
+                <p className="text-xs text-gray-500 mt-1.5">
+                  {(settings.displayMode || 'conversational') === 'conversational'
+                    ? 'One question at a time, like Typeform'
+                    : 'All fields visible at once'}
+                </p>
               </div>
 
               {/* Save & Resume */}
