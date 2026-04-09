@@ -7,10 +7,12 @@ import { verifyWorkspaceAccess } from '@/lib/workspace-auth';
 
 // GET /api/integrations/google-sheets/callback?code=xxx&state=xxx
 export async function GET(request: NextRequest) {
+  const baseUrl = process.env.NEXTAUTH_URL || request.nextUrl.origin;
+
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
-      return NextResponse.redirect(new URL('/login', request.url));
+      return NextResponse.redirect(new URL('/login', baseUrl));
     }
 
     const code = request.nextUrl.searchParams.get('code');
@@ -19,13 +21,13 @@ export async function GET(request: NextRequest) {
 
     if (error) {
       return NextResponse.redirect(
-        new URL(`/dashboard/integrations?error=${encodeURIComponent(error)}`, request.url)
+        new URL(`/dashboard/integrations?error=${encodeURIComponent(error)}`, baseUrl)
       );
     }
 
     if (!code || !stateParam) {
       return NextResponse.redirect(
-        new URL('/dashboard/integrations?error=Missing+authorization+code', request.url)
+        new URL('/dashboard/integrations?error=Missing+authorization+code', baseUrl)
       );
     }
 
@@ -35,14 +37,14 @@ export async function GET(request: NextRequest) {
       state = JSON.parse(Buffer.from(stateParam, 'base64url').toString());
     } catch {
       return NextResponse.redirect(
-        new URL('/dashboard/integrations?error=Invalid+state', request.url)
+        new URL('/dashboard/integrations?error=Invalid+state', baseUrl)
       );
     }
 
     // Verify the session user matches the state user
     if (session.user.id !== state.userId) {
       return NextResponse.redirect(
-        new URL('/dashboard/integrations?error=Session+mismatch', request.url)
+        new URL('/dashboard/integrations?error=Session+mismatch', baseUrl)
       );
     }
 
@@ -50,12 +52,11 @@ export async function GET(request: NextRequest) {
     const access = await verifyWorkspaceAccess(session.user.id, state.workspaceId, 'manager');
     if (!access.allowed) {
       return NextResponse.redirect(
-        new URL('/dashboard/integrations?error=Workspace+access+denied', request.url)
+        new URL('/dashboard/integrations?error=Workspace+access+denied', baseUrl)
       );
     }
 
     // Exchange code for tokens
-    const baseUrl = process.env.NEXTAUTH_URL || request.nextUrl.origin;
     const redirectUri = `${baseUrl}/api/integrations/google-sheets/callback`;
     const tokens = await exchangeCodeForTokens(code, redirectUri);
 
@@ -77,7 +78,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(
       new URL(
         `/dashboard/integrations?google_sheets_connected=${integration.id}`,
-        request.url
+        baseUrl
       )
     );
   } catch (error) {
@@ -85,7 +86,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(
       new URL(
         `/dashboard/integrations?error=${encodeURIComponent('Failed to connect Google Sheets')}`,
-        request.url
+        baseUrl
       )
     );
   }
