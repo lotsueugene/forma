@@ -28,6 +28,8 @@ import {
   Archive,
   DotsThree,
   Gear,
+  WhatsappLogo,
+  LinkedinLogo,
 } from '@phosphor-icons/react';
 import { cn } from '@/lib/utils';
 import FormAnalytics from '@/components/dashboard/FormAnalytics';
@@ -1203,22 +1205,25 @@ export default function FormDetailPage() {
                       href={`https://wa.me/?text=${encodeURIComponent(`Check out this form: ${typeof window !== 'undefined' ? window.location.origin : ''}/f/${formId}`)}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex-1 py-2.5 rounded-lg text-center text-sm font-medium bg-[#25D366]/10 text-[#25D366] hover:bg-[#25D366]/20 transition-colors"
+                      className="flex-1 py-2.5 rounded-lg text-sm font-medium bg-gray-50 hover:bg-gray-100 transition-colors flex items-center justify-center gap-2 border border-gray-200"
                     >
+                      <WhatsappLogo size={20} weight="fill" className="text-[#25D366]" />
                       WhatsApp
                     </a>
                     <a
                       href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(`${typeof window !== 'undefined' ? window.location.origin : ''}/f/${formId}`)}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex-1 py-2.5 rounded-lg text-center text-sm font-medium bg-[#0A66C2]/10 text-[#0A66C2] hover:bg-[#0A66C2]/20 transition-colors"
+                      className="flex-1 py-2.5 rounded-lg text-sm font-medium bg-gray-50 hover:bg-gray-100 transition-colors flex items-center justify-center gap-2 border border-gray-200"
                     >
+                      <LinkedinLogo size={20} weight="fill" className="text-[#0A66C2]" />
                       LinkedIn
                     </a>
                     <a
                       href={`mailto:?subject=${encodeURIComponent(form?.name || 'Form')}&body=${encodeURIComponent(`Fill out this form: ${typeof window !== 'undefined' ? window.location.origin : ''}/f/${formId}`)}`}
-                      className="flex-1 py-2.5 rounded-lg text-center text-sm font-medium bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors"
+                      className="flex-1 py-2.5 rounded-lg text-sm font-medium bg-gray-50 hover:bg-gray-100 transition-colors flex items-center justify-center gap-2 border border-gray-200"
                     >
+                      <EnvelopeSimple size={20} className="text-gray-600" />
                       Email
                     </a>
                   </div>
