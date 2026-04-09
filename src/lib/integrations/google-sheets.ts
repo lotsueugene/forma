@@ -252,10 +252,14 @@ function formatValueForSheets(value: unknown): string {
   if (typeof value === 'boolean') {
     return value ? 'TRUE' : 'FALSE';
   }
+  // Try parsing JSON strings (file uploads may be stored as strings)
+  let parsed = value;
+  if (typeof parsed === 'string') {
+    try { const p = JSON.parse(parsed); if (p && typeof p === 'object') parsed = p; } catch {}
+  }
   // File upload objects — show the URL instead of raw JSON
-  if (value && typeof value === 'object' && 'url' in (value as Record<string, unknown>)) {
-    const file = value as { url?: string; name?: string };
-    return file.url || '';
+  if (parsed && typeof parsed === 'object' && 'url' in (parsed as Record<string, unknown>)) {
+    return (parsed as { url?: string }).url || '';
   }
   if (typeof value === 'object') {
     return JSON.stringify(value);
