@@ -164,6 +164,38 @@ function IntegrationsPageContent() {
         const data = await integrationsRes.json();
         setIntegrationsFeatureEnabled(true);
         setIntegrations(data.integrations || []);
+
+        // Check for incomplete Google Sheets integrations (missing spreadsheetId)
+        const gsIntegrations = (data.integrations || []).filter(
+          (i: IntegrationState) => i.type === 'google-sheets'
+        );
+        for (const gs of gsIntegrations) {
+          const detailRes = await fetch(
+            `/api/workspaces/${currentWorkspace.id}/integrations/${gs.id}`
+          );
+          if (detailRes.ok) {
+            const detail = await detailRes.json();
+            if (!detail.integration?.config?.spreadsheetId ||
+                detail.integration.config.spreadsheetId === '...' ||
+                detail.integration.config.spreadsheetId.length < 10) {
+              // Incomplete — trigger the spreadsheet picker
+              setGsConnectingId(gs.id);
+              setGsLoadingSheets(true);
+              fetch(`/api/integrations/google-sheets/spreadsheets?integrationId=${gs.id}`)
+                .then((res) => res.json())
+                .then((sheetsData) => {
+                  if (sheetsData.spreadsheets) {
+                    setGsSpreadsheets(sheetsData.spreadsheets);
+                  } else if (sheetsData.error) {
+                    setError(sheetsData.error);
+                  }
+                })
+                .catch(() => setError('Failed to load spreadsheets'))
+                .finally(() => setGsLoadingSheets(false));
+              break;
+            }
+          }
+        }
       } else if (integrationsRes.status === 402) {
         setIntegrationsFeatureEnabled(false);
         setIntegrations([]);
