@@ -16,6 +16,7 @@ import {
 } from '@phosphor-icons/react';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
+import ConversationalForm from './ConversationalForm';
 
 // reCAPTCHA site key from environment
 const RECAPTCHA_SITE_KEY = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY;
@@ -94,6 +95,7 @@ interface FormSettings {
   };
   saveAndResume?: boolean;
   customCss?: string;
+  displayMode?: 'classic' | 'conversational';
 }
 
 interface Form {
@@ -488,6 +490,35 @@ export default function FormPageClient({ formId }: FormPageClientProps) {
     );
   }
 
+  // Conversational mode
+  const displayMode = form?.settings?.displayMode || 'conversational';
+  if (displayMode === 'conversational' && form) {
+    return (
+      <>
+        {RECAPTCHA_SITE_KEY && !isCustomDomain && (
+          <Script
+            src={`https://www.google.com/recaptcha/api.js?render=${RECAPTCHA_SITE_KEY}`}
+            strategy="lazyOnload"
+          />
+        )}
+        <ConversationalForm
+          form={form}
+          formId={formId}
+          onSubmit={async () => {
+            await handleSubmit({ preventDefault: () => {} } as React.FormEvent);
+          }}
+          isSubmitting={isSubmitting}
+          isSubmitted={isSubmitted}
+          error={error}
+          onFileChange={handleFileChange}
+          formData={formData}
+          setFormData={setFormData}
+        />
+      </>
+    );
+  }
+
+  // Classic mode
   return (
     <>
       {RECAPTCHA_SITE_KEY && !isCustomDomain && (

@@ -51,6 +51,7 @@ interface FormSettings {
     redirectUrl?: string;
     showBranding?: boolean;
   };
+  displayMode?: 'classic' | 'conversational';
 }
 
 type FieldType =
@@ -1140,6 +1141,45 @@ export default function EditFormPage({ params }: { params: Promise<{ id: string 
                   </button>
                 </div>
                 <div className="p-4 space-y-6">
+                  {/* Display Mode */}
+                  <div>
+                    <div className="flex items-center gap-2 mb-3">
+                      <Palette size={16} className="text-gray-500" />
+                      <h4 className="text-sm font-medium text-gray-900">Display Mode</h4>
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setFormSettings({ ...formSettings, displayMode: 'conversational' })}
+                        className={cn(
+                          'flex-1 px-3 py-2.5 rounded-lg text-xs font-medium border transition-all',
+                          (formSettings.displayMode || 'conversational') === 'conversational'
+                            ? 'border-safety-orange bg-safety-orange/10 text-safety-orange'
+                            : 'border-gray-200 text-gray-600 hover:border-gray-300'
+                        )}
+                      >
+                        Conversational
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setFormSettings({ ...formSettings, displayMode: 'classic' })}
+                        className={cn(
+                          'flex-1 px-3 py-2.5 rounded-lg text-xs font-medium border transition-all',
+                          formSettings.displayMode === 'classic'
+                            ? 'border-safety-orange bg-safety-orange/10 text-safety-orange'
+                            : 'border-gray-200 text-gray-600 hover:border-gray-300'
+                        )}
+                      >
+                        Classic
+                      </button>
+                    </div>
+                    <p className="text-xs text-gray-500 mt-2">
+                      {(formSettings.displayMode || 'conversational') === 'conversational'
+                        ? 'One question at a time, like Typeform'
+                        : 'All fields visible at once'}
+                    </p>
+                  </div>
+
                   {/* Branding */}
                   <div>
                     <div className="flex items-center gap-2 mb-3">
