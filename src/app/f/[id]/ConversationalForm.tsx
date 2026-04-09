@@ -289,7 +289,7 @@ export default function ConversationalForm({
                 animate="center"
                 exit="exit"
                 transition={{ duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }}
-                className="text-center sm:text-left"
+                className="text-center"
               >
                 <motion.h1
                   initial={{ opacity: 0, y: 20 }}
@@ -466,7 +466,7 @@ export default function ConversationalForm({
 
       {/* Branding */}
       {form.settings?.thankYou?.showBranding !== false && (
-        <div className="fixed bottom-6 left-6 sm:bottom-8 sm:left-8 z-40">
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40">
           <Link
             href="/"
             className="flex items-center gap-1.5 text-xs font-medium transition-opacity hover:opacity-80"

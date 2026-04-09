@@ -350,6 +350,8 @@ export default function EditFormPage({ params }: { params: Promise<{ id: string 
   const [aiPrompt, setAIPrompt] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [formSettings, setFormSettings] = useState<FormSettings>({});
+  const [showPublishModal, setShowPublishModal] = useState(false);
+  const [linkCopied, setLinkCopied] = useState(false);
   const [showFormSettings, setShowFormSettings] = useState(false);
 
   const fieldPickerRef = useRef<HTMLDivElement>(null);
@@ -517,8 +519,12 @@ export default function EditFormPage({ params }: { params: Promise<{ id: string 
         return;
       }
 
-      // Redirect to form detail page
-      router.push(`/dashboard/forms/${id}`);
+      // Show publish modal if form is active, otherwise redirect
+      if (formStatus === 'active') {
+        setShowPublishModal(true);
+      } else {
+        router.push(`/dashboard/forms/${id}`);
+      }
     } catch (err) {
       setError('Something went wrong. Please try again.');
     } finally {
@@ -1455,6 +1461,113 @@ export default function EditFormPage({ params }: { params: Promise<{ id: string 
               </div>
             </motion.div>
           </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Publish Success Modal */}
+      <AnimatePresence>
+        {showPublishModal && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/40 z-50"
+              onClick={() => { setShowPublishModal(false); router.push(`/dashboard/forms/${id}`); }}
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+              className="fixed inset-0 z-50 flex items-center justify-center p-4"
+            >
+              <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8 relative" onClick={(e) => e.stopPropagation()}>
+                <button
+                  onClick={() => { setShowPublishModal(false); router.push(`/dashboard/forms/${id}`); }}
+                  className="absolute top-4 right-4 p-1 text-gray-400 hover:text-gray-600"
+                >
+                  <X size={20} />
+                </button>
+
+                <div className="text-center mb-6">
+                  <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-green-100 flex items-center justify-center">
+                    <span className="text-3xl">🎉</span>
+                  </div>
+                  <h2 className="text-2xl font-bold text-gray-900 mb-1">Your form is live!</h2>
+                  <p className="text-gray-500 text-sm">Share the link below to start collecting responses.</p>
+                </div>
+
+                {/* Form link */}
+                <div className="mb-6">
+                  <label className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-2 block">Form link</label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      readOnly
+                      value={`${typeof window !== 'undefined' ? window.location.origin : ''}/f/${id}`}
+                      className="input flex-1 text-sm bg-gray-50"
+                    />
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText(`${window.location.origin}/f/${id}`);
+                        setLinkCopied(true);
+                        setTimeout(() => setLinkCopied(false), 2000);
+                      }}
+                      className={cn(
+                        'btn text-sm whitespace-nowrap',
+                        linkCopied ? 'btn-primary' : 'btn-secondary'
+                      )}
+                    >
+                      {linkCopied ? (
+                        <><CheckCircle size={16} /> Copied!</>
+                      ) : (
+                        <><Copy size={16} /> Copy</>
+                      )}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Share buttons */}
+                <div className="mb-6">
+                  <label className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-3 block">Share via</label>
+                  <div className="flex gap-3">
+                    <a
+                      href={`https://wa.me/?text=${encodeURIComponent(`Check out this form: ${typeof window !== 'undefined' ? window.location.origin : ''}/f/${id}`)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex-1 py-2.5 rounded-lg text-center text-sm font-medium bg-[#25D366]/10 text-[#25D366] hover:bg-[#25D366]/20 transition-colors"
+                    >
+                      WhatsApp
+                    </a>
+                    <a
+                      href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(`${typeof window !== 'undefined' ? window.location.origin : ''}/f/${id}`)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex-1 py-2.5 rounded-lg text-center text-sm font-medium bg-[#0A66C2]/10 text-[#0A66C2] hover:bg-[#0A66C2]/20 transition-colors"
+                    >
+                      LinkedIn
+                    </a>
+                    <a
+                      href={`mailto:?subject=${encodeURIComponent(formName)}&body=${encodeURIComponent(`Fill out this form: ${typeof window !== 'undefined' ? window.location.origin : ''}/f/${id}`)}`}
+                      className="flex-1 py-2.5 rounded-lg text-center text-sm font-medium bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors"
+                    >
+                      Email
+                    </a>
+                  </div>
+                </div>
+
+                <a
+                  href={`/f/${id}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block w-full text-center text-sm text-safety-orange hover:text-accent-200 font-medium transition-colors"
+                >
+                  Open form in new tab →
+                </a>
+              </div>
+            </motion.div>
+          </>
         )}
       </AnimatePresence>
     </div>
