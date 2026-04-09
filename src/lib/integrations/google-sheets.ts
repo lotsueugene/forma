@@ -48,8 +48,25 @@ export async function deliverToGoogleSheets(
     throw new Error('Google Sheets access token is required');
   }
 
-  // Get spreadsheet metadata to find sheet ID
-  const range = sheetName ? `${sheetName}!A:ZZ` : 'Sheet1!A:ZZ';
+  // Get actual first sheet name from spreadsheet metadata if needed
+  let resolvedSheetName = sheetName || 'Sheet1';
+  try {
+    const metaRes = await fetch(
+      `${SHEETS_API_URL}/${spreadsheetId}?fields=sheets.properties.title`,
+      { headers: { Authorization: `Bearer ${accessToken}` } }
+    );
+    if (metaRes.ok) {
+      const meta = await metaRes.json() as { sheets?: Array<{ properties?: { title?: string } }> };
+      const firstSheet = meta.sheets?.[0]?.properties?.title;
+      if (firstSheet && (!sheetName || sheetName === 'Sheet1')) {
+        resolvedSheetName = firstSheet;
+      }
+    }
+  } catch {
+    // Fall through with the configured name
+  }
+
+  const range = `${resolvedSheetName}!A:ZZ`;
 
   // First, check if we need to add headers
   const headersResponse = await fetch(
@@ -99,7 +116,7 @@ export async function deliverToGoogleSheets(
 
   // If we have new headers, update the header row
   if (headers.length > existingHeaders.length && existingHeaders.length > 0) {
-    const headerRange = sheetName ? `${sheetName}!1:1` : 'Sheet1!1:1';
+    const headerRange = `${resolvedSheetName}!1:1`;
     await updateRow(accessToken, spreadsheetId, headerRange, [headers]);
   }
 
