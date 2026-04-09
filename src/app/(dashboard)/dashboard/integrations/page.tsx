@@ -24,6 +24,7 @@ import {
   WebhooksLogo,
 } from '@phosphor-icons/react';
 import { useWorkspace } from '@/contexts/workspace-context';
+import { useSearchParams } from 'next/navigation';
 
 interface FormOption {
   id: string;
@@ -104,6 +105,14 @@ export default function IntegrationsPage() {
   const [addingIntegrationType, setAddingIntegrationType] = useState<string | null>(null);
   const [integrationConfig, setIntegrationConfig] = useState<Record<string, string>>({});
 
+  // Google Sheets OAuth state
+  const searchParams = useSearchParams();
+  const [gsConnectingId, setGsConnectingId] = useState<string | null>(null);
+  const [gsSpreadsheets, setGsSpreadsheets] = useState<Array<{ id: string; name: string }>>([]);
+  const [gsLoadingSheets, setGsLoadingSheets] = useState(false);
+  const [gsSelectedSpreadsheet, setGsSelectedSpreadsheet] = useState('');
+  const [gsSheetName, setGsSheetName] = useState('Sheet1');
+
   const load = useCallback(async () => {
     if (!currentWorkspace) return;
     setLoading(true);
@@ -161,6 +170,35 @@ export default function IntegrationsPage() {
   useEffect(() => {
     load();
   }, [load]);
+
+  // Handle Google Sheets OAuth callback
+  useEffect(() => {
+    const connectedId = searchParams.get('google_sheets_connected');
+    const oauthError = searchParams.get('error');
+
+    if (oauthError) {
+      setError(`Google Sheets: ${oauthError}`);
+      window.history.replaceState({}, '', '/dashboard/integrations');
+    }
+
+    if (connectedId) {
+      setGsConnectingId(connectedId);
+      setGsLoadingSheets(true);
+      fetch(`/api/integrations/google-sheets/spreadsheets?integrationId=${connectedId}`)
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.spreadsheets) {
+            setGsSpreadsheets(data.spreadsheets);
+          } else if (data.error) {
+            setError(data.error);
+          }
+        })
+        .catch(() => setError('Failed to load spreadsheets'))
+        .finally(() => setGsLoadingSheets(false));
+      window.history.replaceState({}, '', '/dashboard/integrations');
+      load(); // Refresh integrations list
+    }
+  }, [searchParams, load]);
 
   const connectedCount = useMemo(() => {
     let n = 0;
@@ -326,8 +364,7 @@ export default function IntegrationsPage() {
         config.baseId = integrationConfig.baseId;
         config.tableId = integrationConfig.tableId;
       } else if (type === 'google-sheets') {
-        // Google Sheets requires OAuth - redirect to OAuth flow
-        setError('Google Sheets integration coming soon');
+        // Google Sheets uses OAuth flow — handled by the "Connect with Google" button
         return;
       }
 
@@ -349,6 +386,32 @@ export default function IntegrationsPage() {
       setError(e instanceof Error ? e.message : 'Failed to add integration');
     } finally {
       setAddingIntegrationType(null);
+    }
+  };
+
+  const finishGoogleSheetsSetup = async () => {
+    if (!currentWorkspace || !gsConnectingId || !gsSelectedSpreadsheet) return;
+    setError(null);
+    try {
+      const res = await fetch(`/api/workspaces/${currentWorkspace.id}/integrations/${gsConnectingId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          enabled: true,
+          config: { spreadsheetId: gsSelectedSpreadsheet, sheetName: gsSheetName || 'Sheet1' },
+        }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || `Failed (${res.status})`);
+      }
+      setGsConnectingId(null);
+      setGsSpreadsheets([]);
+      setGsSelectedSpreadsheet('');
+      setGsSheetName('Sheet1');
+      load();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed to finish Google Sheets setup');
     }
   };
 
@@ -392,6 +455,72 @@ export default function IntegrationsPage() {
           <button type="button" onClick={() => setError(null)} className="btn btn-ghost text-red-600">
             Dismiss
           </button>
+        </div>
+      )}
+
+      {/* Google Sheets spreadsheet picker (shown after OAuth) */}
+      {gsConnectingId && (
+        <div className="card p-5 space-y-4 border-safety-orange/30">
+          <h2 className="font-medium text-gray-900 flex items-center gap-2">
+            <GoogleLogo size={18} />
+            Finish Google Sheets Setup
+          </h2>
+          {gsLoadingSheets ? (
+            <div className="flex items-center gap-2 text-sm text-gray-600">
+              <Spinner size={16} className="animate-spin" />
+              Loading your spreadsheets...
+            </div>
+          ) : (
+            <>
+              <div>
+                <label className="text-xs text-gray-500 mb-1 block">Select a spreadsheet</label>
+                <select
+                  className="input text-sm"
+                  value={gsSelectedSpreadsheet}
+                  onChange={(e) => setGsSelectedSpreadsheet(e.target.value)}
+                >
+                  <option value="">Choose a spreadsheet...</option>
+                  {gsSpreadsheets.map((s) => (
+                    <option key={s.id} value={s.id}>{s.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="text-xs text-gray-500 mb-1 block">Sheet name (tab)</label>
+                <input
+                  type="text"
+                  className="input text-sm"
+                  placeholder="Sheet1"
+                  value={gsSheetName}
+                  onChange={(e) => setGsSheetName(e.target.value)}
+                />
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={finishGoogleSheetsSetup}
+                  disabled={!gsSelectedSpreadsheet}
+                >
+                  <CheckCircle size={16} />
+                  Activate
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-ghost text-gray-600"
+                  onClick={() => {
+                    if (currentWorkspace) {
+                      deleteIntegration(gsConnectingId);
+                    }
+                    setGsConnectingId(null);
+                    setGsSpreadsheets([]);
+                  }}
+                >
+                  Cancel
+                </button>
+              </div>
+            </>
+          )}
         </div>
       )}
 
@@ -520,9 +649,35 @@ export default function IntegrationsPage() {
                 )}
 
                 {addingIntegrationType === 'google-sheets' && (
-                  <p className="text-sm text-gray-700">
-                    Google Sheets integration requires OAuth. This feature is coming soon.
-                  </p>
+                  <div className="space-y-3">
+                    <p className="text-xs text-gray-600">
+                      Connect your Google account to automatically add form submissions to a spreadsheet.
+                    </p>
+                    <button
+                      type="button"
+                      className="btn btn-secondary inline-flex items-center gap-2"
+                      onClick={async () => {
+                        if (!currentWorkspace) return;
+                        try {
+                          const formId = integrationConfig.formId || '';
+                          const res = await fetch(
+                            `/api/integrations/google-sheets/authorize?workspaceId=${currentWorkspace.id}&formId=${formId}`
+                          );
+                          const data = await res.json();
+                          if (data.authUrl) {
+                            window.location.href = data.authUrl;
+                          } else {
+                            setError(data.error || 'Failed to start Google authorization');
+                          }
+                        } catch {
+                          setError('Failed to start Google authorization');
+                        }
+                      }}
+                    >
+                      <GoogleLogo size={18} />
+                      Connect with Google
+                    </button>
+                  </div>
                 )}
 
                 {/* Form selector — which form triggers this integration */}
@@ -540,15 +695,16 @@ export default function IntegrationsPage() {
                   </select>
                 </div>
 
-                <button
-                  type="button"
-                  className="btn btn-primary"
-                  onClick={() => addIntegration(addingIntegrationType)}
-                  disabled={addingIntegrationType === 'google-sheets'}
-                >
-                  <Plus size={16} />
-                  Connect
-                </button>
+                {addingIntegrationType !== 'google-sheets' && (
+                  <button
+                    type="button"
+                    className="btn btn-primary"
+                    onClick={() => addIntegration(addingIntegrationType)}
+                  >
+                    <Plus size={16} />
+                    Connect
+                  </button>
+                )}
               </div>
             )}
 
