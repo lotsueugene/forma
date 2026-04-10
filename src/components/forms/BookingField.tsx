@@ -102,7 +102,7 @@ export default function BookingField({
   useEffect(() => {
     if (selectedDate && userSlots.length > 0) {
       onChange(JSON.stringify({ date: selectedDate, slots: userSlots }));
-    } else if (!selectedDate && userSlots.length === 0) {
+    } else {
       onChange('');
     }
   }, [selectedDate, userSlots]);
