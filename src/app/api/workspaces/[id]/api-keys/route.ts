@@ -7,13 +7,17 @@ import { getSubscriptionInfo } from '@/lib/subscription';
 import crypto from 'crypto';
 
 // Generate a random API key
-function generateApiKey(type: 'live' | 'test' = 'live'): { key: string; prefix: string } {
+function generateApiKey(type: 'live' | 'test' = 'live'): { key: string; prefix: string; hash: string } {
   const randomPart = crypto.randomBytes(24).toString('base64url');
   const prefix = `frm_${type}`;
-  return {
-    key: `${prefix}_${randomPart}`,
-    prefix,
-  };
+  const key = `${prefix}_${randomPart}`;
+  const hash = crypto.createHash('sha256').update(key).digest('hex');
+  return { key, prefix, hash };
+}
+
+// Hash an API key for lookup
+export function hashApiKey(key: string): string {
+  return crypto.createHash('sha256').update(key).digest('hex');
 }
 
 // GET /api/workspaces/[id]/api-keys - List API keys
@@ -98,23 +102,23 @@ export async function POST(
       return NextResponse.json({ error: 'Name is required' }, { status: 400 });
     }
 
-    const { key, prefix } = generateApiKey(type);
+    const { key, prefix, hash } = generateApiKey(type);
 
     const apiKey = await prisma.apiKey.create({
       data: {
         name,
-        key,
+        key: hash, // Store hash, not plaintext
         prefix,
         workspaceId: id,
       },
     });
 
-    // Return the full key only once (on creation)
+    // Return the full key only once (on creation) — it's never stored
     return NextResponse.json({
       apiKey: {
         id: apiKey.id,
         name: apiKey.name,
-        key: apiKey.key, // Full key shown only on creation
+        key, // Full plaintext key shown only on creation
         prefix: apiKey.prefix,
         createdAt: apiKey.createdAt,
       },
