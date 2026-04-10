@@ -382,8 +382,8 @@ export default function FormDetailPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-        <div className="flex items-center gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+        <div className="flex items-start gap-4">
           <Link
             href="/dashboard/forms"
             className="p-2 text-gray-500 hover:text-gray-900 rounded-lg hover:bg-gray-100"
@@ -469,7 +469,7 @@ export default function FormDetailPage() {
             <p className="text-gray-500">{form.description || 'No description'}</p>
           </div>
         </div>
-        <div className="flex items-center gap-2 flex-wrap">
+        <div className="flex items-center gap-2 flex-shrink-0">
           {form.status === 'draft' && (
             <button
               onClick={() => updateFormStatus('active')}
