@@ -140,8 +140,8 @@ export default function BookingsView({ submissions, bookingFieldIds, fields }: B
   const selectedEntries = selectedDate ? (bookingsByDate[selectedDate] || []) : [];
 
   // Timeline
-  const DAY_START = 6;
-  const DAY_END = 22;
+  const DAY_START = 0;
+  const DAY_END = 24;
   const totalMinutes = (DAY_END - DAY_START) * 60;
   const getSlotStyle = (slot: { start: string; end: string }) => {
     const [sh, sm] = slot.start.split(':').map(Number);
@@ -262,7 +262,7 @@ export default function BookingsView({ submissions, bookingFieldIds, fields }: B
             {selectedEntries.length > 0 && (
               <div>
                 <div className="flex justify-between text-[10px] text-gray-400 mb-1">
-                  <span>6 AM</span><span>9 AM</span><span>12 PM</span><span>3 PM</span><span>6 PM</span><span>10 PM</span>
+                  <span>12 AM</span><span>6 AM</span><span>12 PM</span><span>6 PM</span><span>12 AM</span>
                 </div>
                 <div className="relative h-8 rounded-lg bg-gray-100 overflow-hidden">
                   {selectedEntries.flatMap(entry =>
@@ -288,7 +288,11 @@ export default function BookingsView({ submissions, bookingFieldIds, fields }: B
               <p className="text-sm text-gray-400 text-center py-4">No bookings on this date</p>
             ) : (
               <div className="space-y-2">
-                {selectedEntries.map(entry => {
+                {[...selectedEntries].sort((a, b) => {
+                  const aStart = a.slots[0]?.start || '99:99';
+                  const bStart = b.slots[0]?.start || '99:99';
+                  return aStart.localeCompare(bStart);
+                }).map(entry => {
                   const isExpanded = expandedSubmissionId === entry.submissionId;
                   return (
                     <div key={entry.submissionId} className="rounded-xl border border-gray-200 overflow-hidden">

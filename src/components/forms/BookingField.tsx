@@ -21,8 +21,8 @@ interface BookingFieldProps {
 }
 
 // Business hours
-const DAY_START = 6; // 6 AM
-const DAY_END = 22;  // 10 PM
+const DAY_START = 0;  // 12 AM
+const DAY_END = 24;   // 12 AM next day
 
 function timeToMinutes(time: string): number {
   const [h, m] = time.split(':').map(Number);
@@ -108,7 +108,9 @@ export default function BookingField({
   }, [selectedDate, userSlots]);
 
   const bookedSlots = useMemo(() => {
-    return existingBookings[selectedDate] || [];
+    return [...(existingBookings[selectedDate] || [])].sort(
+      (a, b) => timeToMinutes(a.start) - timeToMinutes(b.start)
+    );
   }, [existingBookings, selectedDate]);
 
   // Generate calendar days
@@ -299,10 +301,11 @@ export default function BookingField({
           {/* Visual timeline */}
           <div>
             <div className="flex justify-between text-[10px] mb-1" style={{ color: `${textColor}44` }}>
+              <span>12 AM</span>
               <span>6 AM</span>
               <span>12 PM</span>
               <span>6 PM</span>
-              <span>10 PM</span>
+              <span>12 AM</span>
             </div>
             <div
               className="relative h-10 rounded-lg overflow-hidden"
