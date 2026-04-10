@@ -30,7 +30,9 @@ import {
   Gear,
   WhatsappLogo,
   LinkedinLogo,
+  QrCode,
 } from '@phosphor-icons/react';
+import QRCode from 'react-qr-code';
 import { cn } from '@/lib/utils';
 import FormAnalytics from '@/components/dashboard/FormAnalytics';
 import { useWorkspace } from '@/contexts/workspace-context';
@@ -212,6 +214,7 @@ export default function FormDetailPage() {
 
   const [showPublishModal, setShowPublishModal] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
+  const [showQrCode, setShowQrCode] = useState(false);
 
   const updateFormStatus = async (newStatus: string) => {
     if (!form) return;
@@ -639,7 +642,57 @@ export default function FormDetailPage() {
                   <Link href={formPageUrl} target="_blank" className="btn btn-secondary">
                     <ArrowSquareOut size={18} />
                   </Link>
+                  <button
+                    onClick={() => setShowQrCode(!showQrCode)}
+                    className={cn('btn btn-secondary', showQrCode && 'ring-2 ring-safety-orange')}
+                  >
+                    <QrCode size={18} />
+                  </button>
                 </div>
+                {showQrCode && (
+                  <div className="mt-4 flex flex-col items-center gap-3">
+                    <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm inline-block relative">
+                      <QRCode value={formPageUrl} size={180} level="H" />
+                      {/* Forma branding in center of QR */}
+                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                        <div className="bg-white rounded-lg p-1.5 shadow-sm">
+                          <div className="flex items-center gap-1 text-[10px] font-bold text-gray-900">
+                            <Stack size={12} weight="fill" />
+                            Forma
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => {
+                        const svg = document.querySelector('.qr-download-target svg');
+                        if (!svg) return;
+                        const svgData = new XMLSerializer().serializeToString(svg);
+                        const canvas = document.createElement('canvas');
+                        canvas.width = 512;
+                        canvas.height = 512;
+                        const ctx = canvas.getContext('2d');
+                        const img = new Image();
+                        img.onload = () => {
+                          ctx?.fillRect(0, 0, 512, 512);
+                          if (ctx) { ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, 512, 512); }
+                          ctx?.drawImage(img, 32, 32, 448, 448);
+                          const a = document.createElement('a');
+                          a.download = `${form?.name || 'form'}-qr-code.png`;
+                          a.href = canvas.toDataURL('image/png');
+                          a.click();
+                        };
+                        img.src = 'data:image/svg+xml;base64,' + btoa(svgData);
+                      }}
+                      className="text-xs text-safety-orange hover:text-accent-200 font-medium"
+                    >
+                      Download PNG
+                    </button>
+                    <div className="qr-download-target hidden">
+                      <QRCode value={formPageUrl} size={448} />
+                    </div>
+                  </div>
+                )}
               </div>
             )}
             <div>
@@ -1282,6 +1335,22 @@ export default function FormDetailPage() {
                       Email
                     </a>
                   </div>
+                </div>
+
+                {/* QR Code */}
+                <div className="mb-6 flex flex-col items-center">
+                  <div className="bg-white p-3 rounded-xl border border-gray-200 shadow-sm relative">
+                    <QRCode value={`${typeof window !== 'undefined' ? window.location.origin : ''}/f/${formId}`} size={140} level="H" />
+                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                      <div className="bg-white rounded-lg p-1 shadow-sm">
+                        <div className="flex items-center gap-1 text-[9px] font-bold text-gray-900">
+                          <Stack size={10} weight="fill" />
+                          Forma
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <p className="text-xs text-gray-400 mt-2">Scan to open form</p>
                 </div>
 
                 <a
