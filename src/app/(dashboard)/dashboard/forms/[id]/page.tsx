@@ -31,6 +31,7 @@ import {
   WhatsappLogo,
   LinkedinLogo,
   QrCode,
+  Stack,
 } from '@phosphor-icons/react';
 import QRCode from 'react-qr-code';
 import { cn } from '@/lib/utils';
