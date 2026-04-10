@@ -442,7 +442,7 @@ export default function FormDetailPage() {
                         initial={{ opacity: 0, y: 8 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: 8 }}
-                        className="absolute left-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden z-20"
+                        className="absolute left-0 mt-2 w-48 max-w-[calc(100vw-2rem)] bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden z-20"
                       >
                         {form.status !== 'active' && (
                           <button
@@ -489,7 +489,7 @@ export default function FormDetailPage() {
             <p className="text-gray-500">{form.description || 'No description'}</p>
           </div>
         </div>
-        <div className="flex items-center gap-2 flex-shrink-0">
+        <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0 flex-wrap">
           {form.status === 'draft' && (
             <button
               onClick={() => updateFormStatus('active')}
@@ -540,7 +540,7 @@ export default function FormDetailPage() {
                     initial={{ opacity: 0, y: 8 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: 8 }}
-                    className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden z-20"
+                    className="absolute right-0 mt-2 w-48 max-w-[calc(100vw-2rem)] bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden z-20"
                   >
                     <button
                       onClick={handleDuplicate}
@@ -646,8 +646,8 @@ export default function FormDetailPage() {
                 <label className="text-xs text-gray-500 uppercase tracking-wider mb-2 block">
                   Public Form URL
                 </label>
-                <div className="flex gap-2">
-                  <code className="input font-mono text-sm text-safety-orange flex-1 truncate">
+                <div className="flex gap-2 flex-wrap sm:flex-nowrap">
+                  <code className="input font-mono text-xs sm:text-sm text-safety-orange flex-1 min-w-0 truncate">
                     {formPageUrl}
                   </code>
                   <button
@@ -838,7 +838,7 @@ export default function FormDetailPage() {
                             initial={{ opacity: 0, y: 8 }}
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: 8 }}
-                            className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden z-20"
+                            className="absolute right-0 mt-2 w-48 max-w-[calc(100vw-2rem)] bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden z-20"
                           >
                             <button
                               onClick={exportToCSV}
@@ -1256,7 +1256,7 @@ export default function FormDetailPage() {
             initial={{ opacity: 0, y: 40 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 40 }}
-            className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 bg-gray-900 text-white rounded-xl shadow-2xl px-5 py-3 flex items-center gap-4"
+            className="fixed bottom-6 left-4 right-4 sm:left-1/2 sm:right-auto sm:-translate-x-1/2 z-40 bg-gray-900 text-white rounded-xl shadow-2xl px-4 sm:px-5 py-3 flex items-center justify-between sm:justify-start gap-3 sm:gap-4"
           >
             <span className="text-sm font-medium">
               {selectedSubmissions.length} of {filteredSubmissions.length} selected
@@ -1468,7 +1468,7 @@ export default function FormDetailPage() {
               transition={{ type: 'spring', damping: 25, stiffness: 300 }}
               className="fixed inset-0 z-50 flex items-center justify-center p-4"
             >
-              <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8 relative" onClick={(e) => e.stopPropagation()}>
+              <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-5 sm:p-8 relative" onClick={(e) => e.stopPropagation()}>
                 <button
                   onClick={() => setShowPublishModal(false)}
                   className="absolute top-4 right-4 p-1 text-gray-400 hover:text-gray-600"
