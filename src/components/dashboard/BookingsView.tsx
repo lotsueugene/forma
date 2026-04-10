@@ -117,17 +117,20 @@ export default function BookingsView({ submissions, bookingFieldIds, fields }: B
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
+    const toDateStr = (d: Date) => `${d.getFullYear()}-${(d.getMonth() + 1).toString().padStart(2, '0')}-${d.getDate().toString().padStart(2, '0')}`;
+    const todayStr = toDateStr(today);
+
     const days: Array<{ date: Date; dateStr: string; inMonth: boolean; isToday: boolean; bookingCount: number }> = [];
 
     for (let i = 0; i < firstDay; i++) {
       const d = new Date(year, month, -firstDay + i + 1);
-      days.push({ date: d, dateStr: d.toISOString().split('T')[0], inMonth: false, isToday: false, bookingCount: 0 });
+      days.push({ date: d, dateStr: toDateStr(d), inMonth: false, isToday: false, bookingCount: 0 });
     }
 
     for (let i = 1; i <= daysInMonth; i++) {
       const d = new Date(year, month, i);
-      const dateStr = d.toISOString().split('T')[0];
-      const isToday = dateStr === today.toISOString().split('T')[0];
+      const dateStr = toDateStr(d);
+      const isToday = dateStr === todayStr;
       const bookings = bookingsByDate[dateStr] || [];
       // If a submission is selected, only count that submission's bookings
       const count = selectedSubmissionId
@@ -198,9 +201,11 @@ export default function BookingsView({ submissions, bookingFieldIds, fields }: B
               key={entry.submissionId}
               type="button"
               onClick={() => {
-                setSelectedSubmissionId(
-                  selectedSubmissionId === entry.submissionId ? null : entry.submissionId
-                );
+                setSelectedSubmissionId(entry.submissionId);
+                // Auto-select the booking date and navigate to its month
+                setSelectedDate(entry.date);
+                const bookingDate = new Date(entry.date + 'T00:00:00');
+                setViewMonth(new Date(bookingDate.getFullYear(), bookingDate.getMonth(), 1));
               }}
               className={cn(
                 'w-full text-left px-3 py-2.5 rounded-lg transition-all',
