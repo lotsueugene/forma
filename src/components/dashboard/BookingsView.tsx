@@ -19,7 +19,7 @@ interface Submission {
   id: string;
   data: Record<string, unknown>;
   createdAt: string;
-  metadata?: Record<string, unknown>;
+  metadata?: Record<string, unknown> | null;
 }
 
 interface BookingsViewProps {
