@@ -38,6 +38,7 @@ import {
 import QRCode from 'react-qr-code';
 import { cn } from '@/lib/utils';
 import FormAnalytics from '@/components/dashboard/FormAnalytics';
+import BookingsView from '@/components/dashboard/BookingsView';
 import { useWorkspace } from '@/contexts/workspace-context';
 import FormSettingsPanel from '@/components/dashboard/FormSettings';
 
@@ -1246,77 +1247,13 @@ export default function FormDetailPage() {
         </div>
       )}
 
-      {activeTab === 'bookings' && (() => {
-        // Extract all booking data from submissions
-        const allBookings: Array<{ date: string; slots: Array<{ start: string; end: string }>; submittedBy: string; submittedAt: string }> = [];
-        const bookingFieldIds = (form.fields || []).filter((f: { type: string }) => f.type === 'booking').map((f: { id: string }) => f.id);
-
-        submissions.forEach(sub => {
-          for (const fieldId of bookingFieldIds) {
-            const val = sub.data[fieldId];
-            if (!val) continue;
-            try {
-              const parsed = typeof val === 'string' ? JSON.parse(val) : val;
-              if (parsed?.date && Array.isArray(parsed.slots)) {
-                const name = Object.values(sub.data).find(v => typeof v === 'string' && !v.startsWith('{') && v.includes(' ')) || Object.values(sub.data)[0] || 'Unknown';
-                allBookings.push({
-                  date: parsed.date,
-                  slots: parsed.slots,
-                  submittedBy: String(name),
-                  submittedAt: sub.createdAt,
-                });
-              }
-            } catch {}
-          }
-        });
-
-        // Group by date
-        const byDate: Record<string, typeof allBookings> = {};
-        allBookings.forEach(b => {
-          if (!byDate[b.date]) byDate[b.date] = [];
-          byDate[b.date].push(b);
-        });
-
-        const sortedDates = Object.keys(byDate).sort();
-
-        return (
-          <div className="space-y-4">
-            {sortedDates.length === 0 ? (
-              <div className="card p-12 text-center">
-                <CalendarCheck size={48} className="mx-auto text-gray-400 mb-4" />
-                <h3 className="text-lg font-medium text-gray-800 mb-2">No bookings yet</h3>
-                <p className="text-gray-500">Bookings will appear here when users submit the form.</p>
-              </div>
-            ) : (
-              sortedDates.map(date => {
-                const dateDisplay = new Date(date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
-                const bookings = byDate[date];
-                return (
-                  <div key={date} className="card p-5">
-                    <h3 className="font-medium text-gray-900 mb-3">{dateDisplay}</h3>
-                    <div className="space-y-2">
-                      {bookings.flatMap(b => b.slots.map((slot, i) => {
-                        const fmt = (t: string) => { const [h, m] = t.split(':').map(Number); const ap = h >= 12 ? 'PM' : 'AM'; return `${h === 0 ? 12 : h > 12 ? h - 12 : h}:${m.toString().padStart(2, '0')} ${ap}`; };
-                        return (
-                          <div key={`${b.submittedAt}-${i}`} className="flex items-center justify-between py-2 px-3 rounded-lg bg-gray-50">
-                            <div className="flex items-center gap-3">
-                              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-sm font-medium bg-safety-orange/10 text-safety-orange">
-                                <Clock size={14} />
-                                {fmt(slot.start)} – {fmt(slot.end)}
-                              </span>
-                            </div>
-                            <span className="text-sm text-gray-500">{b.submittedBy}</span>
-                          </div>
-                        );
-                      }))}
-                    </div>
-                  </div>
-                );
-              })
-            )}
-          </div>
-        );
-      })()}
+      {activeTab === 'bookings' && (
+        <BookingsView
+          submissions={submissions}
+          bookingFieldIds={(form.fields || []).filter((f: { type: string }) => f.type === 'booking').map((f: { id: string }) => f.id)}
+          fields={(form.fields || []).map((f: { id: string; type: string; label: string }) => ({ id: f.id, type: f.type, label: f.label }))}
+        />
+      )}
 
       {activeTab === 'analytics' && (
         <FormAnalytics formId={formId} />
