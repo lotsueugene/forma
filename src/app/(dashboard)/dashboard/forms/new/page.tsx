@@ -1348,14 +1348,16 @@ export default function NewFormPage() {
                 <div className="mb-6 flex flex-col items-center">
                   <div className="bg-white p-3 rounded-xl border border-gray-200 shadow-sm relative">
                     <QRCode value={`${typeof window !== 'undefined' ? window.location.origin : ''}/f/${publishedFormId}`} size={140} level="H" />
-                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                      <div className="bg-white rounded-lg p-1 shadow-sm">
-                        <div className="flex items-center gap-1 text-[9px] font-bold text-gray-900">
-                          <Stack size={10} weight="fill" />
-                          Forma
+                    {planType === 'free' && (
+                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                        <div className="bg-white rounded-lg p-1 shadow-sm">
+                          <div className="flex items-center gap-1 text-[9px] font-bold text-gray-900">
+                            <Stack size={10} weight="fill" />
+                            Forma
+                          </div>
                         </div>
                       </div>
-                    </div>
+                    )}
                   </div>
                   <p className="text-xs text-gray-400 mt-2">Scan to open form</p>
                 </div>

@@ -178,6 +178,15 @@ export default function FormDetailPage() {
     fetchFormData();
   }, [formId]);
 
+  // Fetch workspace plan for QR branding
+  useEffect(() => {
+    if (!currentWorkspace) return;
+    fetch(`/api/workspaces/${currentWorkspace.id}/subscription`)
+      .then((res) => res.ok ? res.json() : null)
+      .then((data) => { if (data?.subscription?.plan) setPlanType(data.subscription.plan); })
+      .catch(() => {});
+  }, [currentWorkspace]);
+
   const fetchFormData = async () => {
     try {
       // Fetch form details
@@ -216,6 +225,8 @@ export default function FormDetailPage() {
   const [showPublishModal, setShowPublishModal] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
   const [showQrCode, setShowQrCode] = useState(false);
+  const [planType, setPlanType] = useState<string>('free');
+  const showQrBranding = planType === 'free';
 
   const updateFormStatus = async (newStatus: string) => {
     if (!form) return;
@@ -654,15 +665,17 @@ export default function FormDetailPage() {
                   <div className="mt-4 flex flex-col items-center gap-3">
                     <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm inline-block relative">
                       <QRCode value={formPageUrl} size={180} level="H" />
-                      {/* Forma branding in center of QR */}
-                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                        <div className="bg-white rounded-lg p-1.5 shadow-sm">
-                          <div className="flex items-center gap-1 text-[10px] font-bold text-gray-900">
-                            <Stack size={12} weight="fill" />
-                            Forma
+                      {/* Forma branding in center of QR (free plan only) */}
+                      {showQrBranding && (
+                        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                          <div className="bg-white rounded-lg p-1.5 shadow-sm">
+                            <div className="flex items-center gap-1 text-[10px] font-bold text-gray-900">
+                              <Stack size={12} weight="fill" />
+                              Forma
+                            </div>
                           </div>
                         </div>
-                      </div>
+                      )}
                     </div>
                     <button
                       onClick={() => {
@@ -1342,14 +1355,16 @@ export default function FormDetailPage() {
                 <div className="mb-6 flex flex-col items-center">
                   <div className="bg-white p-3 rounded-xl border border-gray-200 shadow-sm relative">
                     <QRCode value={`${typeof window !== 'undefined' ? window.location.origin : ''}/f/${formId}`} size={140} level="H" />
-                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                      <div className="bg-white rounded-lg p-1 shadow-sm">
-                        <div className="flex items-center gap-1 text-[9px] font-bold text-gray-900">
-                          <Stack size={10} weight="fill" />
-                          Forma
+                    {showQrBranding && (
+                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                        <div className="bg-white rounded-lg p-1 shadow-sm">
+                          <div className="flex items-center gap-1 text-[9px] font-bold text-gray-900">
+                            <Stack size={10} weight="fill" />
+                            Forma
+                          </div>
                         </div>
                       </div>
-                    </div>
+                    )}
                   </div>
                   <p className="text-xs text-gray-400 mt-2">Scan to open form</p>
                 </div>
