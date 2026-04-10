@@ -469,11 +469,14 @@ export default function ConversationalForm({
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40">
           <Link
             href="/"
-            className="flex items-center gap-1.5 text-xs font-medium transition-opacity hover:opacity-80"
-            style={{ color: `${textColor}33` }}
+            className="flex items-center gap-2 text-sm font-medium transition-opacity hover:opacity-80 px-4 py-2 rounded-full"
+            style={{
+              color: `${textColor}55`,
+              backgroundColor: isLightBg ? 'rgba(0,0,0,0.04)' : 'rgba(255,255,255,0.06)',
+            }}
           >
-            <Stack size={14} weight="fill" />
-            Powered by <span style={{ color: accent }}>Forma</span>
+            <Stack size={18} weight="fill" />
+            Powered by <span style={{ color: accent }} className="font-semibold">Forma</span>
           </Link>
         </div>
       )}
