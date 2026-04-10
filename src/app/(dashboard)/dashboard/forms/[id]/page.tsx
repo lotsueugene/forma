@@ -32,6 +32,8 @@ import {
   LinkedinLogo,
   QrCode,
   Stack,
+  Clock,
+  CalendarCheck,
 } from '@phosphor-icons/react';
 import QRCode from 'react-qr-code';
 import { cn } from '@/lib/utils';
@@ -60,7 +62,7 @@ interface Submission {
   createdAt: string;
 }
 
-type Tab = 'submissions' | 'analytics' | 'settings';
+type Tab = 'submissions' | 'bookings' | 'analytics' | 'settings';
 
 export default function FormDetailPage() {
   const params = useParams();
@@ -739,6 +741,9 @@ export default function FormDetailPage() {
         <nav className="flex gap-4 sm:gap-6 min-w-max">
           {[
             { id: 'submissions', label: 'Submissions', icon: EnvelopeSimple, count: submissions.length },
+            ...(form.fields?.some((f: { type: string }) => f.type === 'booking')
+              ? [{ id: 'bookings', label: 'Bookings', icon: CalendarCheck, count: undefined }]
+              : []),
             { id: 'analytics', label: 'Analytics', icon: ChartLineUp },
             { id: 'settings', label: 'Settings', icon: Gear },
           ].map((tab) => (
@@ -882,12 +887,35 @@ export default function FormDetailPage() {
                   }
                 };
 
+                const isBookingData = (value: unknown): boolean => {
+                  if (typeof value !== 'string') return false;
+                  try {
+                    const parsed = JSON.parse(value);
+                    return parsed && typeof parsed === 'object' && 'date' in parsed && 'slots' in parsed;
+                  } catch { return false; }
+                };
+
+                const formatBookingValue = (value: string): string => {
+                  try {
+                    const parsed = JSON.parse(value);
+                    const date = new Date(parsed.date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+                    const slots = (parsed.slots as Array<{ start: string; end: string }>).map(s => {
+                      const fmt = (t: string) => { const [h, m] = t.split(':').map(Number); const ap = h >= 12 ? 'PM' : 'AM'; return `${h === 0 ? 12 : h > 12 ? h - 12 : h}:${m.toString().padStart(2, '0')} ${ap}`; };
+                      return `${fmt(s.start)} - ${fmt(s.end)}`;
+                    });
+                    return `${date} · ${slots.join(', ')}`;
+                  } catch { return String(value); }
+                };
+
                 const formatCellValue = (value: unknown): string => {
                   if (value === undefined || value === null || value === '') return '-';
                   if (Array.isArray(value)) return value.join(', ');
                   if (typeof value === 'string' && isFileData(value)) {
                     const fileData = JSON.parse(value);
                     return fileData.name;
+                  }
+                  if (typeof value === 'string' && isBookingData(value)) {
+                    return formatBookingValue(value);
                   }
                   if (typeof value === 'object') return JSON.stringify(value);
                   return String(value);
@@ -1150,6 +1178,29 @@ export default function FormDetailPage() {
                                                   <div className="text-gray-700">
                                                     {typeof value === 'string' && isFileData(value)
                                                       ? renderFileDownload(value)
+                                                      : typeof value === 'string' && isBookingData(value)
+                                                      ? (() => {
+                                                          try {
+                                                            const parsed = JSON.parse(value);
+                                                            const date = new Date(parsed.date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+                                                            return (
+                                                              <div className="space-y-2">
+                                                                <div className="font-medium text-gray-900">{date}</div>
+                                                                <div className="flex flex-wrap gap-2">
+                                                                  {(parsed.slots as Array<{ start: string; end: string }>).map((s: { start: string; end: string }, i: number) => {
+                                                                    const fmt = (t: string) => { const [h, m] = t.split(':').map(Number); const ap = h >= 12 ? 'PM' : 'AM'; return `${h === 0 ? 12 : h > 12 ? h - 12 : h}:${m.toString().padStart(2, '0')} ${ap}`; };
+                                                                    return (
+                                                                      <span key={i} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium bg-safety-orange/10 text-safety-orange border border-safety-orange/20">
+                                                                        <Clock size={14} />
+                                                                        {fmt(s.start)} – {fmt(s.end)}
+                                                                      </span>
+                                                                    );
+                                                                  })}
+                                                                </div>
+                                                              </div>
+                                                            );
+                                                          } catch { return formatCellValue(value); }
+                                                        })()
                                                       : formatCellValue(value)}
                                                   </div>
                                                 </div>
@@ -1194,6 +1245,78 @@ export default function FormDetailPage() {
           )}
         </div>
       )}
+
+      {activeTab === 'bookings' && (() => {
+        // Extract all booking data from submissions
+        const allBookings: Array<{ date: string; slots: Array<{ start: string; end: string }>; submittedBy: string; submittedAt: string }> = [];
+        const bookingFieldIds = (form.fields || []).filter((f: { type: string }) => f.type === 'booking').map((f: { id: string }) => f.id);
+
+        submissions.forEach(sub => {
+          for (const fieldId of bookingFieldIds) {
+            const val = sub.data[fieldId];
+            if (!val) continue;
+            try {
+              const parsed = typeof val === 'string' ? JSON.parse(val) : val;
+              if (parsed?.date && Array.isArray(parsed.slots)) {
+                const name = Object.values(sub.data).find(v => typeof v === 'string' && !v.startsWith('{') && v.includes(' ')) || Object.values(sub.data)[0] || 'Unknown';
+                allBookings.push({
+                  date: parsed.date,
+                  slots: parsed.slots,
+                  submittedBy: String(name),
+                  submittedAt: sub.createdAt,
+                });
+              }
+            } catch {}
+          }
+        });
+
+        // Group by date
+        const byDate: Record<string, typeof allBookings> = {};
+        allBookings.forEach(b => {
+          if (!byDate[b.date]) byDate[b.date] = [];
+          byDate[b.date].push(b);
+        });
+
+        const sortedDates = Object.keys(byDate).sort();
+
+        return (
+          <div className="space-y-4">
+            {sortedDates.length === 0 ? (
+              <div className="card p-12 text-center">
+                <CalendarCheck size={48} className="mx-auto text-gray-400 mb-4" />
+                <h3 className="text-lg font-medium text-gray-800 mb-2">No bookings yet</h3>
+                <p className="text-gray-500">Bookings will appear here when users submit the form.</p>
+              </div>
+            ) : (
+              sortedDates.map(date => {
+                const dateDisplay = new Date(date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+                const bookings = byDate[date];
+                return (
+                  <div key={date} className="card p-5">
+                    <h3 className="font-medium text-gray-900 mb-3">{dateDisplay}</h3>
+                    <div className="space-y-2">
+                      {bookings.flatMap(b => b.slots.map((slot, i) => {
+                        const fmt = (t: string) => { const [h, m] = t.split(':').map(Number); const ap = h >= 12 ? 'PM' : 'AM'; return `${h === 0 ? 12 : h > 12 ? h - 12 : h}:${m.toString().padStart(2, '0')} ${ap}`; };
+                        return (
+                          <div key={`${b.submittedAt}-${i}`} className="flex items-center justify-between py-2 px-3 rounded-lg bg-gray-50">
+                            <div className="flex items-center gap-3">
+                              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-sm font-medium bg-safety-orange/10 text-safety-orange">
+                                <Clock size={14} />
+                                {fmt(slot.start)} – {fmt(slot.end)}
+                              </span>
+                            </div>
+                            <span className="text-sm text-gray-500">{b.submittedBy}</span>
+                          </div>
+                        );
+                      }))}
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        );
+      })()}
 
       {activeTab === 'analytics' && (
         <FormAnalytics formId={formId} />
