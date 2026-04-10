@@ -227,12 +227,15 @@ export async function POST(
       const bookingValue = bookingField.id ? data[bookingField.id] : null;
       if (!bookingValue) continue;
 
-      let parsed = bookingValue;
-      if (typeof parsed === 'string') {
-        try { parsed = JSON.parse(parsed); } catch { continue; }
+      let rawParsed: unknown = bookingValue;
+      if (typeof rawParsed === 'string') {
+        try { rawParsed = JSON.parse(rawParsed as string); } catch { continue; }
       }
 
-      if (parsed?.date && Array.isArray(parsed.slots)) {
+      const parsed = rawParsed as { date?: string; slots?: Array<{ start: string; end: string }> } | null;
+      if (!parsed?.date || !Array.isArray(parsed.slots)) continue;
+
+      {
         // Fetch existing bookings for this date
         const existingSubs = await prisma.submission.findMany({
           where: { formId: id },
@@ -245,18 +248,19 @@ export async function POST(
           const existingBooking = bookingField.id ? (subData as Record<string, unknown>)[bookingField.id] : null;
           if (!existingBooking) continue;
 
-          let existingParsed = existingBooking;
-          if (typeof existingParsed === 'string') {
-            try { existingParsed = JSON.parse(existingParsed as string); } catch { continue; }
+          let rawExisting: unknown = existingBooking;
+          if (typeof rawExisting === 'string') {
+            try { rawExisting = JSON.parse(rawExisting as string); } catch { continue; }
           }
 
-          if ((existingParsed as { date?: string; slots?: Array<{ start: string; end: string }> })?.date === parsed.date && Array.isArray((existingParsed as { slots?: unknown[] })?.slots)) {
-            existingSlots.push(...((existingParsed as { slots: Array<{ start: string; end: string }> }).slots));
+          const existingParsed = rawExisting as { date?: string; slots?: Array<{ start: string; end: string }> } | null;
+          if (existingParsed?.date === parsed.date && Array.isArray(existingParsed.slots)) {
+            existingSlots.push(...existingParsed.slots);
           }
         }
 
         // Check for overlap
-        for (const newSlot of parsed.slots as Array<{ start: string; end: string }>) {
+        for (const newSlot of parsed.slots) {
           const newStart = parseInt(newSlot.start.replace(':', ''));
           const newEnd = parseInt(newSlot.end.replace(':', ''));
           for (const existing of existingSlots) {
