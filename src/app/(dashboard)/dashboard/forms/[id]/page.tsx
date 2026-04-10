@@ -740,8 +740,8 @@ export default function FormDetailPage() {
       )}
 
       {/* Tabs */}
-      <div className="border-b border-gray-200 overflow-x-auto -mx-4 px-4 sm:-mx-6 sm:px-6 lg:mx-0 lg:px-0 scrollbar-hide">
-        <nav className="flex gap-4 sm:gap-6 min-w-max">
+      <div className="border-b border-gray-200 overflow-x-auto scrollbar-hide">
+        <nav className="flex gap-3 sm:gap-6 whitespace-nowrap">
           {[
             { id: 'submissions', label: 'Submissions', icon: EnvelopeSimple, count: submissions.length },
             ...(form.fields?.some((f: { type: string }) => f.type === 'booking')
