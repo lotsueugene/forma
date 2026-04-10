@@ -229,6 +229,8 @@ export default function FormDetailPage() {
   const [linkCopied, setLinkCopied] = useState(false);
   const [showQrCode, setShowQrCode] = useState(false);
   const [planType, setPlanType] = useState<string>('free');
+  const [isDeletingSubs, setIsDeletingSubs] = useState(false);
+  const [showDeleteSubsConfirm, setShowDeleteSubsConfirm] = useState(false);
   const showQrBranding = planType === 'free';
 
   const updateFormStatus = async (newStatus: string) => {
@@ -1246,6 +1248,137 @@ export default function FormDetailPage() {
           )}
         </div>
       )}
+
+      {/* Floating action bar for selected submissions */}
+      <AnimatePresence>
+        {selectedSubmissions.length > 0 && activeTab === 'submissions' && (
+          <motion.div
+            initial={{ opacity: 0, y: 40 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 40 }}
+            className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 bg-gray-900 text-white rounded-xl shadow-2xl px-5 py-3 flex items-center gap-4"
+          >
+            <span className="text-sm font-medium">
+              {selectedSubmissions.length} of {filteredSubmissions.length} selected
+            </span>
+            <div className="w-px h-5 bg-gray-700" />
+            <button
+              onClick={() => {
+                setSelectedSubmissions([]);
+              }}
+              className="text-sm text-gray-400 hover:text-white transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={() => {
+                // Export selected as CSV
+                const selected = submissions.filter(s => selectedSubmissions.includes(s.id));
+                const allKeys = new Set<string>();
+                selected.forEach(s => Object.keys(s.data).forEach(k => allKeys.add(k)));
+                const keys = Array.from(allKeys);
+                const getLabel = (key: string) => {
+                  const field = form.fields?.find((f: { id: string }) => f.id === key);
+                  return field ? (field as { label: string }).label : key;
+                };
+                const header = keys.map(k => getLabel(k)).join(',');
+                const rows = selected.map(s =>
+                  keys.map(k => {
+                    const v = s.data[k];
+                    const str = typeof v === 'object' ? JSON.stringify(v) : String(v || '');
+                    return `"${str.replace(/"/g, '""')}"`;
+                  }).join(',')
+                );
+                const csv = [header, ...rows].join('\n');
+                const blob = new Blob([csv], { type: 'text/csv' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `${form?.name || 'submissions'}-export.csv`;
+                a.click();
+                URL.revokeObjectURL(url);
+              }}
+              className="text-sm text-gray-300 hover:text-white transition-colors flex items-center gap-1.5"
+            >
+              <Export size={16} />
+              Export
+            </button>
+            <button
+              onClick={() => setShowDeleteSubsConfirm(true)}
+              disabled={isDeletingSubs}
+              className="text-sm text-red-400 hover:text-red-300 transition-colors flex items-center gap-1.5"
+            >
+              <Trash size={16} />
+              Delete
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Delete submissions confirmation */}
+      <AnimatePresence>
+        {showDeleteSubsConfirm && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/40 z-50"
+              onClick={() => setShowDeleteSubsConfirm(false)}
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+              className="fixed inset-0 z-50 flex items-center justify-center p-4"
+            >
+              <div className="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6" onClick={e => e.stopPropagation()}>
+                <div className="text-center mb-5">
+                  <div className="w-14 h-14 mx-auto mb-4 rounded-full bg-red-100 flex items-center justify-center">
+                    <Trash size={28} className="text-red-600" />
+                  </div>
+                  <h2 className="text-lg font-bold text-gray-900 mb-1">Delete {selectedSubmissions.length} submission{selectedSubmissions.length > 1 ? 's' : ''}?</h2>
+                  <p className="text-gray-500 text-sm">This action cannot be undone.</p>
+                </div>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setShowDeleteSubsConfirm(false)}
+                    className="btn btn-secondary flex-1"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={async () => {
+                      setIsDeletingSubs(true);
+                      try {
+                        const res = await fetch(`/api/forms/${formId}/submissions`, {
+                          method: 'DELETE',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ submissionIds: selectedSubmissions }),
+                        });
+                        if (res.ok) {
+                          setSubmissions(prev => prev.filter(s => !selectedSubmissions.includes(s.id)));
+                          setSelectedSubmissions([]);
+                          setShowDeleteSubsConfirm(false);
+                        }
+                      } catch {
+                      } finally {
+                        setIsDeletingSubs(false);
+                      }
+                    }}
+                    disabled={isDeletingSubs}
+                    className="flex-1 px-4 py-2.5 rounded-lg font-medium text-white bg-red-600 hover:bg-red-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+                  >
+                    {isDeletingSubs ? <Spinner size={18} className="animate-spin" /> : <Trash size={18} />}
+                    Delete
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
 
       {activeTab === 'bookings' && (
         <BookingsView

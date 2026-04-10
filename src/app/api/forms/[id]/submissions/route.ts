@@ -533,3 +533,41 @@ export async function POST(
     );
   }
 }
+
+// DELETE /api/forms/[id]/submissions - Delete selected submissions
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const session = await getServerSession(authOptions);
+    const { id } = await params;
+
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const access = await verifyFormAccess(session.user.id, id, 'editor');
+    if (!access.allowed) {
+      return NextResponse.json({ error: access.error }, { status: 403 });
+    }
+
+    const { submissionIds } = await request.json() as { submissionIds: string[] };
+
+    if (!submissionIds || !Array.isArray(submissionIds) || submissionIds.length === 0) {
+      return NextResponse.json({ error: 'submissionIds array is required' }, { status: 400 });
+    }
+
+    const result = await prisma.submission.deleteMany({
+      where: {
+        id: { in: submissionIds },
+        formId: id,
+      },
+    });
+
+    return NextResponse.json({ deleted: result.count });
+  } catch (error) {
+    console.error('Error deleting submissions:', error);
+    return NextResponse.json({ error: 'Failed to delete submissions' }, { status: 500 });
+  }
+}
