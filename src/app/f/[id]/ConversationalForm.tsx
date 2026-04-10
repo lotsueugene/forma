@@ -15,6 +15,7 @@ import {
 } from '@phosphor-icons/react';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
+import BookingField from '@/components/forms/BookingField';
 
 interface FieldCondition {
   fieldId: string;
@@ -389,7 +390,8 @@ export default function ConversationalForm({
                     inputRef,
                     accent,
                     textColor,
-                    isLightBg
+                    isLightBg,
+                    formId
                   )}
                 </div>
 
@@ -492,6 +494,7 @@ function renderConversationalField(
   accent: string,
   textColor: string,
   isLightBg: boolean,
+  formId?: string,
 ) {
   const inputStyle: React.CSSProperties = {
     width: '100%',
@@ -776,6 +779,19 @@ function renderConversationalField(
         </div>
       );
     }
+    case 'booking':
+      return (
+        <BookingField
+          formId={formId || ''}
+          fieldId={field.id}
+          value={formData[field.id] as string}
+          onChange={(val) => onChange(field.id, val)}
+          required={field.required}
+          accent={accent}
+          textColor={textColor}
+          isLightBg={isLightBg}
+        />
+      );
     default:
       return null;
   }

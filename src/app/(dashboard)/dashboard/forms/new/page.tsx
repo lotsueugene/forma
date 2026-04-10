@@ -76,7 +76,8 @@ type FieldType =
   | 'hidden'
   | 'image'
   | 'video'
-  | 'payment';
+  | 'payment'
+  | 'booking';
 
 type ConditionOperator = 'equals' | 'not_equals' | 'contains' | 'not_empty' | 'is_empty';
 
@@ -119,6 +120,7 @@ const fieldTypes: { type: FieldType; label: string; icon: typeof TextT }[] = [
   { type: 'image', label: 'Image', icon: ImageIcon },
   { type: 'video', label: 'Video', icon: VideoCamera },
   { type: 'payment', label: 'Payment', icon: CreditCard },
+  { type: 'booking', label: 'Booking', icon: CalendarBlank },
 ];
 
 const getDefaultLabel = (type: FieldType) => {
@@ -140,6 +142,7 @@ const getDefaultLabel = (type: FieldType) => {
     image: 'Image',
     video: 'Video',
     payment: 'Payment',
+    booking: 'Book a Time',
   };
   return labels[type];
 };

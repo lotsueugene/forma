@@ -17,6 +17,7 @@ import {
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
 import ConversationalForm from './ConversationalForm';
+import BookingField from '@/components/forms/BookingField';
 
 // reCAPTCHA site key from environment
 const RECAPTCHA_SITE_KEY = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY;
@@ -692,7 +693,7 @@ export default function FormPageClient({ formId }: FormPageClientProps) {
                           {field.required && <span style={{ color: accent }} className="ml-1">*</span>}
                         </label>
 
-                        {renderField(field, formData, handleFieldChange, handleCheckboxChange, handleFileChange)}
+                        {renderField(field, formData, handleFieldChange, handleCheckboxChange, handleFileChange, formId)}
                       </motion.div>
                     ))}
                   </AnimatePresence>
@@ -765,7 +766,8 @@ function renderField(
   formData: Record<string, string | string[]>,
   onChange: (fieldId: string, value: string) => void,
   onCheckboxChange: (fieldId: string, option: string, checked: boolean) => void,
-  onFileChange: (fieldId: string, file: File | null) => void
+  onFileChange: (fieldId: string, file: File | null) => void,
+  formId?: string
 ) {
   switch (field.type) {
     case 'text':
@@ -968,6 +970,16 @@ function renderField(
         </div>
       );
     }
+    case 'booking':
+      return (
+        <BookingField
+          formId={formId || ''}
+          fieldId={field.id}
+          value={formData[field.id] as string}
+          onChange={(val) => onChange(field.id, val)}
+          required={field.required}
+        />
+      );
     default:
       return null;
   }

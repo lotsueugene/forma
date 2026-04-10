@@ -73,7 +73,8 @@ type FieldType =
   | 'hidden'
   | 'image'
   | 'video'
-  | 'payment';
+  | 'payment'
+  | 'booking';
 
 type ConditionOperator = 'equals' | 'not_equals' | 'contains' | 'not_empty' | 'is_empty';
 
@@ -117,6 +118,7 @@ const fieldTypes: { type: FieldType; label: string; icon: typeof TextT }[] = [
   { type: 'image', label: 'Image', icon: ImageIcon },
   { type: 'video', label: 'Video', icon: VideoCamera },
   { type: 'payment', label: 'Payment', icon: CreditCard },
+  { type: 'booking', label: 'Booking', icon: CalendarBlank },
 ];
 
 const getDefaultLabel = (type: FieldType) => {
@@ -138,6 +140,7 @@ const getDefaultLabel = (type: FieldType) => {
     image: 'Image',
     video: 'Video',
     payment: 'Payment',
+    booking: 'Book a Time',
   };
   return labels[type];
 };
@@ -1650,6 +1653,15 @@ function FieldPreview({ field }: { field: FormField }) {
           {[1, 2, 3, 4, 5].map((star) => (
             <Star key={star} size={20} className="text-gray-500" />
           ))}
+        </div>
+      );
+    case 'booking':
+      return (
+        <div className="space-y-2">
+          <div className="h-8 bg-gray-50 border border-gray-200 rounded-lg px-3 flex items-center text-xs text-gray-400">
+            <CalendarBlank size={14} className="mr-2" /> Select date & time slots
+          </div>
+          <div className="h-6 bg-gray-100 rounded-lg" />
         </div>
       );
     case 'page_break':

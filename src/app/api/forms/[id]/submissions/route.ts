@@ -219,8 +219,61 @@ export async function POST(
       submittedAt: new Date().toISOString(),
     };
 
+    // Check for booking field overlap
+    const formFields = JSON.parse(form.fields) as Array<{ id?: string; type: string; amount?: number; currency?: string; label?: string }>;
+    const bookingFields = formFields.filter((f) => f.type === 'booking');
+
+    for (const bookingField of bookingFields) {
+      const bookingValue = bookingField.id ? body[bookingField.id] : null;
+      if (!bookingValue) continue;
+
+      let parsed = bookingValue;
+      if (typeof parsed === 'string') {
+        try { parsed = JSON.parse(parsed); } catch { continue; }
+      }
+
+      if (parsed?.date && Array.isArray(parsed.slots)) {
+        // Fetch existing bookings for this date
+        const existingSubs = await prisma.submission.findMany({
+          where: { formId: id },
+          select: { data: true },
+        });
+
+        const existingSlots: Array<{ start: string; end: string }> = [];
+        for (const sub of existingSubs) {
+          const subData = typeof sub.data === 'string' ? JSON.parse(sub.data) : sub.data;
+          const existingBooking = bookingField.id ? (subData as Record<string, unknown>)[bookingField.id] : null;
+          if (!existingBooking) continue;
+
+          let existingParsed = existingBooking;
+          if (typeof existingParsed === 'string') {
+            try { existingParsed = JSON.parse(existingParsed as string); } catch { continue; }
+          }
+
+          if ((existingParsed as { date?: string; slots?: Array<{ start: string; end: string }> })?.date === parsed.date && Array.isArray((existingParsed as { slots?: unknown[] })?.slots)) {
+            existingSlots.push(...((existingParsed as { slots: Array<{ start: string; end: string }> }).slots));
+          }
+        }
+
+        // Check for overlap
+        for (const newSlot of parsed.slots as Array<{ start: string; end: string }>) {
+          const newStart = parseInt(newSlot.start.replace(':', ''));
+          const newEnd = parseInt(newSlot.end.replace(':', ''));
+          for (const existing of existingSlots) {
+            const exStart = parseInt(existing.start.replace(':', ''));
+            const exEnd = parseInt(existing.end.replace(':', ''));
+            if (newStart < exEnd && exStart < newEnd) {
+              return NextResponse.json(
+                { error: `Time slot ${newSlot.start}-${newSlot.end} overlaps with an existing booking (${existing.start}-${existing.end})` },
+                { status: 400, headers: corsHeaders }
+              );
+            }
+          }
+        }
+      }
+    }
+
     // Check if form has a payment field — if so, redirect to Stripe before saving
-    const formFields = JSON.parse(form.fields) as Array<{ type: string; amount?: number; currency?: string; label?: string }>;
     const paymentField = formFields.find((f) => f.type === 'payment' && f.amount && f.amount > 0);
 
     if (paymentField && stripe) {
