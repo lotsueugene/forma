@@ -77,6 +77,11 @@ button, [role="button"] {
   color: var(--light-base-secondary);
 }
 
+/* Hide reCAPTCHA badge (text attribution is shown in the form footer instead) */
+.grecaptcha-badge {
+  visibility: hidden !important;
+}
+
 /* Scrollbar */
 ::-webkit-scrollbar {
   width: 8px;
