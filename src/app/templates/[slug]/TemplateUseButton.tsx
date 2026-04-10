@@ -39,6 +39,7 @@ export default function TemplateUseButton({ template }: { template: FormTemplate
           fields: template.fields,
           status: 'draft',
           workspaceId: workspace.id,
+          settings: template.settings || {},
         }),
       });
 
