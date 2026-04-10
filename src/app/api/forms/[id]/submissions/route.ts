@@ -224,7 +224,7 @@ export async function POST(
     const bookingFields = formFields.filter((f) => f.type === 'booking');
 
     for (const bookingField of bookingFields) {
-      const bookingValue = bookingField.id ? body[bookingField.id] : null;
+      const bookingValue = bookingField.id ? data[bookingField.id] : null;
       if (!bookingValue) continue;
 
       let parsed = bookingValue;
