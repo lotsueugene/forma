@@ -294,7 +294,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
       : user?.email?.slice(0, 2).toUpperCase() || '?';
 
   return (
-    <div className="min-h-screen bg-[#f8f9fb] flex">
+    <div className="min-h-screen bg-[#f8f9fb] flex overflow-x-hidden">
       {/* Mobile Sidebar Backdrop */}
       <AnimatePresence>
         {sidebarOpen && (
@@ -445,7 +445,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
       </aside>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col min-h-screen">
+      <div className="flex-1 flex flex-col min-h-screen min-w-0 overflow-x-hidden">
         {/* Top Bar */}
         <header className="h-16 flex items-center justify-between px-4 lg:px-6 border-b border-black/6 bg-white/80 backdrop-blur-xl sticky top-0 z-30">
           <div className="flex items-center gap-4">
@@ -469,7 +469,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
         </header>
 
         {/* Page Content */}
-        <main className="flex-1 px-3 py-4 sm:p-4 lg:p-8">
+        <main className="flex-1 px-3 py-4 sm:p-4 lg:p-8 min-w-0">
           <AnnouncementBanner />
           <UpgradeBanner />
           {children}
