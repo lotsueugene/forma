@@ -105,6 +105,7 @@ interface FormField {
   bookingMode?: 'custom' | 'fixed';
   slotDuration?: number;
   weeklySchedule?: Record<number, Array<{ start: string; end: string }>>;
+  availabilityEnabled?: boolean;
 }
 
 const fieldTypes: { type: FieldType; label: string; icon: typeof TextT }[] = [
@@ -852,9 +853,10 @@ export default function NewFormPage() {
                       </div>
                     )}
                     <div className="form-field">
-                      <label className="form-label">Weekly Availability</label>
                       <WeeklyScheduleEditor
                         value={selectedField.weeklySchedule}
+                        enabled={selectedField.availabilityEnabled ?? false}
+                        onToggle={(on) => updateField(selectedField.id, { availabilityEnabled: on })}
                         onChange={(schedule) => updateField(selectedField.id, { weeklySchedule: schedule })}
                       />
                     </div>

@@ -102,7 +102,8 @@ interface FormField {
   nextPageCondition?: FieldCondition;
   bookingMode?: 'custom' | 'fixed';
   slotDuration?: number; // minutes (15, 30, 45, 60, etc.)
-  weeklySchedule?: Record<number, Array<{ start: string; end: string }>>; // 0=Sun..6=Sat
+  weeklySchedule?: Record<number, Array<{ start: string; end: string }>>;
+  availabilityEnabled?: boolean;
 }
 
 const fieldTypes: { type: FieldType; label: string; icon: typeof TextT }[] = [
@@ -892,9 +893,10 @@ export default function EditFormPage({ params }: { params: Promise<{ id: string 
                       </div>
                     )}
                     <div className="form-field">
-                      <label className="form-label">Weekly Availability</label>
                       <WeeklyScheduleEditor
                         value={selectedField.weeklySchedule}
+                        enabled={selectedField.availabilityEnabled ?? false}
+                        onToggle={(on) => updateField(selectedField.id, { availabilityEnabled: on })}
                         onChange={(schedule) => updateField(selectedField.id, { weeklySchedule: schedule })}
                       />
                     </div>

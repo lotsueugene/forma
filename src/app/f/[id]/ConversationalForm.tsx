@@ -38,6 +38,7 @@ interface FormField {
   bookingMode?: 'custom' | 'fixed';
   slotDuration?: number;
   weeklySchedule?: Record<number, Array<{ start: string; end: string }>>;
+  availabilityEnabled?: boolean;
 }
 
 interface FormSettings {
@@ -796,6 +797,7 @@ function renderConversationalField(
           bookingMode={field.bookingMode}
           slotDuration={field.slotDuration}
           weeklySchedule={field.weeklySchedule}
+          availabilityEnabled={field.availabilityEnabled}
         />
       );
     default:

@@ -57,6 +57,7 @@ interface FormField {
   bookingMode?: 'custom' | 'fixed';
   slotDuration?: number;
   weeklySchedule?: Record<number, Array<{ start: string; end: string }>>;
+  availabilityEnabled?: boolean;
 }
 
 // Evaluate if a field's condition is met
@@ -984,6 +985,7 @@ function renderField(
           bookingMode={field.bookingMode}
           slotDuration={field.slotDuration}
           weeklySchedule={field.weeklySchedule}
+          availabilityEnabled={field.availabilityEnabled}
         />
       );
     default:

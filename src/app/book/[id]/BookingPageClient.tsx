@@ -17,6 +17,7 @@ interface FormField {
   bookingMode?: 'custom' | 'fixed';
   slotDuration?: number;
   weeklySchedule?: Record<number, Array<{ start: string; end: string }>>;
+  availabilityEnabled?: boolean;
 }
 
 interface FormSettings {
@@ -221,6 +222,7 @@ export default function BookingPageClient({ formId }: { formId: string }) {
             bookingMode={bookingField.bookingMode}
             slotDuration={bookingField.slotDuration}
             weeklySchedule={bookingField.weeklySchedule}
+            availabilityEnabled={bookingField.availabilityEnabled}
           />
         </div>
 

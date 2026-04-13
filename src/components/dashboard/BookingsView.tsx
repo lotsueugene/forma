@@ -37,9 +37,10 @@ interface BookingBlock {
 interface BookingsViewProps {
   submissions: Submission[];
   bookingFieldIds: string[];
-  fields: Array<{ id: string; type: string; label: string; weeklySchedule?: Record<number, Array<{ start: string; end: string }>> }>;
+  fields: Array<{ id: string; type: string; label: string; weeklySchedule?: Record<number, Array<{ start: string; end: string }>>; availabilityEnabled?: boolean }>;
   formId: string;
   onUpdateSchedule?: (fieldId: string, schedule: Record<number, Array<{ start: string; end: string }>>) => void;
+  onToggleAvailability?: (fieldId: string, enabled: boolean) => void;
 }
 
 interface BookingEntry {
@@ -76,7 +77,7 @@ function extractEmail(data: Record<string, unknown>, fields: Array<{ id: string;
   return '';
 }
 
-export default function BookingsView({ submissions, bookingFieldIds, fields, formId, onUpdateSchedule }: BookingsViewProps) {
+export default function BookingsView({ submissions, bookingFieldIds, fields, formId, onUpdateSchedule, onToggleAvailability }: BookingsViewProps) {
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [expandedSubmissionId, setExpandedSubmissionId] = useState<string | null>(null);
   const [viewMonth, setViewMonth] = useState(() => {
@@ -534,10 +535,15 @@ export default function BookingsView({ submissions, bookingFieldIds, fields, for
         {/* Weekly schedule editor */}
         {(() => {
           const bookingField = fields.find(f => bookingFieldIds.includes(f.id));
-          const currentSchedule = bookingField?.weeklySchedule;
           return (
             <WeeklyScheduleEditor
-              value={currentSchedule}
+              value={bookingField?.weeklySchedule}
+              enabled={bookingField?.availabilityEnabled ?? false}
+              onToggle={(on) => {
+                if (bookingField && onToggleAvailability) {
+                  onToggleAvailability(bookingField.id, on);
+                }
+              }}
               onChange={(schedule) => {
                 if (bookingField && onUpdateSchedule) {
                   onUpdateSchedule(bookingField.id, schedule);

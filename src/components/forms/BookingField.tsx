@@ -22,6 +22,7 @@ interface BookingFieldProps {
   bookingMode?: 'custom' | 'fixed';
   slotDuration?: number; // minutes
   weeklySchedule?: Record<number, Array<{ start: string; end: string }>>;
+  availabilityEnabled?: boolean;
 }
 
 // Business hours
@@ -70,15 +71,12 @@ export default function BookingField({
   bookingMode = 'custom',
   slotDuration = 30,
   weeklySchedule,
+  availabilityEnabled = false,
 }: BookingFieldProps) {
-  // Default Mon-Fri 9-5
-  const defaultSchedule: Record<number, Array<{ start: string; end: string }>> = {
-    0: [], 1: [{ start: '09:00', end: '17:00' }], 2: [{ start: '09:00', end: '17:00' }],
-    3: [{ start: '09:00', end: '17:00' }], 4: [{ start: '09:00', end: '17:00' }],
-    5: [{ start: '09:00', end: '17:00' }], 6: [],
-  };
-  const hasSchedule = weeklySchedule && Object.values(weeklySchedule).some(blocks => blocks.length > 0);
-  const schedule = hasSchedule ? weeklySchedule : null; // null = no restrictions
+  // If availability rules are off, no restrictions (schedule = null)
+  // If on, use the schedule (even if empty = unavailable)
+  const hasBlocks = weeklySchedule && Object.values(weeklySchedule).some(blocks => blocks.length > 0);
+  const schedule = (availabilityEnabled && hasBlocks) ? weeklySchedule : null;
   const [selectedDate, setSelectedDate] = useState<string>('');
   const [viewMonth, setViewMonth] = useState(() => {
     const now = new Date();

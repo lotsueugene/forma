@@ -1411,10 +1411,24 @@ export default function FormDetailPage() {
           formId={formId}
           submissions={submissions}
           bookingFieldIds={(form.fields || []).filter((f: { type: string }) => f.type === 'booking').map((f: { id: string }) => f.id)}
-          fields={(form.fields || []).map((f: { id: string; type: string; label: string; weeklySchedule?: Record<number, Array<{ start: string; end: string }>> }) => ({ id: f.id, type: f.type, label: f.label, weeklySchedule: f.weeklySchedule }))}
+          fields={(form.fields || []).map((f: Record<string, unknown>) => ({ id: f.id, type: f.type, label: f.label, weeklySchedule: f.weeklySchedule, availabilityEnabled: f.availabilityEnabled }))}
           onUpdateSchedule={async (fieldId, schedule) => {
             const updatedFields = (form.fields || []).map((f: Record<string, unknown>) =>
               f.id === fieldId ? { ...f, weeklySchedule: schedule } : f
+            );
+            try {
+              await fetch(`/api/forms/${formId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ fields: updatedFields }),
+              });
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              setForm((prev: any) => prev ? { ...prev, fields: updatedFields } : prev);
+            } catch {}
+          }}
+          onToggleAvailability={async (fieldId, enabled) => {
+            const updatedFields = (form.fields || []).map((f: Record<string, unknown>) =>
+              f.id === fieldId ? { ...f, availabilityEnabled: enabled } : f
             );
             try {
               await fetch(`/api/forms/${formId}`, {
