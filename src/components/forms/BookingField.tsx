@@ -76,8 +76,8 @@ export default function BookingField({
     3: [{ start: '09:00', end: '17:00' }], 4: [{ start: '09:00', end: '17:00' }],
     5: [{ start: '09:00', end: '17:00' }], 6: [],
   };
-  const hasAnyBlocks = weeklySchedule && Object.values(weeklySchedule).some(blocks => blocks.length > 0);
-  const schedule = hasAnyBlocks ? weeklySchedule : defaultSchedule;
+  const hasSchedule = weeklySchedule && Object.values(weeklySchedule).some(blocks => blocks.length > 0);
+  const schedule = hasSchedule ? weeklySchedule : null; // null = no restrictions
   const [selectedDate, setSelectedDate] = useState<string>('');
   const [viewMonth, setViewMonth] = useState(() => {
     const now = new Date();
@@ -152,7 +152,7 @@ export default function BookingField({
       const d = new Date(year, month, i);
       const dateStr = d.toISOString().split('T')[0];
       const dayOfWeek = d.getDay();
-      const isDayOff = !schedule[dayOfWeek] || schedule[dayOfWeek].length === 0;
+      const isDayOff = schedule ? (!schedule[dayOfWeek] || schedule[dayOfWeek].length === 0) : false;
       const isBlocked = blockedDates.includes(dateStr);
       days.push({
         date: d,
@@ -217,7 +217,8 @@ export default function BookingField({
   const fixedSlotGroups = useMemo(() => {
     if (bookingMode !== 'fixed' || !selectedDate) return [];
     const dayOfWeek = new Date(selectedDate + 'T00:00:00').getDay();
-    const dayBlocks = schedule[dayOfWeek] || [];
+    // If no schedule set, default to 9-5
+    const dayBlocks = schedule ? (schedule[dayOfWeek] || []) : [{ start: '09:00', end: '17:00' }];
     if (dayBlocks.length === 0) return [];
 
     const groups: { label: string; slots: BookingSlot[] }[] = [];
