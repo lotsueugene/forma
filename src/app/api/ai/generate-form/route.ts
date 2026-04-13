@@ -38,7 +38,7 @@ const bedrockClient = new BedrockRuntimeClient({
   },
 });
 
-async function generateFormWithAI(prompt: string): Promise<{ name: string; fields: GeneratedField[] }> {
+async function generateFormWithAI(prompt: string): Promise<{ name: string; description: string; fields: GeneratedField[] }> {
   const systemPrompt = `You are a form builder AI. Given a user's description, generate a form with appropriate fields.
 
 Available field types: ${AVAILABLE_FIELD_TYPES.join(', ')}
