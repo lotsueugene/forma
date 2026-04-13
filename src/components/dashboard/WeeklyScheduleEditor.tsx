@@ -126,8 +126,10 @@ export default function WeeklyScheduleEditor({ value, enabled = false, onToggle,
   const schedule = value || EMPTY_SCHEDULE;
   const [entries, setEntries] = useState<ScheduleEntry[]>(() => scheduleToEntries(schedule));
 
-  // If enabled but no schedules, auto-correct to off
-  const effectiveEnabled = enabled && entries.length > 0;
+  // Visual state: show as off on load if enabled but no schedules
+  // But once user interacts (toggles on), respect the enabled prop
+  const [userToggled, setUserToggled] = useState(false);
+  const effectiveEnabled = userToggled ? enabled : (enabled && entries.length > 0);
   const [adding, setAdding] = useState(false);
   const [newDays, setNewDays] = useState<number[]>([1, 2, 3, 4, 5]);
   const [newStart, setNewStart] = useState('09:00');
@@ -169,6 +171,7 @@ export default function WeeklyScheduleEditor({ value, enabled = false, onToggle,
   };
 
   const handleToggle = (on: boolean) => {
+    setUserToggled(true);
     if (onToggle) onToggle(on);
   };
 
