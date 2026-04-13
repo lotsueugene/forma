@@ -569,18 +569,29 @@ export default function BookingsView({ submissions, bookingFieldIds, fields, for
                 <>
                   <div className="flex items-center justify-between border-t border-gray-100 pt-4">
                     <p className="text-sm font-medium text-gray-800">Slot Duration</p>
-                    <select
-                      value={(bookingField as Record<string, unknown>)?.slotDuration as number || 30}
-                      onChange={(e) => bookingField && onUpdateField?.(bookingField.id, { slotDuration: parseInt(e.target.value) })}
-                      className="input py-1.5 px-2.5 text-sm w-auto"
-                    >
-                      <option value={15}>15 min</option>
-                      <option value={30}>30 min</option>
-                      <option value={45}>45 min</option>
-                      <option value={60}>1 hour</option>
-                      <option value={90}>1.5 hours</option>
-                      <option value={120}>2 hours</option>
-                    </select>
+                    <div className="flex bg-gray-100 rounded-lg p-0.5">
+                      {[
+                        { value: 15, label: '15m' },
+                        { value: 30, label: '30m' },
+                        { value: 45, label: '45m' },
+                        { value: 60, label: '1h' },
+                        { value: 90, label: '1.5h' },
+                        { value: 120, label: '2h' },
+                      ].map((opt) => (
+                        <button
+                          key={opt.value}
+                          type="button"
+                          onClick={() => bookingField && onUpdateField?.(bookingField.id, { slotDuration: opt.value })}
+                          className={`px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                            ((bookingField as Record<string, unknown>)?.slotDuration || 30) === opt.value
+                              ? 'bg-white text-gray-900 shadow-sm'
+                              : 'text-gray-500'
+                          }`}
+                        >
+                          {opt.label}
+                        </button>
+                      ))}
+                    </div>
                   </div>
                   <div className="border-t border-gray-100 pt-4">
                     <WeeklyScheduleEditor
