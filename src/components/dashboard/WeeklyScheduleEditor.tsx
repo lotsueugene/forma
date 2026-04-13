@@ -144,6 +144,8 @@ export default function WeeklyScheduleEditor({ value, enabled = false, onToggle,
       end: newEnd,
     };
     syncSchedule([...entries, entry]);
+    // Auto-enable availability when first schedule is added
+    if (!enabled && onToggle) onToggle(true);
     setAdding(false);
     setNewDays([1, 2, 3, 4, 5]);
     setNewStart('09:00');
@@ -151,7 +153,10 @@ export default function WeeklyScheduleEditor({ value, enabled = false, onToggle,
   };
 
   const removeEntry = (id: string) => {
-    syncSchedule(entries.filter(e => e.id !== id));
+    const updated = entries.filter(e => e.id !== id);
+    syncSchedule(updated);
+    // Auto-disable if no schedules left
+    if (updated.length === 0 && enabled && onToggle) onToggle(false);
   };
 
   const toggleNewDay = (day: number) => {
@@ -161,10 +166,14 @@ export default function WeeklyScheduleEditor({ value, enabled = false, onToggle,
   };
 
   const handleToggle = (on: boolean) => {
-    if (onToggle) onToggle(on);
-    if (!on) {
-      syncSchedule([]);
+    // Don't allow turning on if there are no schedules — user needs to add one first
+    if (on && entries.length === 0) {
+      // Open the add form instead
+      setAdding(true);
+      return;
     }
+    if (onToggle) onToggle(on);
+    // Don't clear schedules when toggling off — just disable the rules
   };
 
   return (
