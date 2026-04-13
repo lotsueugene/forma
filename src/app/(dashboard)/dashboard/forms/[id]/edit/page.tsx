@@ -862,34 +862,51 @@ export default function EditFormPage({ params }: { params: Promise<{ id: string 
                   <div className="space-y-3">
                     <div className="form-field">
                       <label className="form-label">Booking Mode</label>
-                      <select
-                        value={selectedField.bookingMode || 'custom'}
-                        onChange={(e) =>
-                          updateField(selectedField.id, { bookingMode: e.target.value as 'custom' | 'fixed' })
-                        }
-                        className="input"
-                      >
-                        <option value="custom">Custom Range (client picks start &amp; end)</option>
-                        <option value="fixed">Fixed Duration (client picks a time slot)</option>
-                      </select>
+                      <div className="flex bg-gray-100 rounded-lg p-0.5">
+                        <button
+                          type="button"
+                          onClick={() => updateField(selectedField.id, { bookingMode: 'custom' })}
+                          className={`flex-1 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                            (selectedField.bookingMode || 'custom') !== 'fixed' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500'
+                          }`}
+                        >
+                          Custom
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => updateField(selectedField.id, { bookingMode: 'fixed' })}
+                          className={`flex-1 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                            selectedField.bookingMode === 'fixed' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500'
+                          }`}
+                        >
+                          Fixed
+                        </button>
+                      </div>
                     </div>
                     {(selectedField.bookingMode === 'fixed') && (
                       <div className="form-field">
                         <label className="form-label">Slot Duration</label>
-                        <select
-                          value={selectedField.slotDuration || 30}
-                          onChange={(e) =>
-                            updateField(selectedField.id, { slotDuration: parseInt(e.target.value) })
-                          }
-                          className="input"
-                        >
-                          <option value={15}>15 minutes</option>
-                          <option value={30}>30 minutes</option>
-                          <option value={45}>45 minutes</option>
-                          <option value={60}>1 hour</option>
-                          <option value={90}>1.5 hours</option>
-                          <option value={120}>2 hours</option>
-                        </select>
+                        <div className="flex bg-gray-100 rounded-lg p-0.5">
+                          {[
+                            { value: 15, label: '15m' },
+                            { value: 30, label: '30m' },
+                            { value: 45, label: '45m' },
+                            { value: 60, label: '1h' },
+                            { value: 90, label: '1.5h' },
+                            { value: 120, label: '2h' },
+                          ].map((opt) => (
+                            <button
+                              key={opt.value}
+                              type="button"
+                              onClick={() => updateField(selectedField.id, { slotDuration: opt.value })}
+                              className={`flex-1 px-2 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                                (selectedField.slotDuration || 30) === opt.value ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500'
+                              }`}
+                            >
+                              {opt.label}
+                            </button>
+                          ))}
+                        </div>
                       </div>
                     )}
                     <div className="form-field">
