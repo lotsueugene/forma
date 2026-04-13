@@ -152,7 +152,9 @@ export default function BookingField({
       const d = new Date(year, month, i);
       const dateStr = d.toISOString().split('T')[0];
       const dayOfWeek = d.getDay();
-      const isDayOff = schedule ? (!schedule[dayOfWeek] || schedule[dayOfWeek].length === 0) : false;
+      // Only mark as day off if the schedule explicitly has this day with empty array
+      // AND at least one other day has blocks (meaning the user intentionally configured availability)
+      const isDayOff = false; // Days are never auto-blocked — schedule only restricts TIME within a day
       const isBlocked = blockedDates.includes(dateStr);
       days.push({
         date: d,
@@ -217,9 +219,10 @@ export default function BookingField({
   const fixedSlotGroups = useMemo(() => {
     if (bookingMode !== 'fixed' || !selectedDate) return [];
     const dayOfWeek = new Date(selectedDate + 'T00:00:00').getDay();
-    // If no schedule set, default to 9-5
-    const dayBlocks = schedule ? (schedule[dayOfWeek] || []) : [{ start: '09:00', end: '17:00' }];
-    if (dayBlocks.length === 0) return [];
+    // If no schedule or no blocks for this day, default to 9 AM - 5 PM
+    const dayBlocks = (schedule && schedule[dayOfWeek]?.length > 0)
+      ? schedule[dayOfWeek]
+      : [{ start: '09:00', end: '17:00' }];
 
     const groups: { label: string; slots: BookingSlot[] }[] = [];
     const morning: BookingSlot[] = [];

@@ -187,7 +187,7 @@ export default function WeeklyScheduleEditor({ value, onChange }: Props) {
                   </div>
                 </div>
               ) : (
-                <p className="text-sm text-gray-400 pt-1.5">Unavailable</p>
+                <p className="text-sm text-gray-400 pt-1.5">Available all day</p>
               )}
             </div>
           </div>
