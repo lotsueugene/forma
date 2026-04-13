@@ -85,12 +85,16 @@ export default function BookingsView({ submissions, bookingFieldIds, fields, for
   // Booking blocks (owner-set unavailability)
   const [blocks, setBlocks] = useState<BookingBlock[]>([]);
   const [showBlockForm, setShowBlockForm] = useState(false);
-  const [blockDate, setBlockDate] = useState('');
+  const [selectedBlockDates, setSelectedBlockDates] = useState<string[]>([]);
   const [blockStartTime, setBlockStartTime] = useState('');
   const [blockEndTime, setBlockEndTime] = useState('');
   const [blockReason, setBlockReason] = useState('');
   const [blockWholeDay, setBlockWholeDay] = useState(true);
   const [savingBlock, setSavingBlock] = useState(false);
+  const [blockViewMonth, setBlockViewMonth] = useState(() => {
+    const now = new Date();
+    return new Date(now.getFullYear(), now.getMonth(), 1);
+  });
 
   // Fetch blocks
   useEffect(() => {
@@ -100,30 +104,76 @@ export default function BookingsView({ submissions, bookingFieldIds, fields, for
       .catch(() => {});
   }, [formId]);
 
-  const addBlock = async () => {
-    if (!blockDate) return;
+  // Block calendar days
+  const blockCalendarDays = useMemo(() => {
+    const year = blockViewMonth.getFullYear();
+    const month = blockViewMonth.getMonth();
+    const firstDay = new Date(year, month, 1).getDay();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const days: Array<{ date: Date; dateStr: string; inMonth: boolean; isPast: boolean; isBlocked: boolean; isSelected: boolean }> = [];
+
+    for (let i = 0; i < firstDay; i++) {
+      const d = new Date(year, month, -firstDay + i + 1);
+      days.push({ date: d, dateStr: toDateStr(d), inMonth: false, isPast: true, isBlocked: false, isSelected: false });
+    }
+
+    const blockedDateSet = new Set(blocks.filter(b => !b.startTime).map(b => b.date));
+
+    for (let i = 1; i <= daysInMonth; i++) {
+      const d = new Date(year, month, i);
+      const dateStr = toDateStr(d);
+      days.push({
+        date: d,
+        dateStr,
+        inMonth: true,
+        isPast: d < today,
+        isBlocked: blockedDateSet.has(dateStr),
+        isSelected: selectedBlockDates.includes(dateStr),
+      });
+    }
+
+    return days;
+  }, [blockViewMonth, blocks, selectedBlockDates]);
+
+  const toggleBlockDate = (dateStr: string) => {
+    setSelectedBlockDates(prev =>
+      prev.includes(dateStr)
+        ? prev.filter(d => d !== dateStr)
+        : [...prev, dateStr]
+    );
+  };
+
+  const saveBlocks = async () => {
+    if (selectedBlockDates.length === 0) return;
     setSavingBlock(true);
     try {
-      const res = await fetch(`/api/forms/${formId}/blocks`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          fieldId: bookingFieldIds[0],
-          date: blockDate,
-          startTime: blockWholeDay ? null : blockStartTime || null,
-          endTime: blockWholeDay ? null : blockEndTime || null,
-          reason: blockReason || null,
-        }),
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setBlocks(prev => [...prev, data.block]);
-        setBlockDate('');
-        setBlockStartTime('');
-        setBlockEndTime('');
-        setBlockReason('');
-        setShowBlockForm(false);
+      const newBlocks: BookingBlock[] = [];
+      for (const date of selectedBlockDates) {
+        const res = await fetch(`/api/forms/${formId}/blocks`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            fieldId: bookingFieldIds[0],
+            date,
+            startTime: blockWholeDay ? null : blockStartTime || null,
+            endTime: blockWholeDay ? null : blockEndTime || null,
+            reason: blockReason || null,
+          }),
+        });
+        if (res.ok) {
+          const data = await res.json();
+          newBlocks.push(data.block);
+        }
       }
+      setBlocks(prev => [...prev, ...newBlocks]);
+      setSelectedBlockDates([]);
+      setBlockStartTime('');
+      setBlockEndTime('');
+      setBlockReason('');
+      setShowBlockForm(false);
     } catch {}
     setSavingBlock(false);
   };
@@ -472,84 +522,143 @@ export default function BookingsView({ submissions, bookingFieldIds, fields, for
         </p>
       )}
 
-      {/* Blocked times management */}
+      {/* Date overrides */}
       <div className="card p-5 space-y-4">
         <div className="flex items-center justify-between">
           <h3 className="font-medium text-gray-900 flex items-center gap-2">
             <Prohibit size={18} />
             Date Overrides
           </h3>
-          <button
-            type="button"
-            onClick={() => setShowBlockForm(!showBlockForm)}
-            className="btn btn-secondary text-sm"
-          >
-            <Plus size={14} />
-            Block Date
-          </button>
+          {!showBlockForm && (
+            <button
+              type="button"
+              onClick={() => setShowBlockForm(true)}
+              className="btn btn-secondary text-sm"
+            >
+              <Plus size={14} />
+              Block Dates
+            </button>
+          )}
         </div>
 
         {showBlockForm && (
-          <div className="bg-gray-50 rounded-lg p-4 space-y-3 border border-gray-200">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
-                <label className="text-xs font-medium text-gray-600 mb-1 block">Date</label>
-                <input
-                  type="date"
-                  value={blockDate}
-                  onChange={(e) => setBlockDate(e.target.value)}
-                  className="input w-full"
-                />
+          <div className="space-y-4">
+            {/* Forma-branded calendar for multi-select */}
+            <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
+              <div className="flex items-center justify-between mb-3">
+                <button
+                  type="button"
+                  onClick={() => setBlockViewMonth(new Date(blockViewMonth.getFullYear(), blockViewMonth.getMonth() - 1, 1))}
+                  className="p-1.5 rounded-lg hover:bg-gray-200 text-gray-500"
+                >
+                  <CaretLeft size={16} />
+                </button>
+                <span className="text-sm font-semibold text-gray-800">
+                  {blockViewMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setBlockViewMonth(new Date(blockViewMonth.getFullYear(), blockViewMonth.getMonth() + 1, 1))}
+                  className="p-1.5 rounded-lg hover:bg-gray-200 text-gray-500"
+                >
+                  <CaretRight size={16} />
+                </button>
               </div>
+
+              <div className="grid grid-cols-7 gap-1 mb-1">
+                {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map(d => (
+                  <div key={d} className="text-center text-[10px] font-medium text-gray-400 py-1">{d}</div>
+                ))}
+              </div>
+              <div className="grid grid-cols-7 gap-1">
+                {blockCalendarDays.map((day, i) => (
+                  <button
+                    key={i}
+                    type="button"
+                    disabled={day.isPast || !day.inMonth}
+                    onClick={() => toggleBlockDate(day.dateStr)}
+                    className={cn(
+                      'relative h-9 rounded-lg text-sm font-medium transition-all',
+                      !day.inMonth && 'invisible',
+                      day.isPast && 'opacity-20 cursor-not-allowed',
+                      day.isBlocked && !day.isSelected && 'bg-red-100 text-red-600',
+                      day.isSelected && 'bg-red-500 text-white',
+                      !day.isPast && !day.isBlocked && !day.isSelected && 'hover:bg-gray-200 text-gray-700',
+                    )}
+                  >
+                    {day.date.getDate()}
+                    {day.isBlocked && !day.isSelected && (
+                      <div className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-red-400" />
+                    )}
+                  </button>
+                ))}
+              </div>
+
+              {selectedBlockDates.length > 0 && (
+                <p className="text-xs text-gray-500 mt-3 pt-3 border-t border-gray-200">
+                  <strong className="text-gray-700">{selectedBlockDates.length}</strong> date{selectedBlockDates.length !== 1 ? 's' : ''} selected
+                </p>
+              )}
+            </div>
+
+            {/* Options */}
+            <div className="space-y-3">
+              <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={blockWholeDay}
+                  onChange={(e) => setBlockWholeDay(e.target.checked)}
+                  className="w-4 h-4 accent-safety-orange"
+                />
+                Block entire day
+              </label>
+              {!blockWholeDay && (
+                <div className="flex items-center gap-2">
+                  <div className="flex-1">
+                    <label className="text-xs text-gray-500 mb-1 block">From</label>
+                    <input
+                      type="time"
+                      value={blockStartTime}
+                      onChange={(e) => setBlockStartTime(e.target.value)}
+                      className="input w-full"
+                    />
+                  </div>
+                  <span className="text-sm text-gray-300 mt-5">–</span>
+                  <div className="flex-1">
+                    <label className="text-xs text-gray-500 mb-1 block">To</label>
+                    <input
+                      type="time"
+                      value={blockEndTime}
+                      onChange={(e) => setBlockEndTime(e.target.value)}
+                      className="input w-full"
+                    />
+                  </div>
+                </div>
+              )}
               <div>
-                <label className="text-xs font-medium text-gray-600 mb-1 block">Reason (optional)</label>
+                <label className="text-xs text-gray-500 mb-1 block">Reason (optional)</label>
                 <input
                   type="text"
                   value={blockReason}
                   onChange={(e) => setBlockReason(e.target.value)}
-                  placeholder="e.g. Lunch, Day off"
+                  placeholder="e.g. Vacation, Holiday, Personal"
                   className="input w-full"
                 />
               </div>
             </div>
-            <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={blockWholeDay}
-                onChange={(e) => setBlockWholeDay(e.target.checked)}
-                className="w-4 h-4"
-              />
-              Block entire day
-            </label>
-            {!blockWholeDay && (
-              <div className="flex items-center gap-2">
-                <input
-                  type="time"
-                  value={blockStartTime}
-                  onChange={(e) => setBlockStartTime(e.target.value)}
-                  className="input flex-1"
-                />
-                <span className="text-sm text-gray-400">to</span>
-                <input
-                  type="time"
-                  value={blockEndTime}
-                  onChange={(e) => setBlockEndTime(e.target.value)}
-                  className="input flex-1"
-                />
-              </div>
-            )}
-            <div className="flex gap-2">
+
+            <div className="flex gap-2 pt-1">
               <button
                 type="button"
-                onClick={addBlock}
-                disabled={!blockDate || savingBlock}
+                onClick={saveBlocks}
+                disabled={selectedBlockDates.length === 0 || savingBlock}
                 className="btn btn-primary text-sm"
               >
-                {savingBlock ? 'Saving...' : 'Add Block'}
+                {savingBlock ? 'Saving...' : `Block ${selectedBlockDates.length || ''} Date${selectedBlockDates.length !== 1 ? 's' : ''}`}
               </button>
               <button
                 type="button"
-                onClick={() => setShowBlockForm(false)}
+                onClick={() => { setShowBlockForm(false); setSelectedBlockDates([]); }}
                 className="btn btn-ghost text-sm"
               >
                 Cancel
@@ -558,39 +667,42 @@ export default function BookingsView({ submissions, bookingFieldIds, fields, for
           </div>
         )}
 
-        {blocks.length > 0 ? (
+        {/* Existing blocks list */}
+        {blocks.length > 0 && (
           <div className="divide-y divide-gray-100">
             {blocks.map((block) => (
               <div key={block.id} className="flex items-center justify-between py-2.5">
                 <div className="flex items-center gap-3">
-                  <div className="w-2 h-2 rounded-full bg-red-400" />
-                  <div>
-                    <span className="text-sm text-gray-800 font-medium">
+                  <div className="w-2 h-2 rounded-full bg-red-400 shrink-0" />
+                  <div className="text-sm">
+                    <span className="text-gray-800 font-medium">
                       {new Date(block.date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
                     </span>
                     {block.startTime && block.endTime ? (
-                      <span className="text-sm text-gray-500 ml-2">
-                        {fmt(block.startTime)} - {fmt(block.endTime)}
+                      <span className="text-gray-500 ml-2">
+                        {fmt(block.startTime)} – {fmt(block.endTime)}
                       </span>
                     ) : (
-                      <span className="text-xs text-red-500 ml-2">All day</span>
+                      <span className="text-red-500 ml-2 text-xs font-medium">All day</span>
                     )}
                     {block.reason && (
-                      <span className="text-xs text-gray-400 ml-2">&middot; {block.reason}</span>
+                      <span className="text-gray-400 ml-2 text-xs">&middot; {block.reason}</span>
                     )}
                   </div>
                 </div>
                 <button
                   type="button"
                   onClick={() => removeBlock(block.id)}
-                  className="p-1.5 rounded hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors"
+                  className="p-1.5 rounded hover:bg-red-50 text-red-400 hover:text-red-600 transition-colors shrink-0"
                 >
                   <Trash size={14} />
                 </button>
               </div>
             ))}
           </div>
-        ) : (
+        )}
+
+        {blocks.length === 0 && !showBlockForm && (
           <p className="text-sm text-gray-400">No date overrides. Your weekly schedule applies to all dates.</p>
         )}
       </div>
