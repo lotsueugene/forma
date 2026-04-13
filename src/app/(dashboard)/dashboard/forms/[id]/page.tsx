@@ -1411,7 +1411,7 @@ export default function FormDetailPage() {
           formId={formId}
           submissions={submissions}
           bookingFieldIds={(form.fields || []).filter((f: { type: string }) => f.type === 'booking').map((f: { id: string }) => f.id)}
-          fields={(form.fields || []).map((f: { id: string; type: string; label: string; weeklySchedule?: Record<number, Array<{ start: string; end: string }>>; availabilityEnabled?: boolean; bookingMode?: string }) => ({ id: f.id, type: f.type, label: f.label, weeklySchedule: f.weeklySchedule, availabilityEnabled: f.availabilityEnabled, bookingMode: f.bookingMode }))}
+          fields={(form.fields || []).map((f: { id: string; type: string; label: string; weeklySchedule?: Record<number, Array<{ start: string; end: string }>>; availabilityEnabled?: boolean; bookingMode?: string; slotDuration?: number }) => ({ id: f.id, type: f.type, label: f.label, weeklySchedule: f.weeklySchedule, availabilityEnabled: f.availabilityEnabled, bookingMode: f.bookingMode, slotDuration: f.slotDuration }))}
           onUpdateField={async (fieldId, updates) => {
             const updatedFields = (form.fields || []).map((f: Record<string, unknown>) =>
               f.id === fieldId ? { ...f, ...updates } : f

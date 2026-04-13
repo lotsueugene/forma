@@ -37,7 +37,7 @@ interface BookingBlock {
 interface BookingsViewProps {
   submissions: Submission[];
   bookingFieldIds: string[];
-  fields: Array<{ id: string; type: string; label: string; weeklySchedule?: Record<number, Array<{ start: string; end: string }>>; availabilityEnabled?: boolean; bookingMode?: string }>;
+  fields: Array<{ id: string; type: string; label: string; weeklySchedule?: Record<number, Array<{ start: string; end: string }>>; availabilityEnabled?: boolean; bookingMode?: string; slotDuration?: number }>;
   formId: string;
   onUpdateSchedule?: (fieldId: string, schedule: Record<number, Array<{ start: string; end: string }>>) => void;
   onToggleAvailability?: (fieldId: string, enabled: boolean) => void;
@@ -564,9 +564,24 @@ export default function BookingsView({ submissions, bookingFieldIds, fields, for
                 </div>
               </div>
 
-              {/* Availability rules — only for fixed mode */}
+              {/* Fixed mode settings */}
               {isFixed && (
                 <>
+                  <div className="flex items-center justify-between border-t border-gray-100 pt-4">
+                    <p className="text-sm font-medium text-gray-800">Slot Duration</p>
+                    <select
+                      value={(bookingField as Record<string, unknown>)?.slotDuration as number || 30}
+                      onChange={(e) => bookingField && onUpdateField?.(bookingField.id, { slotDuration: parseInt(e.target.value) })}
+                      className="input py-1.5 px-2.5 text-sm w-auto"
+                    >
+                      <option value={15}>15 min</option>
+                      <option value={30}>30 min</option>
+                      <option value={45}>45 min</option>
+                      <option value={60}>1 hour</option>
+                      <option value={90}>1.5 hours</option>
+                      <option value={120}>2 hours</option>
+                    </select>
+                  </div>
                   <div className="border-t border-gray-100 pt-4">
                     <WeeklyScheduleEditor
                       value={bookingField?.weeklySchedule}
