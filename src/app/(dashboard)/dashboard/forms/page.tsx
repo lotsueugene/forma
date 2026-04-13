@@ -196,7 +196,7 @@ export default function FormsPage() {
             className="btn btn-secondary"
           >
             <Lightning size={18} weight="fill" />
-            Quick Create
+            Get Endpoint
           </button>
           <Link href="/dashboard/forms/new" className="btn btn-primary">
             <Plus size={18} weight="bold" />
@@ -566,7 +566,7 @@ export default function FormsPage() {
               className="btn btn-secondary"
             >
               <Lightning size={18} weight="fill" />
-              Quick Create
+              Get Endpoint
             </button>
             <Link href="/dashboard/forms/new" className="btn btn-primary">
               <Plus size={18} weight="bold" />
@@ -608,7 +608,7 @@ export default function FormsPage() {
                 </div>
                 <div>
                   <h2 className="text-lg font-semibold text-gray-900">
-                    Quick Create Endpoint
+                    Get Endpoint Endpoint
                   </h2>
                   <p className="text-sm text-gray-500">
                     Get an API endpoint instantly
