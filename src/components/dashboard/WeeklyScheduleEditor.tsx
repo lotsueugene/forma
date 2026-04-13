@@ -151,7 +151,7 @@ export default function WeeklyScheduleEditor({ value, onChange }: Props) {
                       <button
                         type="button"
                         onClick={() => removeBlock(day, i)}
-                        className="p-1 text-gray-300 hover:text-red-500 transition-colors shrink-0"
+                        className="p-1 text-red-400 hover:text-red-600 transition-colors shrink-0"
                       >
                         <X size={12} />
                       </button>
@@ -172,7 +172,7 @@ export default function WeeklyScheduleEditor({ value, onChange }: Props) {
                       className="text-[11px] text-gray-400 hover:text-gray-600 flex items-center gap-0.5"
                     >
                       <Copy size={10} />
-                      {copiedFrom === day ? 'Copied!' : 'Copy to all'}
+                      {copiedFrom === day ? 'Applied!' : 'Apply to all'}
                     </button>
                   </div>
                 </div>

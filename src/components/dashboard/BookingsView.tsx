@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   CalendarCheck,
@@ -93,12 +93,12 @@ export default function BookingsView({ submissions, bookingFieldIds, fields, for
   const [savingBlock, setSavingBlock] = useState(false);
 
   // Fetch blocks
-  useState(() => {
+  useEffect(() => {
     fetch(`/api/forms/${formId}/blocks`)
       .then(res => res.ok ? res.json() : { blocks: [] })
       .then(data => setBlocks(data.blocks || []))
       .catch(() => {});
-  });
+  }, [formId]);
 
   const addBlock = async () => {
     if (!blockDate) return;
@@ -477,7 +477,7 @@ export default function BookingsView({ submissions, bookingFieldIds, fields, for
         <div className="flex items-center justify-between">
           <h3 className="font-medium text-gray-900 flex items-center gap-2">
             <Prohibit size={18} />
-            Blocked Times
+            Date Overrides
           </h3>
           <button
             type="button"
@@ -485,7 +485,7 @@ export default function BookingsView({ submissions, bookingFieldIds, fields, for
             className="btn btn-secondary text-sm"
           >
             <Plus size={14} />
-            Block Time
+            Block Date
           </button>
         </div>
 
@@ -591,7 +591,7 @@ export default function BookingsView({ submissions, bookingFieldIds, fields, for
             ))}
           </div>
         ) : (
-          <p className="text-sm text-gray-400">No blocked times. Clients can book any available slot.</p>
+          <p className="text-sm text-gray-400">No date overrides. Your weekly schedule applies to all dates.</p>
         )}
       </div>
     </div>
