@@ -748,7 +748,7 @@ export default function SettingsPage() {
               animate={{ opacity: 1, y: 0 }}
               className="space-y-6"
             >
-              <div className="card p-6">
+              <div className="card p-4 sm:p-6">
                 <h2 className="font-semibold text-gray-900 mb-6">Profile Information</h2>
 
                 {/* Avatar */}
@@ -838,7 +838,7 @@ export default function SettingsPage() {
               className="space-y-6"
             >
               {/* Workspace Name */}
-              <div className="card p-6">
+              <div className="card p-4 sm:p-6">
                 <h2 className="font-semibold text-gray-900 mb-6">Workspace Name</h2>
 
                 {workspaceMessage && (
@@ -887,7 +887,7 @@ export default function SettingsPage() {
               </div>
 
               {/* Workspace Logo */}
-              <div className="card p-6">
+              <div className="card p-4 sm:p-6">
                 <h2 className="font-semibold text-gray-900 mb-2">Workspace Logo</h2>
                 <p className="text-sm text-gray-500 mb-4">Used in broadcast emails and branding. Recommended size: 200x50px.</p>
                 {(() => {
@@ -955,7 +955,7 @@ export default function SettingsPage() {
               </div>
 
               {/* Workspace Settings */}
-              <div className="card p-6">
+              <div className="card p-4 sm:p-6">
                 <h2 className="font-semibold text-gray-900 mb-6">Workspace Settings</h2>
 
                 <div className="form-field">
@@ -998,7 +998,7 @@ export default function SettingsPage() {
               animate={{ opacity: 1, y: 0 }}
               className="space-y-6"
             >
-              <div className="card p-6">
+              <div className="card p-4 sm:p-6">
                 <h2 className="font-semibold text-gray-900 mb-6">Email Notifications</h2>
                 {isLoadingNotifications ? (
                   <div className="flex items-center justify-center py-8">
@@ -1046,7 +1046,7 @@ export default function SettingsPage() {
               animate={{ opacity: 1, y: 0 }}
               className="space-y-6"
             >
-              <div className="card p-6">
+              <div className="card p-4 sm:p-6">
                 <div className="flex items-center justify-between mb-6">
                   <h2 className="font-semibold text-gray-900">API Keys</h2>
                   <button
@@ -1105,7 +1105,7 @@ export default function SettingsPage() {
                 )}
               </div>
 
-              <div className="card p-6">
+              <div className="card p-4 sm:p-6">
                 <h2 className="font-semibold text-gray-900 mb-4">API Documentation</h2>
                 <p className="text-gray-500 mb-4">
                   Learn how to integrate Forma into your applications with our comprehensive API documentation.
@@ -1365,7 +1365,7 @@ export default function SettingsPage() {
                     </div>
                   </div>
 
-                  <div className="card p-6">
+                  <div className="card p-4 sm:p-6">
                     <h2 className="font-semibold text-gray-900 mb-6">Your subscription</h2>
                     <div
                       className={cn(
@@ -1476,7 +1476,7 @@ export default function SettingsPage() {
                     </div>
                   </div>
 
-                  <div className="card p-6">
+                  <div className="card p-4 sm:p-6">
                     <h2 className="font-semibold text-gray-900 mb-4">Usage This Month</h2>
                     <div className="space-y-4">
                       <div>
@@ -1561,7 +1561,7 @@ export default function SettingsPage() {
               animate={{ opacity: 1, y: 0 }}
               className="space-y-6"
             >
-              <div className="card p-6">
+              <div className="card p-4 sm:p-6">
                 <h2 className="font-semibold text-gray-900 mb-6">Change Password</h2>
 
                 {passwordMessage && (

@@ -357,7 +357,7 @@ export default function BroadcastsPage() {
 
       {/* Broadcasts list */}
       {broadcasts.length === 0 ? (
-        <div className="card p-12 text-center">
+        <div className="card p-8 sm:p-12 text-center">
           <EnvelopeSimple size={48} className="mx-auto mb-4 text-gray-300" />
           <h3 className="text-lg font-medium text-gray-900 mb-2">No broadcasts yet</h3>
           <p className="text-gray-500 text-sm mb-6 max-w-sm mx-auto">

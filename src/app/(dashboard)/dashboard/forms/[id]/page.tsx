@@ -631,7 +631,7 @@ export default function FormDetailPage() {
 
       {/* Quick Share Section - Visible for active and paused forms */}
       {(form.status === 'active' || form.status === 'paused') && (
-        <div className="card p-6 border-safety-orange/30 bg-safety-orange/5">
+        <div className="card p-4 sm:p-6 border-safety-orange/30 bg-safety-orange/5">
           <div className="flex items-center gap-2 mb-4">
             <LinkIcon size={20} className="text-safety-orange" />
             <h3 className="font-medium text-gray-800">
@@ -803,7 +803,7 @@ export default function FormDetailPage() {
       {activeTab === 'submissions' && (
         <div className="space-y-4">
           {submissions.length === 0 ? (
-            <div className="card p-12 text-center">
+            <div className="card p-8 sm:p-12 text-center">
               <EnvelopeSimple size={48} className="mx-auto text-gray-400 mb-4" />
               <h3 className="text-lg font-medium text-gray-800 mb-2">
                 No submissions yet

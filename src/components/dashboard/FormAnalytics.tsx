@@ -210,7 +210,7 @@ export default function FormAnalytics({ formId }: { formId: string }) {
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
-        className="card p-6"
+        className="card p-4 sm:p-6"
       >
         <h3 className="font-medium text-gray-800 mb-4">Submissions Over Time (Last 30 Days)</h3>
         <div className="h-64">
@@ -265,7 +265,7 @@ export default function FormAnalytics({ formId }: { formId: string }) {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.25 }}
-          className="card p-6"
+          className="card p-4 sm:p-6"
         >
           <div className="flex items-center gap-2 mb-4">
             <Clock size={20} className="text-gray-500" />
@@ -300,7 +300,7 @@ export default function FormAnalytics({ formId }: { formId: string }) {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
-          className="card p-6"
+          className="card p-4 sm:p-6"
         >
           <div className="flex items-center gap-2 mb-4">
             <CalendarBlank size={20} className="text-gray-500" />
@@ -335,7 +335,7 @@ export default function FormAnalytics({ formId }: { formId: string }) {
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.35 }}
-        className="card p-6"
+        className="card p-4 sm:p-6"
       >
         <div className="flex items-center gap-2 mb-4">
           <Globe size={20} className="text-gray-500" />

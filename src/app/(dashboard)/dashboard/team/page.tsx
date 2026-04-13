@@ -575,7 +575,7 @@ export default function TeamPage() {
       )}
 
       {/* Roles Legend */}
-      <div className="card p-6">
+      <div className="card p-4 sm:p-6">
         <h2 className="font-medium text-gray-900 mb-4">Role Permissions</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {[

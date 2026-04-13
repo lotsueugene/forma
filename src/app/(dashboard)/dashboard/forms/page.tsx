@@ -550,7 +550,7 @@ export default function FormsPage() {
 
       {/* Empty State */}
       {filteredForms.length === 0 && !isLoading && (
-        <div className="card p-12 text-center">
+        <div className="card p-8 sm:p-12 text-center">
           <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 flex items-center justify-center">
             <Files size={32} className="text-gray-600" />
           </div>

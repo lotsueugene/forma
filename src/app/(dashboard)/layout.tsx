@@ -469,7 +469,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
         </header>
 
         {/* Page Content */}
-        <main className="flex-1 p-4 lg:p-8">
+        <main className="flex-1 px-3 py-4 sm:p-4 lg:p-8">
           <AnnouncementBanner />
           <UpgradeBanner />
           {children}
