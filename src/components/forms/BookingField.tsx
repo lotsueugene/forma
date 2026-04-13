@@ -20,6 +20,8 @@ interface BookingFieldProps {
   isLightBg?: boolean;
   bookingMode?: 'custom' | 'fixed';
   slotDuration?: number; // minutes
+  startHour?: number; // 0-23
+  endHour?: number;   // 1-24
 }
 
 // Business hours
@@ -67,6 +69,8 @@ export default function BookingField({
   isLightBg = true,
   bookingMode = 'custom',
   slotDuration = 30,
+  startHour = 9,
+  endHour = 17,
 }: BookingFieldProps) {
   const [selectedDate, setSelectedDate] = useState<string>('');
   const [viewMonth, setViewMonth] = useState(() => {
@@ -195,17 +199,29 @@ export default function BookingField({
     return opts;
   }, []);
 
-  // Generate fixed-duration slots (for fixed mode)
-  const fixedSlots = useMemo(() => {
+  // Generate fixed-duration slots grouped by time of day
+  const fixedSlotGroups = useMemo(() => {
     if (bookingMode !== 'fixed') return [];
-    const slots: BookingSlot[] = [];
-    const startMin = 8 * 60;  // 8 AM
-    const endMin = 20 * 60;   // 8 PM
+    const startMin = startHour * 60;
+    const endMin = endHour * 60;
+    const groups: { label: string; slots: BookingSlot[] }[] = [];
+    const morning: BookingSlot[] = [];
+    const afternoon: BookingSlot[] = [];
+    const evening: BookingSlot[] = [];
+
     for (let m = startMin; m + slotDuration <= endMin; m += slotDuration) {
-      slots.push({ start: minutesToTime(m), end: minutesToTime(m + slotDuration) });
+      const slot = { start: minutesToTime(m), end: minutesToTime(m + slotDuration) };
+      if (m < 12 * 60) morning.push(slot);
+      else if (m < 17 * 60) afternoon.push(slot);
+      else evening.push(slot);
     }
-    return slots;
-  }, [bookingMode, slotDuration]);
+
+    if (morning.length > 0) groups.push({ label: 'Morning', slots: morning });
+    if (afternoon.length > 0) groups.push({ label: 'Afternoon', slots: afternoon });
+    if (evening.length > 0) groups.push({ label: 'Evening', slots: evening });
+
+    return groups;
+  }, [bookingMode, slotDuration, startHour, endHour]);
 
   // Check if a fixed slot is already booked
   const isSlotBooked = (slot: BookingSlot): boolean => {
@@ -392,42 +408,45 @@ export default function BookingField({
           </div>
 
           {bookingMode === 'fixed' ? (
-            /* ── Fixed duration: clickable slot grid ── */
-            <div className="space-y-3">
-              <div className="flex items-center gap-2 text-sm font-medium" style={{ color: textColor }}>
-                <Clock size={16} />
-                Pick a time ({slotDuration} min slots)
-              </div>
-              <div className="grid grid-cols-3 gap-2">
-                {fixedSlots.map((slot) => {
-                  const booked = isSlotBooked(slot);
-                  const selected = isSlotSelected(slot);
-                  return (
-                    <button
-                      key={slot.start}
-                      type="button"
-                      disabled={booked}
-                      onClick={() => toggleFixedSlot(slot)}
-                      className={cn(
-                        'py-2.5 px-2 rounded-lg text-sm font-medium transition-all text-center',
-                        booked && 'opacity-30 cursor-not-allowed line-through',
-                        !booked && !selected && 'hover:opacity-80',
-                      )}
-                      style={{
-                        backgroundColor: selected
-                          ? accent
-                          : booked
-                            ? 'rgba(239,68,68,0.1)'
-                            : isLightBg ? 'rgba(0,0,0,0.04)' : 'rgba(255,255,255,0.06)',
-                        color: selected ? '#fff' : booked ? '#dc2626' : textColor,
-                        border: `1.5px solid ${selected ? accent : isLightBg ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.1)'}`,
-                      }}
-                    >
-                      {formatTime(slot.start)}
-                    </button>
-                  );
-                })}
-              </div>
+            /* ── Fixed duration: clickable slots grouped by time of day ── */
+            <div className="space-y-4">
+              {fixedSlotGroups.map((group) => (
+                <div key={group.label} className="space-y-2">
+                  <p className="text-xs font-medium uppercase tracking-wider" style={{ color: `${textColor}55` }}>
+                    {group.label}
+                  </p>
+                  <div className="grid grid-cols-3 gap-2">
+                    {group.slots.map((slot) => {
+                      const booked = isSlotBooked(slot);
+                      const selected = isSlotSelected(slot);
+                      return (
+                        <button
+                          key={slot.start}
+                          type="button"
+                          disabled={booked}
+                          onClick={() => toggleFixedSlot(slot)}
+                          className={cn(
+                            'py-2.5 px-2 rounded-lg text-sm font-medium transition-all text-center',
+                            booked && 'opacity-30 cursor-not-allowed line-through',
+                            !booked && !selected && 'hover:opacity-80',
+                          )}
+                          style={{
+                            backgroundColor: selected
+                              ? accent
+                              : booked
+                                ? 'rgba(239,68,68,0.1)'
+                                : isLightBg ? 'rgba(0,0,0,0.04)' : 'rgba(255,255,255,0.06)',
+                            color: selected ? '#fff' : booked ? '#dc2626' : textColor,
+                            border: `1.5px solid ${selected ? accent : isLightBg ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.1)'}`,
+                          }}
+                        >
+                          {formatTime(slot.start)}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
               {userSlots.length > 0 && (
                 <div className="space-y-2">
                   <p className="text-xs font-medium" style={{ color: `${textColor}66` }}>Selected:</p>
