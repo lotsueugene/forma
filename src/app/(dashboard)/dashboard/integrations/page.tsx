@@ -901,7 +901,7 @@ function IntegrationsPageContent() {
                     {customDomain ? 'Update' : 'Save'}
                   </button>
                 )}
-                {customDomain && customDomain.status !== 'verified' && (
+                {customDomain && (
                   <button type="button" className="btn btn-secondary" onClick={verifyDomain} disabled={verifyingDomain}>
                     {verifyingDomain ? <Spinner size={16} className="animate-spin" /> : <ArrowsClockwise size={16} />}
                     Verify DNS
