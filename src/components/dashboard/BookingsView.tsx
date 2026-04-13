@@ -37,10 +37,11 @@ interface BookingBlock {
 interface BookingsViewProps {
   submissions: Submission[];
   bookingFieldIds: string[];
-  fields: Array<{ id: string; type: string; label: string; weeklySchedule?: Record<number, Array<{ start: string; end: string }>>; availabilityEnabled?: boolean }>;
+  fields: Array<{ id: string; type: string; label: string; weeklySchedule?: Record<number, Array<{ start: string; end: string }>>; availabilityEnabled?: boolean; bookingMode?: string }>;
   formId: string;
   onUpdateSchedule?: (fieldId: string, schedule: Record<number, Array<{ start: string; end: string }>>) => void;
   onToggleAvailability?: (fieldId: string, enabled: boolean) => void;
+  onUpdateField?: (fieldId: string, updates: Record<string, unknown>) => void;
 }
 
 interface BookingEntry {
@@ -77,7 +78,7 @@ function extractEmail(data: Record<string, unknown>, fields: Array<{ id: string;
   return '';
 }
 
-export default function BookingsView({ submissions, bookingFieldIds, fields, formId, onUpdateSchedule, onToggleAvailability }: BookingsViewProps) {
+export default function BookingsView({ submissions, bookingFieldIds, fields, formId, onUpdateSchedule, onToggleAvailability, onUpdateField }: BookingsViewProps) {
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [expandedSubmissionId, setExpandedSubmissionId] = useState<string | null>(null);
   const [viewMonth, setViewMonth] = useState(() => {
@@ -525,31 +526,66 @@ export default function BookingsView({ submissions, bookingFieldIds, fields, for
         </p>
       )}
 
-      {/* Weekly Availability */}
-      <div className="card p-5 space-y-4">
-        <h3 className="font-medium text-gray-900 flex items-center gap-2">
-          <Clock size={18} />
-          Weekly Availability
-        </h3>
-
-        {/* Weekly schedule editor */}
+      {/* Booking Settings */}
+      <div className="card p-4 sm:p-5 space-y-4">
         {(() => {
           const bookingField = fields.find(f => bookingFieldIds.includes(f.id));
+          const isFixed = bookingField?.bookingMode === 'fixed';
+
           return (
-            <WeeklyScheduleEditor
-              value={bookingField?.weeklySchedule}
-              enabled={bookingField?.availabilityEnabled ?? false}
-              onToggle={(on) => {
-                if (bookingField && onToggleAvailability) {
-                  onToggleAvailability(bookingField.id, on);
-                }
-              }}
-              onChange={(schedule) => {
-                if (bookingField && onUpdateSchedule) {
-                  onUpdateSchedule(bookingField.id, schedule);
-                }
-              }}
-            />
+            <>
+              {/* Mode toggle */}
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-800">Booking Mode</p>
+                  <p className="text-xs text-gray-400">
+                    {isFixed ? 'Clients pick from set time slots' : 'Clients choose their own start and end time'}
+                  </p>
+                </div>
+                <div className="flex bg-gray-100 rounded-lg p-0.5">
+                  <button
+                    type="button"
+                    onClick={() => bookingField && onUpdateField?.(bookingField.id, { bookingMode: 'custom' })}
+                    className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                      !isFixed ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500'
+                    }`}
+                  >
+                    Custom
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => bookingField && onUpdateField?.(bookingField.id, { bookingMode: 'fixed' })}
+                    className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                      isFixed ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500'
+                    }`}
+                  >
+                    Fixed
+                  </button>
+                </div>
+              </div>
+
+              {/* Availability rules — only for fixed mode */}
+              {isFixed && (
+                <>
+                  <div className="border-t border-gray-100 pt-4">
+                    <WeeklyScheduleEditor
+                      value={bookingField?.weeklySchedule}
+                      enabled={bookingField?.availabilityEnabled ?? false}
+                      onToggle={(on) => {
+                        if (bookingField && onToggleAvailability) {
+                          onToggleAvailability(bookingField.id, on);
+                        }
+                      }}
+                      onChange={(schedule) => {
+                        if (bookingField && onUpdateSchedule) {
+                          onUpdateSchedule(bookingField.id, schedule);
+                        }
+                      }}
+                    />
+                  </div>
+                </>
+              )}
+            </>
           );
         })()}
 

@@ -1411,7 +1411,21 @@ export default function FormDetailPage() {
           formId={formId}
           submissions={submissions}
           bookingFieldIds={(form.fields || []).filter((f: { type: string }) => f.type === 'booking').map((f: { id: string }) => f.id)}
-          fields={(form.fields || []).map((f: { id: string; type: string; label: string; weeklySchedule?: Record<number, Array<{ start: string; end: string }>>; availabilityEnabled?: boolean }) => ({ id: f.id, type: f.type, label: f.label, weeklySchedule: f.weeklySchedule, availabilityEnabled: f.availabilityEnabled }))}
+          fields={(form.fields || []).map((f: { id: string; type: string; label: string; weeklySchedule?: Record<number, Array<{ start: string; end: string }>>; availabilityEnabled?: boolean; bookingMode?: string }) => ({ id: f.id, type: f.type, label: f.label, weeklySchedule: f.weeklySchedule, availabilityEnabled: f.availabilityEnabled, bookingMode: f.bookingMode }))}
+          onUpdateField={async (fieldId, updates) => {
+            const updatedFields = (form.fields || []).map((f: Record<string, unknown>) =>
+              f.id === fieldId ? { ...f, ...updates } : f
+            );
+            try {
+              await fetch(`/api/forms/${formId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ fields: updatedFields }),
+              });
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              setForm((prev: any) => prev ? { ...prev, fields: updatedFields } : prev);
+            } catch {}
+          }}
           onUpdateSchedule={async (fieldId, schedule) => {
             const updatedFields = (form.fields || []).map((f: Record<string, unknown>) =>
               f.id === fieldId ? { ...f, weeklySchedule: schedule } : f
