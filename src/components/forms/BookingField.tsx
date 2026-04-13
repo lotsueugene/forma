@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { CalendarBlank, Clock, CaretLeft, CaretRight, Check, Warning } from '@phosphor-icons/react';
 import { cn } from '@/lib/utils';
+import TimeInput from '@/components/ui/TimeInput';
 
 interface BookingSlot {
   start: string; // "09:00"
@@ -535,11 +536,10 @@ export default function BookingField({
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <input
-                    type="time"
+                  <TimeInput
                     value={startTime}
-                    onChange={(e) => { setStartTime(e.target.value); setError(''); }}
-                    step={slotDuration * 60}
+                    onChange={(val) => { setStartTime(val); setError(''); }}
+                    placeholder="9:00 AM"
                     className="flex-1 px-3 py-2.5 rounded-lg text-sm outline-none"
                     style={{
                       backgroundColor: isLightBg ? 'rgba(0,0,0,0.04)' : 'rgba(255,255,255,0.06)',
@@ -548,11 +548,10 @@ export default function BookingField({
                     }}
                   />
                   <span className="text-sm" style={{ color: `${textColor}44` }}>to</span>
-                  <input
-                    type="time"
+                  <TimeInput
                     value={endTime}
-                    onChange={(e) => { setEndTime(e.target.value); setError(''); }}
-                    step={slotDuration * 60}
+                    onChange={(val) => { setEndTime(val); setError(''); }}
+                    placeholder="5:00 PM"
                     className="flex-1 px-3 py-2.5 rounded-lg text-sm outline-none"
                     style={{
                       backgroundColor: isLightBg ? 'rgba(0,0,0,0.04)' : 'rgba(255,255,255,0.06)',

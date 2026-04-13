@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { Plus, X, Copy, Check } from '@phosphor-icons/react';
+import TimeInput from '@/components/ui/TimeInput';
 
 interface TimeBlock {
   start: string;
@@ -121,18 +122,18 @@ export default function WeeklyScheduleEditor({ value, onChange }: Props) {
                 <div className="space-y-2">
                   {blocks.map((block, i) => (
                     <div key={i} className="flex items-center gap-2">
-                      <input
-                        type="time"
+                      <TimeInput
                         value={block.start}
-                        onChange={(e) => updateBlock(day, i, 'start', e.target.value)}
+                        onChange={(val) => updateBlock(day, i, 'start', val)}
                         className="input py-1.5 px-2.5 text-sm flex-1 min-w-0"
+                        placeholder="9:00 AM"
                       />
                       <span className="text-gray-400 text-xs font-medium">to</span>
-                      <input
-                        type="time"
+                      <TimeInput
                         value={block.end}
-                        onChange={(e) => updateBlock(day, i, 'end', e.target.value)}
+                        onChange={(val) => updateBlock(day, i, 'end', val)}
                         className="input py-1.5 px-2.5 text-sm flex-1 min-w-0"
+                        placeholder="5:00 PM"
                       />
                       <button
                         type="button"
