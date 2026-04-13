@@ -842,6 +842,11 @@ export default function NewFormPage() {
                           Fixed
                         </button>
                       </div>
+                      <p className="text-xs text-gray-400 mt-1.5">
+                        {selectedField.bookingMode === 'fixed'
+                          ? 'Clients pick from set time slots'
+                          : 'Clients choose their own start and end time'}
+                      </p>
                     </div>
                     {(selectedField.bookingMode === 'fixed') && (
                       <>
