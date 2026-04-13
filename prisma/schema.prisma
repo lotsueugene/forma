@@ -222,6 +222,7 @@ model Form {
 
   submissions Submission[]
   integrations Integration[]
+  bookingBlocks BookingBlock[]
   respondentBroadcasts RespondentBroadcast[]
   defaultForDomains CustomDomain[] @relation("DefaultForm")
 
@@ -239,6 +240,22 @@ model Submission {
   data      String   // JSON string of submission data
   metadata  String?  // JSON string of metadata (IP, user agent, etc.)
   createdAt DateTime @default(now())
+}
+
+// Blocked times set by form owner (unavailable slots)
+model BookingBlock {
+  id        String   @id @default(cuid())
+  formId    String
+  form      Form     @relation(fields: [formId], references: [id], onDelete: Cascade)
+  fieldId   String   // Which booking field this applies to
+  date      String   // "2026-04-15" for specific date, or empty for recurring
+  startTime String?  // "12:00" — null means entire day blocked
+  endTime   String?  // "13:00"
+  reason    String?  // "Lunch break", "Day off"
+  createdAt DateTime @default(now())
+
+  @@index([formId, fieldId])
+  @@index([formId, date])
 }
 
 model Integration {

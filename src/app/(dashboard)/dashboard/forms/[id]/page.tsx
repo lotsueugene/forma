@@ -1408,6 +1408,7 @@ export default function FormDetailPage() {
 
       {activeTab === 'bookings' && (
         <BookingsView
+          formId={formId}
           submissions={submissions}
           bookingFieldIds={(form.fields || []).filter((f: { type: string }) => f.type === 'booking').map((f: { id: string }) => f.id)}
           fields={(form.fields || []).map((f: { id: string; type: string; label: string }) => ({ id: f.id, type: f.type, label: f.label }))}

@@ -22,6 +22,7 @@ interface BookingFieldProps {
   slotDuration?: number; // minutes
   startHour?: number; // 0-23
   endHour?: number;   // 1-24
+  availableDays?: number[]; // 0=Sun ... 6=Sat
 }
 
 // Business hours
@@ -71,6 +72,7 @@ export default function BookingField({
   slotDuration = 30,
   startHour = 9,
   endHour = 17,
+  availableDays = [1, 2, 3, 4, 5],
 }: BookingFieldProps) {
   const [selectedDate, setSelectedDate] = useState<string>('');
   const [viewMonth, setViewMonth] = useState(() => {
@@ -83,14 +85,18 @@ export default function BookingField({
   const [userSlots, setUserSlots] = useState<BookingSlot[]>([]);
   const [error, setError] = useState('');
   const [loadingBookings, setLoadingBookings] = useState(false);
+  const [blockedDates, setBlockedDates] = useState<string[]>([]);
 
-  // Fetch existing bookings for this form
+  // Fetch existing bookings and blocked times for this form
   useEffect(() => {
     if (!formId) return;
     setLoadingBookings(true);
     fetch(`/api/public/forms/${formId}/bookings?fieldId=${fieldId}`)
-      .then(res => res.ok ? res.json() : { bookings: {} })
-      .then(data => setExistingBookings(data.bookings || {}))
+      .then(res => res.ok ? res.json() : { bookings: {}, blockedDates: [] })
+      .then(data => {
+        setExistingBookings(data.bookings || {});
+        setBlockedDates(data.blockedDates || []);
+      })
       .catch(() => {})
       .finally(() => setLoadingBookings(false));
   }, [formId, fieldId]);
@@ -130,27 +136,31 @@ export default function BookingField({
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    const days: Array<{ date: Date; inMonth: boolean; isPast: boolean; hasBookings: boolean }> = [];
+    const days: Array<{ date: Date; inMonth: boolean; isPast: boolean; isUnavailable: boolean; hasBookings: boolean }> = [];
 
     // Padding days from previous month
     for (let i = 0; i < firstDay; i++) {
       const d = new Date(year, month, -firstDay + i + 1);
-      days.push({ date: d, inMonth: false, isPast: true, hasBookings: false });
+      days.push({ date: d, inMonth: false, isPast: true, isUnavailable: false, hasBookings: false });
     }
 
     for (let i = 1; i <= daysInMonth; i++) {
       const d = new Date(year, month, i);
       const dateStr = d.toISOString().split('T')[0];
+      const dayOfWeek = d.getDay();
+      const isDayOff = !availableDays.includes(dayOfWeek);
+      const isBlocked = blockedDates.includes(dateStr);
       days.push({
         date: d,
         inMonth: true,
         isPast: d < today,
+        isUnavailable: isDayOff || isBlocked,
         hasBookings: (existingBookings[dateStr] || []).length > 0,
       });
     }
 
     return days;
-  }, [viewMonth, existingBookings]);
+  }, [viewMonth, existingBookings, availableDays, blockedDates]);
 
   const addSlot = () => {
     setError('');
@@ -308,7 +318,7 @@ export default function BookingField({
               <button
                 key={i}
                 type="button"
-                disabled={day.isPast || !day.inMonth}
+                disabled={day.isPast || !day.inMonth || day.isUnavailable}
                 onClick={() => {
                   setSelectedDate(dateStr);
                   setUserSlots([]);
@@ -320,7 +330,7 @@ export default function BookingField({
                 className={cn(
                   'relative h-9 rounded-lg text-sm font-medium transition-all',
                   !day.inMonth && 'invisible',
-                  day.isPast && 'opacity-30 cursor-not-allowed',
+                  (day.isPast || day.isUnavailable) && 'opacity-30 cursor-not-allowed',
                   !day.isPast && !isSelected && 'hover:opacity-80',
                 )}
                 style={{

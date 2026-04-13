@@ -11,6 +11,9 @@ import {
   X,
   File as FileIcon,
   CaretDown,
+  Prohibit,
+  Trash,
+  Plus,
 } from '@phosphor-icons/react';
 import { cn } from '@/lib/utils';
 
@@ -21,10 +24,20 @@ interface Submission {
   metadata?: Record<string, unknown> | null;
 }
 
+interface BookingBlock {
+  id: string;
+  date: string;
+  startTime: string | null;
+  endTime: string | null;
+  reason: string | null;
+  fieldId: string;
+}
+
 interface BookingsViewProps {
   submissions: Submission[];
   bookingFieldIds: string[];
   fields: Array<{ id: string; type: string; label: string }>;
+  formId: string;
 }
 
 interface BookingEntry {
@@ -61,13 +74,72 @@ function extractEmail(data: Record<string, unknown>, fields: Array<{ id: string;
   return '';
 }
 
-export default function BookingsView({ submissions, bookingFieldIds, fields }: BookingsViewProps) {
+export default function BookingsView({ submissions, bookingFieldIds, fields, formId }: BookingsViewProps) {
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [expandedSubmissionId, setExpandedSubmissionId] = useState<string | null>(null);
   const [viewMonth, setViewMonth] = useState(() => {
     const now = new Date();
     return new Date(now.getFullYear(), now.getMonth(), 1);
   });
+
+  // Booking blocks (owner-set unavailability)
+  const [blocks, setBlocks] = useState<BookingBlock[]>([]);
+  const [showBlockForm, setShowBlockForm] = useState(false);
+  const [blockDate, setBlockDate] = useState('');
+  const [blockStartTime, setBlockStartTime] = useState('');
+  const [blockEndTime, setBlockEndTime] = useState('');
+  const [blockReason, setBlockReason] = useState('');
+  const [blockWholeDay, setBlockWholeDay] = useState(true);
+  const [savingBlock, setSavingBlock] = useState(false);
+
+  // Fetch blocks
+  useState(() => {
+    fetch(`/api/forms/${formId}/blocks`)
+      .then(res => res.ok ? res.json() : { blocks: [] })
+      .then(data => setBlocks(data.blocks || []))
+      .catch(() => {});
+  });
+
+  const addBlock = async () => {
+    if (!blockDate) return;
+    setSavingBlock(true);
+    try {
+      const res = await fetch(`/api/forms/${formId}/blocks`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          fieldId: bookingFieldIds[0],
+          date: blockDate,
+          startTime: blockWholeDay ? null : blockStartTime || null,
+          endTime: blockWholeDay ? null : blockEndTime || null,
+          reason: blockReason || null,
+        }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setBlocks(prev => [...prev, data.block]);
+        setBlockDate('');
+        setBlockStartTime('');
+        setBlockEndTime('');
+        setBlockReason('');
+        setShowBlockForm(false);
+      }
+    } catch {}
+    setSavingBlock(false);
+  };
+
+  const removeBlock = async (blockId: string) => {
+    try {
+      const res = await fetch(`/api/forms/${formId}/blocks`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ blockId }),
+      });
+      if (res.ok) {
+        setBlocks(prev => prev.filter(b => b.id !== blockId));
+      }
+    } catch {}
+  };
 
   // Extract all booking entries
   const bookingEntries = useMemo(() => {
@@ -399,6 +471,129 @@ export default function BookingsView({ submissions, bookingFieldIds, fields }: B
           Click a date with dots to see bookings
         </p>
       )}
+
+      {/* Blocked times management */}
+      <div className="card p-5 space-y-4">
+        <div className="flex items-center justify-between">
+          <h3 className="font-medium text-gray-900 flex items-center gap-2">
+            <Prohibit size={18} />
+            Blocked Times
+          </h3>
+          <button
+            type="button"
+            onClick={() => setShowBlockForm(!showBlockForm)}
+            className="btn btn-secondary text-sm"
+          >
+            <Plus size={14} />
+            Block Time
+          </button>
+        </div>
+
+        {showBlockForm && (
+          <div className="bg-gray-50 rounded-lg p-4 space-y-3 border border-gray-200">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="text-xs font-medium text-gray-600 mb-1 block">Date</label>
+                <input
+                  type="date"
+                  value={blockDate}
+                  onChange={(e) => setBlockDate(e.target.value)}
+                  className="input w-full"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-medium text-gray-600 mb-1 block">Reason (optional)</label>
+                <input
+                  type="text"
+                  value={blockReason}
+                  onChange={(e) => setBlockReason(e.target.value)}
+                  placeholder="e.g. Lunch, Day off"
+                  className="input w-full"
+                />
+              </div>
+            </div>
+            <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={blockWholeDay}
+                onChange={(e) => setBlockWholeDay(e.target.checked)}
+                className="w-4 h-4"
+              />
+              Block entire day
+            </label>
+            {!blockWholeDay && (
+              <div className="flex items-center gap-2">
+                <input
+                  type="time"
+                  value={blockStartTime}
+                  onChange={(e) => setBlockStartTime(e.target.value)}
+                  className="input flex-1"
+                />
+                <span className="text-sm text-gray-400">to</span>
+                <input
+                  type="time"
+                  value={blockEndTime}
+                  onChange={(e) => setBlockEndTime(e.target.value)}
+                  className="input flex-1"
+                />
+              </div>
+            )}
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={addBlock}
+                disabled={!blockDate || savingBlock}
+                className="btn btn-primary text-sm"
+              >
+                {savingBlock ? 'Saving...' : 'Add Block'}
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowBlockForm(false)}
+                className="btn btn-ghost text-sm"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
+
+        {blocks.length > 0 ? (
+          <div className="divide-y divide-gray-100">
+            {blocks.map((block) => (
+              <div key={block.id} className="flex items-center justify-between py-2.5">
+                <div className="flex items-center gap-3">
+                  <div className="w-2 h-2 rounded-full bg-red-400" />
+                  <div>
+                    <span className="text-sm text-gray-800 font-medium">
+                      {new Date(block.date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+                    </span>
+                    {block.startTime && block.endTime ? (
+                      <span className="text-sm text-gray-500 ml-2">
+                        {fmt(block.startTime)} - {fmt(block.endTime)}
+                      </span>
+                    ) : (
+                      <span className="text-xs text-red-500 ml-2">All day</span>
+                    )}
+                    {block.reason && (
+                      <span className="text-xs text-gray-400 ml-2">&middot; {block.reason}</span>
+                    )}
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => removeBlock(block.id)}
+                  className="p-1.5 rounded hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors"
+                >
+                  <Trash size={14} />
+                </button>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-sm text-gray-400">No blocked times. Clients can book any available slot.</p>
+        )}
+      </div>
     </div>
   );
 }

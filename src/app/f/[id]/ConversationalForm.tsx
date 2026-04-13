@@ -39,6 +39,7 @@ interface FormField {
   slotDuration?: number;
   startHour?: number;
   endHour?: number;
+  availableDays?: number[];
 }
 
 interface FormSettings {
@@ -798,6 +799,7 @@ function renderConversationalField(
           slotDuration={field.slotDuration}
           startHour={field.startHour}
           endHour={field.endHour}
+          availableDays={field.availableDays}
         />
       );
     default:

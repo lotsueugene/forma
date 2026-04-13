@@ -104,6 +104,7 @@ interface FormField {
   slotDuration?: number;
   startHour?: number;
   endHour?: number;
+  availableDays?: number[];
 }
 
 const fieldTypes: { type: FieldType; label: string; icon: typeof TextT }[] = [
@@ -883,6 +884,34 @@ export default function NewFormPage() {
                         </div>
                       </>
                     )}
+                    <div className="form-field">
+                      <label className="form-label">Available Days</label>
+                      <div className="flex flex-wrap gap-1.5">
+                        {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day, i) => {
+                          const days = selectedField.availableDays ?? [1, 2, 3, 4, 5];
+                          const isActive = days.includes(i);
+                          return (
+                            <button
+                              key={day}
+                              type="button"
+                              onClick={() => {
+                                const updated = isActive
+                                  ? days.filter((d: number) => d !== i)
+                                  : [...days, i].sort();
+                                updateField(selectedField.id, { availableDays: updated });
+                              }}
+                              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                                isActive
+                                  ? 'bg-safety-orange text-white'
+                                  : 'bg-gray-100 text-gray-400'
+                              }`}
+                            >
+                              {day}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
                   </div>
                 )}
 

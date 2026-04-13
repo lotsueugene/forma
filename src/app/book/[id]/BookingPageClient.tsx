@@ -18,6 +18,7 @@ interface FormField {
   slotDuration?: number;
   startHour?: number;
   endHour?: number;
+  availableDays?: number[];
 }
 
 interface FormSettings {
@@ -223,6 +224,7 @@ export default function BookingPageClient({ formId }: { formId: string }) {
             slotDuration={bookingField.slotDuration}
             startHour={bookingField.startHour}
             endHour={bookingField.endHour}
+            availableDays={bookingField.availableDays}
           />
         </div>
 

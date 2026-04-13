@@ -58,6 +58,7 @@ interface FormField {
   slotDuration?: number;
   startHour?: number;
   endHour?: number;
+  availableDays?: number[];
 }
 
 // Evaluate if a field's condition is met
@@ -986,6 +987,7 @@ function renderField(
           slotDuration={field.slotDuration}
           startHour={field.startHour}
           endHour={field.endHour}
+          availableDays={field.availableDays}
         />
       );
     default:

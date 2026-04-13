@@ -57,9 +57,35 @@ export async function GET(
       }
     }
 
-    return NextResponse.json({ bookings });
+    // Fetch owner-set blocked times
+    const blocks = await prisma.bookingBlock.findMany({
+      where: {
+        formId: id,
+        ...(fieldId ? { fieldId } : {}),
+      },
+      select: { date: true, startTime: true, endTime: true },
+    });
+
+    // Group blocks by date
+    const blockedDates: string[] = [];
+    const blockedSlots: Record<string, Array<{ start: string; end: string }>> = {};
+
+    for (const block of blocks) {
+      if (!block.startTime || !block.endTime) {
+        // Whole day blocked
+        blockedDates.push(block.date);
+      } else {
+        // Specific time range blocked — treat like a booking
+        if (!bookings[block.date]) bookings[block.date] = [];
+        bookings[block.date].push({ start: block.startTime, end: block.endTime });
+        if (!blockedSlots[block.date]) blockedSlots[block.date] = [];
+        blockedSlots[block.date].push({ start: block.startTime, end: block.endTime });
+      }
+    }
+
+    return NextResponse.json({ bookings, blockedDates, blockedSlots });
   } catch (error) {
     console.error('Error fetching bookings:', error);
-    return NextResponse.json({ bookings: {} });
+    return NextResponse.json({ bookings: {}, blockedDates: [], blockedSlots: {} });
   }
 }
