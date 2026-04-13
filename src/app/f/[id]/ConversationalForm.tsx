@@ -35,6 +35,8 @@ interface FormField {
   mediaUrl?: string;
   amount?: number;
   currency?: string;
+  bookingMode?: 'custom' | 'fixed';
+  slotDuration?: number;
 }
 
 interface FormSettings {
