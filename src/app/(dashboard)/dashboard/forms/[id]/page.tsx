@@ -1423,7 +1423,7 @@ export default function FormDetailPage() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ fields: updatedFields }),
               });
-              setForm((prev: typeof form) => prev ? { ...prev, fields: updatedFields } : prev);
+              setForm((prev) => prev ? { ...prev, fields: updatedFields } : prev);
             } catch {}
           }}
         />
