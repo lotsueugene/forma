@@ -206,15 +206,6 @@ export default function BookingField({
     setUserSlots(prev => prev.filter((_, i) => i !== index));
   };
 
-  // Generate time options (30-min intervals for custom mode dropdowns)
-  const timeOptions = useMemo(() => {
-    const opts: string[] = [];
-    for (let m = DAY_START * 60; m < DAY_END * 60; m += 30) {
-      opts.push(minutesToTime(m));
-    }
-    return opts;
-  }, []);
-
   // Generate fixed-duration slots from the weekly schedule for the selected day
   const fixedSlotGroups = useMemo(() => {
     if (bookingMode !== 'fixed' || !selectedDate) return [];
@@ -534,42 +525,41 @@ export default function BookingField({
                   border: `1px solid ${isLightBg ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.1)'}`,
                 }}
               >
-                <div className="flex items-center gap-2 text-sm font-medium" style={{ color: textColor }}>
-                  <Clock size={16} />
-                  Add a time slot
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-sm font-medium" style={{ color: textColor }}>
+                    <Clock size={16} />
+                    Add a time slot
+                  </div>
+                  <span className="text-[11px]" style={{ color: `${textColor}44` }}>
+                    {slotDuration} min intervals
+                  </span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <select
+                  <input
+                    type="time"
                     value={startTime}
                     onChange={(e) => { setStartTime(e.target.value); setError(''); }}
+                    step={slotDuration * 60}
                     className="flex-1 px-3 py-2.5 rounded-lg text-sm outline-none"
                     style={{
                       backgroundColor: isLightBg ? 'rgba(0,0,0,0.04)' : 'rgba(255,255,255,0.06)',
                       border: `1.5px solid ${isLightBg ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.12)'}`,
                       color: textColor,
                     }}
-                  >
-                    <option value="">Start</option>
-                    {timeOptions.map(t => (
-                      <option key={t} value={t}>{formatTime(t)}</option>
-                    ))}
-                  </select>
+                  />
                   <span className="text-sm" style={{ color: `${textColor}44` }}>to</span>
-                  <select
+                  <input
+                    type="time"
                     value={endTime}
                     onChange={(e) => { setEndTime(e.target.value); setError(''); }}
+                    step={slotDuration * 60}
                     className="flex-1 px-3 py-2.5 rounded-lg text-sm outline-none"
                     style={{
                       backgroundColor: isLightBg ? 'rgba(0,0,0,0.04)' : 'rgba(255,255,255,0.06)',
                       border: `1.5px solid ${isLightBg ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.12)'}`,
                       color: textColor,
                     }}
-                  >
-                    <option value="">End</option>
-                    {timeOptions.map(t => (
-                      <option key={t} value={t}>{formatTime(t)}</option>
-                    ))}
-                  </select>
+                  />
                   <button
                     type="button"
                     onClick={addSlot}
