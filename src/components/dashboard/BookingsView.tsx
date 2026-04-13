@@ -16,6 +16,7 @@ import {
   Plus,
 } from '@phosphor-icons/react';
 import { cn } from '@/lib/utils';
+import WeeklyScheduleEditor from './WeeklyScheduleEditor';
 
 interface Submission {
   id: string;
@@ -36,8 +37,9 @@ interface BookingBlock {
 interface BookingsViewProps {
   submissions: Submission[];
   bookingFieldIds: string[];
-  fields: Array<{ id: string; type: string; label: string }>;
+  fields: Array<{ id: string; type: string; label: string; weeklySchedule?: Record<number, Array<{ start: string; end: string }>> }>;
   formId: string;
+  onUpdateSchedule?: (fieldId: string, schedule: Record<number, Array<{ start: string; end: string }>>) => void;
 }
 
 interface BookingEntry {
@@ -74,7 +76,7 @@ function extractEmail(data: Record<string, unknown>, fields: Array<{ id: string;
   return '';
 }
 
-export default function BookingsView({ submissions, bookingFieldIds, fields, formId }: BookingsViewProps) {
+export default function BookingsView({ submissions, bookingFieldIds, fields, formId, onUpdateSchedule }: BookingsViewProps) {
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [expandedSubmissionId, setExpandedSubmissionId] = useState<string | null>(null);
   const [viewMonth, setViewMonth] = useState(() => {
@@ -522,119 +524,108 @@ export default function BookingsView({ submissions, bookingFieldIds, fields, for
         </p>
       )}
 
-      {/* Date overrides */}
+      {/* Weekly Availability */}
       <div className="card p-5 space-y-4">
-        <div className="flex items-center justify-between">
-          <h3 className="font-medium text-gray-900 flex items-center gap-2">
-            <Prohibit size={18} />
-            Date Overrides
-          </h3>
-          {!showBlockForm && (
-            <button
-              type="button"
-              onClick={() => setShowBlockForm(true)}
-              className="btn btn-secondary text-sm"
-            >
-              <Plus size={14} />
-              Block Dates
-            </button>
-          )}
-        </div>
+        <h3 className="font-medium text-gray-900 flex items-center gap-2">
+          <Clock size={18} />
+          Weekly Availability
+        </h3>
 
-        {showBlockForm && (
-          <div className="space-y-4">
-            {/* Forma-branded calendar for multi-select */}
-            <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
-              <div className="flex items-center justify-between mb-3">
-                <button
-                  type="button"
-                  onClick={() => setBlockViewMonth(new Date(blockViewMonth.getFullYear(), blockViewMonth.getMonth() - 1, 1))}
-                  className="p-1.5 rounded-lg hover:bg-gray-200 text-gray-500"
-                >
-                  <CaretLeft size={16} />
-                </button>
-                <span className="text-sm font-semibold text-gray-800">
-                  {blockViewMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => setBlockViewMonth(new Date(blockViewMonth.getFullYear(), blockViewMonth.getMonth() + 1, 1))}
-                  className="p-1.5 rounded-lg hover:bg-gray-200 text-gray-500"
-                >
-                  <CaretRight size={16} />
-                </button>
-              </div>
+        {/* Weekly schedule editor */}
+        {(() => {
+          const bookingField = fields.find(f => bookingFieldIds.includes(f.id));
+          const currentSchedule = bookingField?.weeklySchedule;
+          return (
+            <WeeklyScheduleEditor
+              value={currentSchedule}
+              onChange={(schedule) => {
+                if (bookingField && onUpdateSchedule) {
+                  onUpdateSchedule(bookingField.id, schedule);
+                }
+              }}
+            />
+          );
+        })()}
 
-              <div className="grid grid-cols-7 gap-1 mb-1">
-                {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map(d => (
-                  <div key={d} className="text-center text-[10px] font-medium text-gray-400 py-1">{d}</div>
-                ))}
-              </div>
-              <div className="grid grid-cols-7 gap-1">
-                {blockCalendarDays.map((day, i) => (
-                  <button
-                    key={i}
-                    type="button"
-                    disabled={day.isPast || !day.inMonth}
-                    onClick={() => toggleBlockDate(day.dateStr)}
-                    className={cn(
-                      'relative h-9 rounded-lg text-sm font-medium transition-all',
-                      !day.inMonth && 'invisible',
-                      day.isPast && 'opacity-20 cursor-not-allowed',
-                      day.isBlocked && !day.isSelected && 'bg-red-100 text-red-600',
-                      day.isSelected && 'bg-red-500 text-white',
-                      !day.isPast && !day.isBlocked && !day.isSelected && 'hover:bg-gray-200 text-gray-700',
-                    )}
-                  >
-                    {day.date.getDate()}
-                    {day.isBlocked && !day.isSelected && (
-                      <div className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-red-400" />
-                    )}
-                  </button>
-                ))}
-              </div>
+        {/* Time off / specific date blocks */}
+        <div className="border-t border-gray-200 pt-4 space-y-3">
+          <div className="flex items-center justify-between">
+            <h4 className="text-sm font-medium text-gray-700 flex items-center gap-2">
+              <Prohibit size={14} />
+              Time Off
+            </h4>
+            {!showBlockForm && (
+              <button
+                type="button"
+                onClick={() => setShowBlockForm(true)}
+                className="text-xs text-safety-orange hover:text-accent-200 font-medium flex items-center gap-1"
+              >
+                <Plus size={12} />
+                Add dates
+              </button>
+            )}
+          </div>
 
-              {selectedBlockDates.length > 0 && (
-                <p className="text-xs text-gray-500 mt-3 pt-3 border-t border-gray-200">
-                  <strong className="text-gray-700">{selectedBlockDates.length}</strong> date{selectedBlockDates.length !== 1 ? 's' : ''} selected
-                </p>
-              )}
-            </div>
-
-            {/* Options */}
+          {showBlockForm && (
             <div className="space-y-3">
-              <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={blockWholeDay}
-                  onChange={(e) => setBlockWholeDay(e.target.checked)}
-                  className="w-4 h-4 accent-safety-orange"
-                />
-                Block entire day
-              </label>
-              {!blockWholeDay && (
-                <div className="flex items-center gap-2">
-                  <div className="flex-1">
-                    <label className="text-xs text-gray-500 mb-1 block">From</label>
-                    <input
-                      type="time"
-                      value={blockStartTime}
-                      onChange={(e) => setBlockStartTime(e.target.value)}
-                      className="input w-full"
-                    />
-                  </div>
-                  <span className="text-sm text-gray-300 mt-5">–</span>
-                  <div className="flex-1">
-                    <label className="text-xs text-gray-500 mb-1 block">To</label>
-                    <input
-                      type="time"
-                      value={blockEndTime}
-                      onChange={(e) => setBlockEndTime(e.target.value)}
-                      className="input w-full"
-                    />
-                  </div>
+              {/* Forma-branded calendar for multi-select */}
+              <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
+                <div className="flex items-center justify-between mb-3">
+                  <button
+                    type="button"
+                    onClick={() => setBlockViewMonth(new Date(blockViewMonth.getFullYear(), blockViewMonth.getMonth() - 1, 1))}
+                    className="p-1.5 rounded-lg hover:bg-gray-200 text-gray-500"
+                  >
+                    <CaretLeft size={16} />
+                  </button>
+                  <span className="text-sm font-semibold text-gray-800">
+                    {blockViewMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setBlockViewMonth(new Date(blockViewMonth.getFullYear(), blockViewMonth.getMonth() + 1, 1))}
+                    className="p-1.5 rounded-lg hover:bg-gray-200 text-gray-500"
+                  >
+                    <CaretRight size={16} />
+                  </button>
                 </div>
-              )}
+
+                <div className="grid grid-cols-7 gap-1 mb-1">
+                  {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map(d => (
+                    <div key={d} className="text-center text-[10px] font-medium text-gray-400 py-1">{d}</div>
+                  ))}
+                </div>
+                <div className="grid grid-cols-7 gap-1">
+                  {blockCalendarDays.map((day, i) => (
+                    <button
+                      key={i}
+                      type="button"
+                      disabled={day.isPast || !day.inMonth}
+                      onClick={() => toggleBlockDate(day.dateStr)}
+                      className={cn(
+                        'relative h-9 rounded-lg text-sm font-medium transition-all',
+                        !day.inMonth && 'invisible',
+                        day.isPast && 'opacity-20 cursor-not-allowed',
+                        day.isBlocked && !day.isSelected && 'bg-red-100 text-red-600',
+                        day.isSelected && 'bg-red-500 text-white',
+                        !day.isPast && !day.isBlocked && !day.isSelected && 'hover:bg-gray-200 text-gray-700',
+                      )}
+                    >
+                      {day.date.getDate()}
+                      {day.isBlocked && !day.isSelected && (
+                        <div className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-red-400" />
+                      )}
+                    </button>
+                  ))}
+                </div>
+
+                {selectedBlockDates.length > 0 && (
+                  <p className="text-xs text-gray-500 mt-3 pt-3 border-t border-gray-200">
+                    <strong className="text-gray-700">{selectedBlockDates.length}</strong> date{selectedBlockDates.length !== 1 ? 's' : ''} selected
+                  </p>
+                )}
+              </div>
+
               <div>
                 <label className="text-xs text-gray-500 mb-1 block">Reason (optional)</label>
                 <input
@@ -645,66 +636,59 @@ export default function BookingsView({ submissions, bookingFieldIds, fields, for
                   className="input w-full"
                 />
               </div>
-            </div>
 
-            <div className="flex gap-2 pt-1">
-              <button
-                type="button"
-                onClick={saveBlocks}
-                disabled={selectedBlockDates.length === 0 || savingBlock}
-                className="btn btn-primary text-sm"
-              >
-                {savingBlock ? 'Saving...' : `Block ${selectedBlockDates.length || ''} Date${selectedBlockDates.length !== 1 ? 's' : ''}`}
-              </button>
-              <button
-                type="button"
-                onClick={() => { setShowBlockForm(false); setSelectedBlockDates([]); }}
-                className="btn btn-ghost text-sm"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Existing blocks list */}
-        {blocks.length > 0 && (
-          <div className="divide-y divide-gray-100">
-            {blocks.map((block) => (
-              <div key={block.id} className="flex items-center justify-between py-2.5">
-                <div className="flex items-center gap-3">
-                  <div className="w-2 h-2 rounded-full bg-red-400 shrink-0" />
-                  <div className="text-sm">
-                    <span className="text-gray-800 font-medium">
-                      {new Date(block.date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
-                    </span>
-                    {block.startTime && block.endTime ? (
-                      <span className="text-gray-500 ml-2">
-                        {fmt(block.startTime)} – {fmt(block.endTime)}
-                      </span>
-                    ) : (
-                      <span className="text-red-500 ml-2 text-xs font-medium">All day</span>
-                    )}
-                    {block.reason && (
-                      <span className="text-gray-400 ml-2 text-xs">&middot; {block.reason}</span>
-                    )}
-                  </div>
-                </div>
+              <div className="flex gap-2">
                 <button
                   type="button"
-                  onClick={() => removeBlock(block.id)}
-                  className="p-1.5 rounded hover:bg-red-50 text-red-400 hover:text-red-600 transition-colors shrink-0"
+                  onClick={saveBlocks}
+                  disabled={selectedBlockDates.length === 0 || savingBlock}
+                  className="btn btn-primary text-sm"
                 >
-                  <Trash size={14} />
+                  {savingBlock ? 'Saving...' : `Block ${selectedBlockDates.length || ''} Date${selectedBlockDates.length !== 1 ? 's' : ''}`}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setShowBlockForm(false); setSelectedBlockDates([]); }}
+                  className="btn btn-ghost text-sm"
+                >
+                  Cancel
                 </button>
               </div>
-            ))}
-          </div>
-        )}
+            </div>
+          )}
 
-        {blocks.length === 0 && !showBlockForm && (
-          <p className="text-sm text-gray-400">No date overrides. Your weekly schedule applies to all dates.</p>
-        )}
+          {/* Existing blocks list */}
+          {blocks.length > 0 && (
+            <div className="divide-y divide-gray-100">
+              {blocks.map((block) => (
+                <div key={block.id} className="flex items-center justify-between py-2.5">
+                  <div className="flex items-center gap-3">
+                    <div className="w-2 h-2 rounded-full bg-red-400 shrink-0" />
+                    <div className="text-sm">
+                      <span className="text-gray-800 font-medium">
+                        {new Date(block.date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+                      </span>
+                      {block.reason && (
+                        <span className="text-gray-400 ml-2 text-xs">&middot; {block.reason}</span>
+                      )}
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => removeBlock(block.id)}
+                    className="p-1.5 rounded hover:bg-red-50 text-red-400 hover:text-red-600 transition-colors shrink-0"
+                  >
+                    <Trash size={14} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {blocks.length === 0 && !showBlockForm && (
+            <p className="text-xs text-gray-400">No time off scheduled.</p>
+          )}
+        </div>
       </div>
     </div>
   );

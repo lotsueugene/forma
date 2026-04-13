@@ -1411,7 +1411,21 @@ export default function FormDetailPage() {
           formId={formId}
           submissions={submissions}
           bookingFieldIds={(form.fields || []).filter((f: { type: string }) => f.type === 'booking').map((f: { id: string }) => f.id)}
-          fields={(form.fields || []).map((f: { id: string; type: string; label: string }) => ({ id: f.id, type: f.type, label: f.label }))}
+          fields={(form.fields || []).map((f: { id: string; type: string; label: string; weeklySchedule?: Record<number, Array<{ start: string; end: string }>> }) => ({ id: f.id, type: f.type, label: f.label, weeklySchedule: f.weeklySchedule }))}
+          onUpdateSchedule={async (fieldId, schedule) => {
+            // Update the form's booking field with new schedule
+            const updatedFields = (form.fields || []).map((f: { id: string; weeklySchedule?: unknown }) =>
+              f.id === fieldId ? { ...f, weeklySchedule: schedule } : f
+            );
+            try {
+              await fetch(`/api/forms/${formId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ fields: updatedFields }),
+              });
+              setForm((prev: typeof form) => prev ? { ...prev, fields: updatedFields } : prev);
+            } catch {}
+          }}
         />
       )}
 
