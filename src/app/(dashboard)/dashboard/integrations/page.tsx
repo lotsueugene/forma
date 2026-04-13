@@ -826,7 +826,66 @@ function IntegrationsPageContent() {
             <div className="text-sm text-gray-600">Loading…</div>
           ) : !domainFeatureEnabled ? (
             <p className="text-sm text-gray-600">Upgrade to Pro to connect your own domain for hosted form URLs.</p>
+          ) : customDomain?.status === 'verified' ? (
+            /* ── Verified domain view ── */
+            <div className="space-y-4">
+              <div className="flex items-center justify-between bg-emerald-50 border border-emerald-200 rounded-lg px-4 py-3">
+                <div className="flex items-center gap-2">
+                  <CheckCircle size={16} className="text-emerald-600" />
+                  <code className="text-sm font-medium text-emerald-800">{customDomain.domain}</code>
+                </div>
+                <button type="button" className="text-xs text-red-500 hover:text-red-700 font-medium" onClick={removeDomain}>
+                  Remove
+                </button>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                  Default form (root URL)
+                </label>
+                <div className="flex items-center gap-2">
+                  <select
+                    className="input flex-1"
+                    value={customDomain.defaultFormId || ''}
+                    onChange={(e) => saveDefaultForm(e.target.value || null)}
+                    disabled={savingDefaultForm}
+                  >
+                    <option value="">First active form</option>
+                    {availableForms.map((form) => (
+                      <option key={form.id} value={form.id}>
+                        {form.name} {form.slug ? `(/${form.slug})` : ''}
+                      </option>
+                    ))}
+                  </select>
+                  {savingDefaultForm && <Spinner size={16} className="animate-spin text-gray-400" />}
+                </div>
+              </div>
+
+              {/* Form URLs on this domain */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Form URLs</label>
+                <div className="bg-gray-50 rounded-lg border border-gray-200 divide-y divide-gray-200">
+                  {availableForms.map((form) => (
+                    <div key={form.id} className="flex items-center justify-between px-3 py-2 text-sm">
+                      <span className="text-gray-700 truncate">{form.name}</span>
+                      {form.slug ? (
+                        <code className="text-xs text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded shrink-0 ml-2">/{form.slug}</code>
+                      ) : (
+                        <span className="text-xs text-gray-400 italic shrink-0 ml-2">No slug set</span>
+                      )}
+                    </div>
+                  ))}
+                  {availableForms.length === 0 && (
+                    <div className="px-3 py-2 text-sm text-gray-400">No active forms</div>
+                  )}
+                </div>
+                <p className="text-xs text-gray-500 mt-1.5">
+                  Set a slug in each form&apos;s settings to make it available at {customDomain.domain}/<strong>slug</strong>
+                </p>
+              </div>
+            </div>
           ) : (
+            /* ── No domain or pending verification ── */
             <>
               <input
                 type="text"
@@ -836,105 +895,58 @@ function IntegrationsPageContent() {
                 onChange={(e) => setDomainInput(e.target.value)}
               />
               <div className="flex gap-2 flex-wrap">
-                {/* Show Add/Update button only when input differs from saved domain */}
                 {(!customDomain || domainInput.trim() !== customDomain.domain) && (
                   <button type="button" className="btn btn-primary" onClick={saveDomain} disabled={savingDomain || !domainInput.trim()}>
                     {savingDomain ? <Spinner size={16} className="animate-spin" /> : <CheckCircle size={16} />}
                     {customDomain ? 'Update' : 'Save'}
                   </button>
                 )}
+                {customDomain && customDomain.status !== 'verified' && (
+                  <button type="button" className="btn btn-secondary" onClick={verifyDomain} disabled={verifyingDomain}>
+                    {verifyingDomain ? <Spinner size={16} className="animate-spin" /> : <ArrowsClockwise size={16} />}
+                    Verify DNS
+                  </button>
+                )}
                 {customDomain && (
-                  <>
-                    {customDomain.status !== 'verified' && (
-                      <button type="button" className="btn btn-secondary" onClick={verifyDomain} disabled={verifyingDomain}>
-                        {verifyingDomain ? <Spinner size={16} className="animate-spin" /> : <ArrowsClockwise size={16} />}
-                        Verify DNS
-                      </button>
-                    )}
-                    <button type="button" className="btn btn-ghost text-red-600" onClick={removeDomain}>
-                      <Trash size={16} />
-                      Remove
-                    </button>
-                  </>
+                  <button type="button" className="btn btn-ghost text-red-600" onClick={removeDomain}>
+                    <Trash size={16} />
+                    Remove
+                  </button>
                 )}
               </div>
 
-              {customDomain && (
-                <div className="text-xs text-gray-600 bg-gray-50 rounded p-3 space-y-3">
-                  <div className="flex items-center gap-2">
-                    {customDomain.status === 'verified' ? (
-                      <>
-                        <CheckCircle size={14} className="text-emerald-600" />
-                        <span className="text-emerald-600 font-medium">Domain verified and active</span>
-                      </>
-                    ) : (
-                      <>
-                        <XCircle size={14} className="text-amber-500" />
-                        <span className="text-amber-600 font-medium">Pending verification</span>
-                      </>
-                    )}
-                  </div>
-                  {customDomain.status !== 'verified' && (() => {
-                    // Determine if this is a subdomain (e.g., forms.example.com vs example.com)
-                    const parts = customDomain.domain.split('.');
-                    const isSubdomain = parts.length > 2;
-                    const subdomain = isSubdomain ? parts[0] : '@';
-                    const txtHost = isSubdomain ? `_forma-verification.${subdomain}` : '_forma-verification';
+              {customDomain && customDomain.status !== 'verified' && (() => {
+                const parts = customDomain.domain.split('.');
+                const isSubdomain = parts.length > 2;
+                const subdomain = isSubdomain ? parts[0] : '@';
+                const txtHost = isSubdomain ? `_forma-verification.${subdomain}` : '_forma-verification';
 
-                    return (
-                      <div className="space-y-3">
-                        <div className="space-y-1">
-                          <div className="font-medium text-gray-700">Step 1: Add A record (point domain to our server)</div>
-                          <div className="grid grid-cols-[80px_1fr] gap-1 text-gray-600">
-                            <span>Type:</span><code className="bg-gray-100 px-1 rounded">A</code>
-                            <span>Host:</span><code className="bg-gray-100 px-1 rounded">{subdomain}</code>
-                            <span>Value:</span><code className="bg-gray-100 px-1 rounded">SERVER_IP_REDACTED</code>
-                          </div>
-                        </div>
-                        <div className="space-y-1">
-                          <div className="font-medium text-gray-700">Step 2: Add TXT record (verify ownership)</div>
-                          <div className="grid grid-cols-[80px_1fr] gap-1 text-gray-600">
-                            <span>Type:</span><code className="bg-gray-100 px-1 rounded">TXT</code>
-                            <span>Host:</span><code className="bg-gray-100 px-1 rounded">{txtHost}</code>
-                            <span>Value:</span><code className="bg-gray-100 px-1 rounded break-all">{customDomain.verificationToken}</code>
-                          </div>
-                        </div>
-                        <p className="text-gray-500">DNS changes can take up to 24-48 hours to propagate. Click &quot;Verify DNS&quot; after adding both records.</p>
-                      </div>
-                    );
-                  })()}
-                  {customDomain.status === 'verified' && (
-                    <div className="space-y-3">
-                      <p className="text-gray-600">Your forms are now available at <code className="bg-gray-100 px-1 rounded">https://{customDomain.domain}</code></p>
-
-                      <div className="border-t border-gray-200 pt-3">
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Default form (shown at root URL)
-                        </label>
-                        <div className="flex items-center gap-2">
-                          <select
-                            className="input flex-1"
-                            value={customDomain.defaultFormId || ''}
-                            onChange={(e) => saveDefaultForm(e.target.value || null)}
-                            disabled={savingDefaultForm}
-                          >
-                            <option value="">First active form</option>
-                            {availableForms.map((form) => (
-                              <option key={form.id} value={form.id}>
-                                {form.name} {form.slug ? `(/${form.slug})` : ''}
-                              </option>
-                            ))}
-                          </select>
-                          {savingDefaultForm && <Spinner size={16} className="animate-spin text-gray-400" />}
-                        </div>
-                        <p className="text-xs text-gray-500 mt-1">
-                          This form will show when users visit {customDomain.domain} directly
-                        </p>
+                return (
+                  <div className="text-xs text-gray-600 bg-amber-50 border border-amber-200 rounded-lg p-3 space-y-3">
+                    <div className="flex items-center gap-2">
+                      <XCircle size={14} className="text-amber-500" />
+                      <span className="text-amber-600 font-medium">Pending verification</span>
+                    </div>
+                    <div className="space-y-1">
+                      <div className="font-medium text-gray-700">Step 1: Add A record</div>
+                      <div className="grid grid-cols-[80px_1fr] gap-1 text-gray-600">
+                        <span>Type:</span><code className="bg-white px-1 rounded">A</code>
+                        <span>Host:</span><code className="bg-white px-1 rounded">{subdomain}</code>
+                        <span>Value:</span><code className="bg-white px-1 rounded">SERVER_IP_REDACTED</code>
                       </div>
                     </div>
-                  )}
-                </div>
-              )}
+                    <div className="space-y-1">
+                      <div className="font-medium text-gray-700">Step 2: Add TXT record</div>
+                      <div className="grid grid-cols-[80px_1fr] gap-1 text-gray-600">
+                        <span>Type:</span><code className="bg-white px-1 rounded">TXT</code>
+                        <span>Host:</span><code className="bg-white px-1 rounded">{txtHost}</code>
+                        <span>Value:</span><code className="bg-white px-1 rounded break-all">{customDomain.verificationToken}</code>
+                      </div>
+                    </div>
+                    <p className="text-gray-500">DNS changes can take up to 48 hours. Click &quot;Verify DNS&quot; after adding both records.</p>
+                  </div>
+                );
+              })()}
             </>
           )}
         </div>
