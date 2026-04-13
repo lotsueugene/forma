@@ -915,7 +915,7 @@ function IntegrationsPageContent() {
                 )}
               </div>
 
-              {customDomain && customDomain.status !== 'verified' && (() => {
+              {customDomain && (() => {
                 const parts = customDomain.domain.split('.');
                 const isSubdomain = parts.length > 2;
                 const subdomain = isSubdomain ? parts[0] : '@';
