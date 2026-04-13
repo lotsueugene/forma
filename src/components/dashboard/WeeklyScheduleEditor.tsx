@@ -175,7 +175,7 @@ export default function WeeklyScheduleEditor({ value, enabled = false, onToggle,
           <div>
             <p className="text-sm font-medium text-gray-800">Availability Rules</p>
             <p className="text-xs text-gray-400">
-              {enabled ? 'Only show times you set as available' : 'Clients can book any time'}
+              {enabled ? 'Restricts available time slots in fixed duration mode' : 'No restrictions — applies to fixed duration mode only'}
             </p>
           </div>
           <button
