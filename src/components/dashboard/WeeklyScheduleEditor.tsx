@@ -27,24 +27,6 @@ const EMPTY_SCHEDULE: WeeklySchedule = {
   0: [], 1: [], 2: [], 3: [], 4: [], 5: [], 6: [],
 };
 
-function formatTime(time: string): string {
-  const [h, m] = time.split(':').map(Number);
-  const ampm = h >= 12 ? 'PM' : 'AM';
-  const h12 = h === 0 ? 12 : h > 12 ? h - 12 : h;
-  return `${h12}:${m.toString().padStart(2, '0')} ${ampm}`;
-}
-
-function getTimeOptions(): string[] {
-  const opts: string[] = [];
-  for (let m = 0; m < 24 * 60; m += 30) {
-    const h = Math.floor(m / 60);
-    const min = m % 60;
-    opts.push(`${h.toString().padStart(2, '0')}:${min.toString().padStart(2, '0')}`);
-  }
-  return opts;
-}
-
-const TIME_OPTIONS = getTimeOptions();
 
 interface Props {
   value?: WeeklySchedule;
@@ -139,25 +121,19 @@ export default function WeeklyScheduleEditor({ value, onChange }: Props) {
                 <div className="space-y-2">
                   {blocks.map((block, i) => (
                     <div key={i} className="flex items-center gap-2">
-                      <select
+                      <input
+                        type="time"
                         value={block.start}
                         onChange={(e) => updateBlock(day, i, 'start', e.target.value)}
                         className="input py-1.5 px-2.5 text-sm flex-1 min-w-0"
-                      >
-                        {TIME_OPTIONS.map(t => (
-                          <option key={t} value={t}>{formatTime(t)}</option>
-                        ))}
-                      </select>
+                      />
                       <span className="text-gray-400 text-xs font-medium">to</span>
-                      <select
+                      <input
+                        type="time"
                         value={block.end}
                         onChange={(e) => updateBlock(day, i, 'end', e.target.value)}
                         className="input py-1.5 px-2.5 text-sm flex-1 min-w-0"
-                      >
-                        {TIME_OPTIONS.map(t => (
-                          <option key={t} value={t}>{formatTime(t)}</option>
-                        ))}
-                      </select>
+                      />
                       <button
                         type="button"
                         onClick={() => removeBlock(day, i)}
