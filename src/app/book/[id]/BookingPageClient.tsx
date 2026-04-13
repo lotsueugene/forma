@@ -273,7 +273,7 @@ export default function BookingPageClient({ formId }: { formId: string }) {
             {error && <p className="text-sm text-red-500">{error}</p>}
             <button
               type="button"
-              onClick={handleSubmit as () => void}
+              onClick={(e) => handleSubmit(e as unknown as React.FormEvent)}
               disabled={isSubmitting}
               className="w-full py-3 rounded-xl text-white text-sm font-semibold transition-all hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2"
               style={{ backgroundColor: accent }}
