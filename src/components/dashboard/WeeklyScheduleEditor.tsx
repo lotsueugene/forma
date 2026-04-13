@@ -49,7 +49,9 @@ interface Props {
 }
 
 export default function WeeklyScheduleEditor({ value, onChange }: Props) {
-  const schedule = value || DEFAULT_SCHEDULE;
+  // Use default if no schedule or if all days are empty (misconfigured)
+  const hasAnyBlocks = value && Object.values(value).some(blocks => blocks.length > 0);
+  const schedule = hasAnyBlocks ? value : DEFAULT_SCHEDULE;
   const [copiedFrom, setCopiedFrom] = useState<number | null>(null);
 
   const updateDay = (day: number, blocks: TimeBlock[]) => {

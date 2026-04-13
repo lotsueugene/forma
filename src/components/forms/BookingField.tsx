@@ -76,7 +76,8 @@ export default function BookingField({
     3: [{ start: '09:00', end: '17:00' }], 4: [{ start: '09:00', end: '17:00' }],
     5: [{ start: '09:00', end: '17:00' }], 6: [],
   };
-  const schedule = weeklySchedule || defaultSchedule;
+  const hasAnyBlocks = weeklySchedule && Object.values(weeklySchedule).some(blocks => blocks.length > 0);
+  const schedule = hasAnyBlocks ? weeklySchedule : defaultSchedule;
   const [selectedDate, setSelectedDate] = useState<string>('');
   const [viewMonth, setViewMonth] = useState(() => {
     const now = new Date();
