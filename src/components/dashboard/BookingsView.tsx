@@ -236,9 +236,9 @@ export default function BookingsView({ submissions, bookingFieldIds, fields, for
     <div className="space-y-4">
       {/* Stats bar */}
       <div className="flex items-center gap-4 text-sm text-gray-500">
-        <span><strong className="text-gray-900">{bookingEntries.length}</strong> bookings</span>
-        <span><strong className="text-gray-900">{totalSlots}</strong> time slots</span>
-        <span><strong className="text-gray-900">{Object.keys(bookingsByDate).length}</strong> days</span>
+        <span><strong className="text-gray-900">{bookingEntries.length}</strong> booking{bookingEntries.length !== 1 ? 's' : ''}</span>
+        <span><strong className="text-gray-900">{totalSlots}</strong> time slot{totalSlots !== 1 ? 's' : ''}</span>
+        <span><strong className="text-gray-900">{Object.keys(bookingsByDate).length}</strong> day{Object.keys(bookingsByDate).length !== 1 ? 's' : ''}</span>
       </div>
 
       {/* Calendar */}
