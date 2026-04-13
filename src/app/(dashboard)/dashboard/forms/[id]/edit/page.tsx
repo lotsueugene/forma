@@ -884,39 +884,41 @@ export default function EditFormPage({ params }: { params: Promise<{ id: string 
                       </div>
                     </div>
                     {(selectedField.bookingMode === 'fixed') && (
-                      <div className="form-field">
-                        <label className="form-label">Slot Duration</label>
-                        <div className="flex bg-gray-100 rounded-lg p-0.5">
-                          {[
-                            { value: 15, label: '15m' },
-                            { value: 30, label: '30m' },
-                            { value: 45, label: '45m' },
-                            { value: 60, label: '1h' },
-                            { value: 90, label: '1.5h' },
-                            { value: 120, label: '2h' },
-                          ].map((opt) => (
-                            <button
-                              key={opt.value}
-                              type="button"
-                              onClick={() => updateField(selectedField.id, { slotDuration: opt.value })}
-                              className={`flex-1 px-2 py-1.5 rounded-md text-xs font-medium transition-colors ${
-                                (selectedField.slotDuration || 30) === opt.value ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500'
-                              }`}
-                            >
-                              {opt.label}
-                            </button>
-                          ))}
+                      <>
+                        <div className="form-field">
+                          <label className="form-label">Slot Duration</label>
+                          <div className="flex bg-gray-100 rounded-lg p-0.5">
+                            {[
+                              { value: 15, label: '15m' },
+                              { value: 30, label: '30m' },
+                              { value: 45, label: '45m' },
+                              { value: 60, label: '1h' },
+                              { value: 90, label: '1.5h' },
+                              { value: 120, label: '2h' },
+                            ].map((opt) => (
+                              <button
+                                key={opt.value}
+                                type="button"
+                                onClick={() => updateField(selectedField.id, { slotDuration: opt.value })}
+                                className={`flex-1 px-2 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                                  (selectedField.slotDuration || 30) === opt.value ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500'
+                                }`}
+                              >
+                                {opt.label}
+                              </button>
+                            ))}
+                          </div>
                         </div>
-                      </div>
+                        <div className="form-field">
+                          <WeeklyScheduleEditor
+                            value={selectedField.weeklySchedule}
+                            enabled={selectedField.availabilityEnabled ?? false}
+                            onToggle={(on) => updateField(selectedField.id, { availabilityEnabled: on })}
+                            onChange={(schedule) => updateField(selectedField.id, { weeklySchedule: schedule })}
+                          />
+                        </div>
+                      </>
                     )}
-                    <div className="form-field">
-                      <WeeklyScheduleEditor
-                        value={selectedField.weeklySchedule}
-                        enabled={selectedField.availabilityEnabled ?? false}
-                        onToggle={(on) => updateField(selectedField.id, { availabilityEnabled: on })}
-                        onChange={(schedule) => updateField(selectedField.id, { weeklySchedule: schedule })}
-                      />
-                    </div>
                   </div>
                 )}
 
