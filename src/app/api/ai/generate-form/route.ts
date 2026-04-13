@@ -55,6 +55,7 @@ Rules:
 Respond with ONLY valid JSON in this exact format, no other text:
 {
   "name": "Form Name",
+  "description": "A short one-sentence description of the form's purpose",
   "fields": [
     {
       "type": "text",
@@ -116,6 +117,7 @@ Do not include "options" for field types that don't need them (text, email, phon
 
   return {
     name: parsed.name || 'Generated Form',
+    description: parsed.description || '',
     fields,
   };
 }

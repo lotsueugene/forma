@@ -402,6 +402,7 @@ export default function NewFormPage() {
 
       // Update form with AI-generated content
       setFormName(data.name);
+      if (data.description) setFormDescription(data.description);
       setFields(data.fields);
       setShowAIModal(false);
       setAIPrompt('');
