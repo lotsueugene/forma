@@ -175,7 +175,9 @@ export default function FormDetailPage() {
   // Get the base URL for endpoints
   const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
   const formPageUrl = `${baseUrl}/f/${formId}`;
+  const bookingUrl = `${baseUrl}/book/${formId}`;
   const apiEndpoint = `${baseUrl}/api/forms/${formId}/submissions`;
+  const hasBookingField = form?.fields?.some((f: { type: string }) => f.type === 'booking');
 
   useEffect(() => {
     fetchFormData();
@@ -712,6 +714,30 @@ export default function FormDetailPage() {
                     </div>
                   </div>
                 )}
+              </div>
+            )}
+            {hasBookingField && (
+              <div>
+                <label className="text-xs text-gray-500 uppercase tracking-wider mb-2 block">
+                  Booking Link
+                </label>
+                <div className="flex gap-2 flex-wrap sm:flex-nowrap">
+                  <code className="input font-mono text-xs sm:text-sm text-safety-orange flex-1 min-w-0 truncate">
+                    {bookingUrl}
+                  </code>
+                  <button
+                    onClick={() => copyToClipboard(bookingUrl, 'bookingUrl')}
+                    className="btn btn-secondary"
+                  >
+                    {copied === 'bookingUrl' ? <Check size={18} className="text-emerald-600" /> : <Copy size={18} />}
+                  </button>
+                  <Link href={bookingUrl} target="_blank" className="btn btn-secondary">
+                    <ArrowSquareOut size={18} />
+                  </Link>
+                </div>
+                <p className="text-xs text-gray-500 mt-2">
+                  Calendar-first view — clients pick a time slot, then fill in their details.
+                </p>
               </div>
             )}
             <div>

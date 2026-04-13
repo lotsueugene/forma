@@ -861,28 +861,32 @@ function IntegrationsPageContent() {
                 </div>
               </div>
 
-              {/* Form URLs on this domain */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">Form URLs</label>
-                <div className="bg-gray-50 rounded-lg border border-gray-200 divide-y divide-gray-200">
-                  {availableForms.map((form) => (
-                    <div key={form.id} className="flex items-center justify-between px-3 py-2 text-sm">
-                      <span className="text-gray-700 truncate">{form.name}</span>
-                      {form.slug ? (
-                        <code className="text-xs text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded shrink-0 ml-2">/{form.slug}</code>
-                      ) : (
-                        <span className="text-xs text-gray-400 italic shrink-0 ml-2">No slug set</span>
-                      )}
-                    </div>
-                  ))}
-                  {availableForms.length === 0 && (
-                    <div className="px-3 py-2 text-sm text-gray-400">No active forms</div>
-                  )}
-                </div>
-                <p className="text-xs text-gray-500 mt-1.5">
-                  Set a slug in each form&apos;s settings to make it available at {customDomain.domain}/<strong>slug</strong>
-                </p>
-              </div>
+              {/* Form URLs on this domain — only show forms with slugs */}
+              {(() => {
+                const formsWithSlugs = availableForms.filter((f) => f.slug);
+                const formsWithoutSlugs = availableForms.length - formsWithSlugs.length;
+                return (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1.5">Active URLs</label>
+                    {formsWithSlugs.length > 0 ? (
+                      <div className="bg-gray-50 rounded-lg border border-gray-200 divide-y divide-gray-200">
+                        {formsWithSlugs.map((form) => (
+                          <div key={form.id} className="flex items-center justify-between px-3 py-2 text-sm">
+                            <span className="text-gray-700 truncate">{form.name}</span>
+                            <code className="text-xs text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded shrink-0 ml-2">/{form.slug}</code>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-gray-400">No forms with slugs configured yet.</p>
+                    )}
+                    <p className="text-xs text-gray-500 mt-1.5">
+                      Set a slug in a form&apos;s settings to make it available at {customDomain.domain}/<strong>slug</strong>
+                      {formsWithoutSlugs > 0 && <span> &middot; {formsWithoutSlugs} form{formsWithoutSlugs !== 1 ? 's' : ''} without slugs</span>}
+                    </p>
+                  </div>
+                );
+              })()}
             </div>
           ) : (
             /* ── No domain or pending verification ── */
