@@ -125,6 +125,9 @@ interface Props {
 export default function WeeklyScheduleEditor({ value, enabled = false, onToggle, onChange }: Props) {
   const schedule = value || EMPTY_SCHEDULE;
   const [entries, setEntries] = useState<ScheduleEntry[]>(() => scheduleToEntries(schedule));
+
+  // If enabled but no schedules, auto-correct to off
+  const effectiveEnabled = enabled && entries.length > 0;
   const [adding, setAdding] = useState(false);
   const [newDays, setNewDays] = useState<number[]>([1, 2, 3, 4, 5]);
   const [newStart, setNewStart] = useState('09:00');
@@ -177,25 +180,25 @@ export default function WeeklyScheduleEditor({ value, enabled = false, onToggle,
           <div>
             <p className="text-sm font-medium text-gray-800">Availability Rules</p>
             <p className="text-xs text-gray-400">
-              {enabled ? 'Restricts available time slots in fixed duration mode' : 'No restrictions — applies to fixed duration mode only'}
+              {effectiveEnabled ? 'Restricts available time slots in fixed duration mode' : 'No restrictions — applies to fixed duration mode only'}
             </p>
           </div>
           <button
             type="button"
-            onClick={() => handleToggle(!enabled)}
+            onClick={() => handleToggle(!effectiveEnabled)}
             className={`w-11 h-6 rounded-full transition-colors relative ${
-              enabled ? 'bg-safety-orange' : 'bg-gray-300'
+              effectiveEnabled ? 'bg-safety-orange' : 'bg-gray-300'
             }`}
           >
             <div className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${
-              enabled ? 'translate-x-5.5' : 'translate-x-0.5'
+              effectiveEnabled ? 'translate-x-5.5' : 'translate-x-0.5'
             }`} />
           </button>
         </div>
       )}
 
       {/* Schedule entries */}
-      {(enabled || !onToggle) && (
+      {(effectiveEnabled || !onToggle) && (
         <div className="space-y-2">
           {entries.length > 0 && (
             <div className="rounded-xl border border-gray-200 divide-y divide-gray-100 bg-white">
@@ -224,7 +227,7 @@ export default function WeeklyScheduleEditor({ value, enabled = false, onToggle,
 
           {entries.length === 0 && !adding && (
             <p className="text-sm text-gray-400 py-2">
-              {(enabled || !onToggle) ? 'No schedules set. Add one to define your availability.' : ''}
+              {(effectiveEnabled || !onToggle) ? 'No schedules set. Add one to define your availability.' : ''}
             </p>
           )}
 
