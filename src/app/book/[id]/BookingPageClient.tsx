@@ -14,6 +14,8 @@ interface FormField {
   options?: string[];
   amount?: number;
   currency?: string;
+  bookingMode?: 'custom' | 'fixed';
+  slotDuration?: number;
 }
 
 interface FormSettings {
@@ -215,6 +217,8 @@ export default function BookingPageClient({ formId }: { formId: string }) {
             accent={accent}
             textColor={textColor}
             isLightBg={isLightBg}
+            bookingMode={bookingField.bookingMode}
+            slotDuration={bookingField.slotDuration}
           />
         </div>
 

@@ -18,6 +18,8 @@ interface BookingFieldProps {
   accent?: string;
   textColor?: string;
   isLightBg?: boolean;
+  bookingMode?: 'custom' | 'fixed';
+  slotDuration?: number; // minutes
 }
 
 // Business hours
@@ -63,6 +65,8 @@ export default function BookingField({
   accent = '#ef6f2e',
   textColor = '#111827',
   isLightBg = true,
+  bookingMode = 'custom',
+  slotDuration = 30,
 }: BookingFieldProps) {
   const [selectedDate, setSelectedDate] = useState<string>('');
   const [viewMonth, setViewMonth] = useState(() => {
@@ -182,7 +186,7 @@ export default function BookingField({
     setUserSlots(prev => prev.filter((_, i) => i !== index));
   };
 
-  // Generate time options (30-min intervals)
+  // Generate time options (30-min intervals for custom mode dropdowns)
   const timeOptions = useMemo(() => {
     const opts: string[] = [];
     for (let m = DAY_START * 60; m < DAY_END * 60; m += 30) {
@@ -190,6 +194,38 @@ export default function BookingField({
     }
     return opts;
   }, []);
+
+  // Generate fixed-duration slots (for fixed mode)
+  const fixedSlots = useMemo(() => {
+    if (bookingMode !== 'fixed') return [];
+    const slots: BookingSlot[] = [];
+    const startMin = 8 * 60;  // 8 AM
+    const endMin = 20 * 60;   // 8 PM
+    for (let m = startMin; m + slotDuration <= endMin; m += slotDuration) {
+      slots.push({ start: minutesToTime(m), end: minutesToTime(m + slotDuration) });
+    }
+    return slots;
+  }, [bookingMode, slotDuration]);
+
+  // Check if a fixed slot is already booked
+  const isSlotBooked = (slot: BookingSlot): boolean => {
+    return bookedSlots.some(booked => slotsOverlap(slot, booked));
+  };
+
+  // Check if a fixed slot is selected by the user
+  const isSlotSelected = (slot: BookingSlot): boolean => {
+    return userSlots.some(s => s.start === slot.start && s.end === slot.end);
+  };
+
+  // Toggle a fixed slot
+  const toggleFixedSlot = (slot: BookingSlot) => {
+    if (isSlotBooked(slot)) return;
+    if (isSlotSelected(slot)) {
+      setUserSlots(prev => prev.filter(s => !(s.start === slot.start && s.end === slot.end)));
+    } else {
+      setUserSlots(prev => [...prev, slot].sort((a, b) => timeToMinutes(a.start) - timeToMinutes(b.start)));
+    }
+  };
 
   // Timeline visualization
   const totalMinutes = (DAY_END - DAY_START) * 60;
@@ -355,119 +391,192 @@ export default function BookingField({
             </div>
           </div>
 
-          {/* Existing bookings list */}
-          {bookedSlots.length > 0 && (
-            <div className="space-y-1">
-              <p className="text-xs font-medium" style={{ color: `${textColor}66` }}>Already booked:</p>
-              <div className="flex flex-wrap gap-2">
-                {bookedSlots.map((slot, i) => (
-                  <span
-                    key={i}
-                    className="text-xs px-2 py-1 rounded-md"
+          {bookingMode === 'fixed' ? (
+            /* ── Fixed duration: clickable slot grid ── */
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 text-sm font-medium" style={{ color: textColor }}>
+                <Clock size={16} />
+                Pick a time ({slotDuration} min slots)
+              </div>
+              <div className="grid grid-cols-3 gap-2">
+                {fixedSlots.map((slot) => {
+                  const booked = isSlotBooked(slot);
+                  const selected = isSlotSelected(slot);
+                  return (
+                    <button
+                      key={slot.start}
+                      type="button"
+                      disabled={booked}
+                      onClick={() => toggleFixedSlot(slot)}
+                      className={cn(
+                        'py-2.5 px-2 rounded-lg text-sm font-medium transition-all text-center',
+                        booked && 'opacity-30 cursor-not-allowed line-through',
+                        !booked && !selected && 'hover:opacity-80',
+                      )}
+                      style={{
+                        backgroundColor: selected
+                          ? accent
+                          : booked
+                            ? 'rgba(239,68,68,0.1)'
+                            : isLightBg ? 'rgba(0,0,0,0.04)' : 'rgba(255,255,255,0.06)',
+                        color: selected ? '#fff' : booked ? '#dc2626' : textColor,
+                        border: `1.5px solid ${selected ? accent : isLightBg ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.1)'}`,
+                      }}
+                    >
+                      {formatTime(slot.start)}
+                    </button>
+                  );
+                })}
+              </div>
+              {userSlots.length > 0 && (
+                <div className="space-y-2">
+                  <p className="text-xs font-medium" style={{ color: `${textColor}66` }}>Selected:</p>
+                  {userSlots.map((slot, i) => (
+                    <div
+                      key={i}
+                      className="flex items-center justify-between px-4 py-3 rounded-xl"
+                      style={{
+                        backgroundColor: `${accent}10`,
+                        border: `1.5px solid ${accent}30`,
+                      }}
+                    >
+                      <div className="flex items-center gap-2">
+                        <Check size={16} style={{ color: accent }} />
+                        <span className="text-sm font-medium" style={{ color: textColor }}>
+                          {formatTime(slot.start)} - {formatTime(slot.end)}
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => toggleFixedSlot(slot)}
+                        className="text-xs px-2 py-1 rounded-md transition-colors"
+                        style={{ color: '#dc2626' }}
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          ) : (
+            /* ── Custom range: start/end dropdowns ── */
+            <>
+              {/* Existing bookings list */}
+              {bookedSlots.length > 0 && (
+                <div className="space-y-1">
+                  <p className="text-xs font-medium" style={{ color: `${textColor}66` }}>Already booked:</p>
+                  <div className="flex flex-wrap gap-2">
+                    {bookedSlots.map((slot, i) => (
+                      <span
+                        key={i}
+                        className="text-xs px-2 py-1 rounded-md"
+                        style={{
+                          backgroundColor: 'rgba(239,68,68,0.1)',
+                          color: '#dc2626',
+                        }}
+                      >
+                        {formatTime(slot.start)} - {formatTime(slot.end)}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Time picker */}
+              <div
+                className="rounded-xl p-4 space-y-3"
+                style={{
+                  backgroundColor: isLightBg ? 'rgba(0,0,0,0.02)' : 'rgba(255,255,255,0.04)',
+                  border: `1px solid ${isLightBg ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.1)'}`,
+                }}
+              >
+                <div className="flex items-center gap-2 text-sm font-medium" style={{ color: textColor }}>
+                  <Clock size={16} />
+                  Add a time slot
+                </div>
+                <div className="flex items-center gap-2">
+                  <select
+                    value={startTime}
+                    onChange={(e) => { setStartTime(e.target.value); setError(''); }}
+                    className="flex-1 px-3 py-2.5 rounded-lg text-sm outline-none"
                     style={{
-                      backgroundColor: 'rgba(239,68,68,0.1)',
-                      color: '#dc2626',
+                      backgroundColor: isLightBg ? 'rgba(0,0,0,0.04)' : 'rgba(255,255,255,0.06)',
+                      border: `1.5px solid ${isLightBg ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.12)'}`,
+                      color: textColor,
                     }}
                   >
-                    {formatTime(slot.start)} - {formatTime(slot.end)}
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Time picker */}
-          <div
-            className="rounded-xl p-4 space-y-3"
-            style={{
-              backgroundColor: isLightBg ? 'rgba(0,0,0,0.02)' : 'rgba(255,255,255,0.04)',
-              border: `1px solid ${isLightBg ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.1)'}`,
-            }}
-          >
-            <div className="flex items-center gap-2 text-sm font-medium" style={{ color: textColor }}>
-              <Clock size={16} />
-              Add a time slot
-            </div>
-            <div className="flex items-center gap-2">
-              <select
-                value={startTime}
-                onChange={(e) => { setStartTime(e.target.value); setError(''); }}
-                className="flex-1 px-3 py-2.5 rounded-lg text-sm outline-none"
-                style={{
-                  backgroundColor: isLightBg ? 'rgba(0,0,0,0.04)' : 'rgba(255,255,255,0.06)',
-                  border: `1.5px solid ${isLightBg ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.12)'}`,
-                  color: textColor,
-                }}
-              >
-                <option value="">Start</option>
-                {timeOptions.map(t => (
-                  <option key={t} value={t}>{formatTime(t)}</option>
-                ))}
-              </select>
-              <span className="text-sm" style={{ color: `${textColor}44` }}>to</span>
-              <select
-                value={endTime}
-                onChange={(e) => { setEndTime(e.target.value); setError(''); }}
-                className="flex-1 px-3 py-2.5 rounded-lg text-sm outline-none"
-                style={{
-                  backgroundColor: isLightBg ? 'rgba(0,0,0,0.04)' : 'rgba(255,255,255,0.06)',
-                  border: `1.5px solid ${isLightBg ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.12)'}`,
-                  color: textColor,
-                }}
-              >
-                <option value="">End</option>
-                {timeOptions.map(t => (
-                  <option key={t} value={t}>{formatTime(t)}</option>
-                ))}
-              </select>
-              <button
-                type="button"
-                onClick={addSlot}
-                className="px-4 py-2.5 rounded-lg text-white text-sm font-medium transition-all hover:opacity-90"
-                style={{ backgroundColor: accent }}
-              >
-                Add
-              </button>
-            </div>
-
-            {error && (
-              <div className="flex items-center gap-2 text-sm text-red-500">
-                <Warning size={16} />
-                {error}
-              </div>
-            )}
-          </div>
-
-          {/* User's selected slots */}
-          {userSlots.length > 0 && (
-            <div className="space-y-2">
-              <p className="text-xs font-medium" style={{ color: `${textColor}66` }}>Your bookings:</p>
-              {userSlots.map((slot, i) => (
-                <div
-                  key={i}
-                  className="flex items-center justify-between px-4 py-3 rounded-xl"
-                  style={{
-                    backgroundColor: `${accent}10`,
-                    border: `1.5px solid ${accent}30`,
-                  }}
-                >
-                  <div className="flex items-center gap-2">
-                    <Check size={16} style={{ color: accent }} />
-                    <span className="text-sm font-medium" style={{ color: textColor }}>
-                      {formatTime(slot.start)} - {formatTime(slot.end)}
-                    </span>
-                  </div>
+                    <option value="">Start</option>
+                    {timeOptions.map(t => (
+                      <option key={t} value={t}>{formatTime(t)}</option>
+                    ))}
+                  </select>
+                  <span className="text-sm" style={{ color: `${textColor}44` }}>to</span>
+                  <select
+                    value={endTime}
+                    onChange={(e) => { setEndTime(e.target.value); setError(''); }}
+                    className="flex-1 px-3 py-2.5 rounded-lg text-sm outline-none"
+                    style={{
+                      backgroundColor: isLightBg ? 'rgba(0,0,0,0.04)' : 'rgba(255,255,255,0.06)',
+                      border: `1.5px solid ${isLightBg ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.12)'}`,
+                      color: textColor,
+                    }}
+                  >
+                    <option value="">End</option>
+                    {timeOptions.map(t => (
+                      <option key={t} value={t}>{formatTime(t)}</option>
+                    ))}
+                  </select>
                   <button
                     type="button"
-                    onClick={() => removeSlot(i)}
-                    className="text-xs px-2 py-1 rounded-md transition-colors"
-                    style={{ color: '#dc2626' }}
+                    onClick={addSlot}
+                    className="px-4 py-2.5 rounded-lg text-white text-sm font-medium transition-all hover:opacity-90"
+                    style={{ backgroundColor: accent }}
                   >
-                    Remove
+                    Add
                   </button>
                 </div>
-              ))}
-            </div>
+
+                {error && (
+                  <div className="flex items-center gap-2 text-sm text-red-500">
+                    <Warning size={16} />
+                    {error}
+                  </div>
+                )}
+              </div>
+
+              {/* User's selected slots */}
+              {userSlots.length > 0 && (
+                <div className="space-y-2">
+                  <p className="text-xs font-medium" style={{ color: `${textColor}66` }}>Your bookings:</p>
+                  {userSlots.map((slot, i) => (
+                    <div
+                      key={i}
+                      className="flex items-center justify-between px-4 py-3 rounded-xl"
+                      style={{
+                        backgroundColor: `${accent}10`,
+                        border: `1.5px solid ${accent}30`,
+                      }}
+                    >
+                      <div className="flex items-center gap-2">
+                        <Check size={16} style={{ color: accent }} />
+                        <span className="text-sm font-medium" style={{ color: textColor }}>
+                          {formatTime(slot.start)} - {formatTime(slot.end)}
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => removeSlot(i)}
+                        className="text-xs px-2 py-1 rounded-md transition-colors"
+                        style={{ color: '#dc2626' }}
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </>
           )}
         </div>
       )}

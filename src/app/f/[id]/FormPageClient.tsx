@@ -54,6 +54,8 @@ interface FormField {
   amount?: number;
   currency?: string;
   nextPage?: number;
+  bookingMode?: 'custom' | 'fixed';
+  slotDuration?: number;
 }
 
 // Evaluate if a field's condition is met
@@ -978,6 +980,8 @@ function renderField(
           value={formData[field.id] as string}
           onChange={(val) => onChange(field.id, val)}
           required={field.required}
+          bookingMode={field.bookingMode}
+          slotDuration={field.slotDuration}
         />
       );
     default:

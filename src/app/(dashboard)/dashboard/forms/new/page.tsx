@@ -100,6 +100,8 @@ interface FormField {
   amount?: number;
   currency?: string;
   nextPage?: number;
+  bookingMode?: 'custom' | 'fixed';
+  slotDuration?: number;
 }
 
 const fieldTypes: { type: FieldType; label: string; icon: typeof TextT }[] = [
@@ -807,6 +809,44 @@ export default function NewFormPage() {
                         <option value="aud">AUD ($)</option>
                       </select>
                     </div>
+                  </div>
+                )}
+
+                {/* Booking settings */}
+                {selectedField.type === 'booking' && (
+                  <div className="space-y-3">
+                    <div className="form-field">
+                      <label className="form-label">Booking Mode</label>
+                      <select
+                        value={selectedField.bookingMode || 'custom'}
+                        onChange={(e) =>
+                          updateField(selectedField.id, { bookingMode: e.target.value as 'custom' | 'fixed' })
+                        }
+                        className="input"
+                      >
+                        <option value="custom">Custom Range (client picks start &amp; end)</option>
+                        <option value="fixed">Fixed Duration (client picks a time slot)</option>
+                      </select>
+                    </div>
+                    {(selectedField.bookingMode === 'fixed') && (
+                      <div className="form-field">
+                        <label className="form-label">Slot Duration</label>
+                        <select
+                          value={selectedField.slotDuration || 30}
+                          onChange={(e) =>
+                            updateField(selectedField.id, { slotDuration: parseInt(e.target.value) })
+                          }
+                          className="input"
+                        >
+                          <option value={15}>15 minutes</option>
+                          <option value={30}>30 minutes</option>
+                          <option value={45}>45 minutes</option>
+                          <option value={60}>1 hour</option>
+                          <option value={90}>1.5 hours</option>
+                          <option value={120}>2 hours</option>
+                        </select>
+                      </div>
+                    )}
                   </div>
                 )}
 

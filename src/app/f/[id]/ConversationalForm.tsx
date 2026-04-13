@@ -790,6 +790,8 @@ function renderConversationalField(
           accent={accent}
           textColor={textColor}
           isLightBg={isLightBg}
+          bookingMode={field.bookingMode}
+          slotDuration={field.slotDuration}
         />
       );
     default:
