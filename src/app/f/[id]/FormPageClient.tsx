@@ -56,9 +56,7 @@ interface FormField {
   nextPage?: number;
   bookingMode?: 'custom' | 'fixed';
   slotDuration?: number;
-  startHour?: number;
-  endHour?: number;
-  availableDays?: number[];
+  weeklySchedule?: Record<number, Array<{ start: string; end: string }>>;
 }
 
 // Evaluate if a field's condition is met
@@ -985,9 +983,7 @@ function renderField(
           required={field.required}
           bookingMode={field.bookingMode}
           slotDuration={field.slotDuration}
-          startHour={field.startHour}
-          endHour={field.endHour}
-          availableDays={field.availableDays}
+          weeklySchedule={field.weeklySchedule}
         />
       );
     default:

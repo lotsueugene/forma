@@ -20,9 +20,7 @@ interface BookingFieldProps {
   isLightBg?: boolean;
   bookingMode?: 'custom' | 'fixed';
   slotDuration?: number; // minutes
-  startHour?: number; // 0-23
-  endHour?: number;   // 1-24
-  availableDays?: number[]; // 0=Sun ... 6=Sat
+  weeklySchedule?: Record<number, Array<{ start: string; end: string }>>;
 }
 
 // Business hours
@@ -70,10 +68,15 @@ export default function BookingField({
   isLightBg = true,
   bookingMode = 'custom',
   slotDuration = 30,
-  startHour = 9,
-  endHour = 17,
-  availableDays = [1, 2, 3, 4, 5],
+  weeklySchedule,
 }: BookingFieldProps) {
+  // Default Mon-Fri 9-5
+  const defaultSchedule: Record<number, Array<{ start: string; end: string }>> = {
+    0: [], 1: [{ start: '09:00', end: '17:00' }], 2: [{ start: '09:00', end: '17:00' }],
+    3: [{ start: '09:00', end: '17:00' }], 4: [{ start: '09:00', end: '17:00' }],
+    5: [{ start: '09:00', end: '17:00' }], 6: [],
+  };
+  const schedule = weeklySchedule || defaultSchedule;
   const [selectedDate, setSelectedDate] = useState<string>('');
   const [viewMonth, setViewMonth] = useState(() => {
     const now = new Date();
@@ -148,7 +151,7 @@ export default function BookingField({
       const d = new Date(year, month, i);
       const dateStr = d.toISOString().split('T')[0];
       const dayOfWeek = d.getDay();
-      const isDayOff = !availableDays.includes(dayOfWeek);
+      const isDayOff = !schedule[dayOfWeek] || schedule[dayOfWeek].length === 0;
       const isBlocked = blockedDates.includes(dateStr);
       days.push({
         date: d,
@@ -160,7 +163,7 @@ export default function BookingField({
     }
 
     return days;
-  }, [viewMonth, existingBookings, availableDays, blockedDates]);
+  }, [viewMonth, existingBookings, schedule, blockedDates]);
 
   const addSlot = () => {
     setError('');
@@ -209,21 +212,27 @@ export default function BookingField({
     return opts;
   }, []);
 
-  // Generate fixed-duration slots grouped by time of day
+  // Generate fixed-duration slots from the weekly schedule for the selected day
   const fixedSlotGroups = useMemo(() => {
-    if (bookingMode !== 'fixed') return [];
-    const startMin = startHour * 60;
-    const endMin = endHour * 60;
+    if (bookingMode !== 'fixed' || !selectedDate) return [];
+    const dayOfWeek = new Date(selectedDate + 'T00:00:00').getDay();
+    const dayBlocks = schedule[dayOfWeek] || [];
+    if (dayBlocks.length === 0) return [];
+
     const groups: { label: string; slots: BookingSlot[] }[] = [];
     const morning: BookingSlot[] = [];
     const afternoon: BookingSlot[] = [];
     const evening: BookingSlot[] = [];
 
-    for (let m = startMin; m + slotDuration <= endMin; m += slotDuration) {
-      const slot = { start: minutesToTime(m), end: minutesToTime(m + slotDuration) };
-      if (m < 12 * 60) morning.push(slot);
-      else if (m < 17 * 60) afternoon.push(slot);
-      else evening.push(slot);
+    for (const block of dayBlocks) {
+      const blockStart = timeToMinutes(block.start);
+      const blockEnd = timeToMinutes(block.end);
+      for (let m = blockStart; m + slotDuration <= blockEnd; m += slotDuration) {
+        const slot = { start: minutesToTime(m), end: minutesToTime(m + slotDuration) };
+        if (m < 12 * 60) morning.push(slot);
+        else if (m < 17 * 60) afternoon.push(slot);
+        else evening.push(slot);
+      }
     }
 
     if (morning.length > 0) groups.push({ label: 'Morning', slots: morning });
@@ -231,7 +240,7 @@ export default function BookingField({
     if (evening.length > 0) groups.push({ label: 'Evening', slots: evening });
 
     return groups;
-  }, [bookingMode, slotDuration, startHour, endHour]);
+  }, [bookingMode, slotDuration, schedule, selectedDate]);
 
   // Check if a fixed slot is already booked
   const isSlotBooked = (slot: BookingSlot): boolean => {
@@ -331,7 +340,7 @@ export default function BookingField({
                   'relative h-9 rounded-lg text-sm font-medium transition-all',
                   !day.inMonth && 'invisible',
                   (day.isPast || day.isUnavailable) && 'opacity-30 cursor-not-allowed',
-                  !day.isPast && !isSelected && 'hover:opacity-80',
+                  !day.isPast && !day.isUnavailable && !isSelected && 'hover:opacity-80',
                 )}
                 style={{
                   backgroundColor: isSelected ? accent : 'transparent',

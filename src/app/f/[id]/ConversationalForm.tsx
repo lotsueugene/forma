@@ -37,9 +37,7 @@ interface FormField {
   currency?: string;
   bookingMode?: 'custom' | 'fixed';
   slotDuration?: number;
-  startHour?: number;
-  endHour?: number;
-  availableDays?: number[];
+  weeklySchedule?: Record<number, Array<{ start: string; end: string }>>;
 }
 
 interface FormSettings {
@@ -797,9 +795,7 @@ function renderConversationalField(
           isLightBg={isLightBg}
           bookingMode={field.bookingMode}
           slotDuration={field.slotDuration}
-          startHour={field.startHour}
-          endHour={field.endHour}
-          availableDays={field.availableDays}
+          weeklySchedule={field.weeklySchedule}
         />
       );
     default:

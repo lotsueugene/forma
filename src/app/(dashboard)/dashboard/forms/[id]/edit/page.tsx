@@ -40,6 +40,7 @@ import {
 } from '@phosphor-icons/react';
 import { cn, generateId } from '@/lib/utils';
 import { useWorkspace } from '@/contexts/workspace-context';
+import WeeklyScheduleEditor from '@/components/dashboard/WeeklyScheduleEditor';
 
 interface FormSettings {
   branding?: {
@@ -100,9 +101,7 @@ interface FormField {
   nextPageCondition?: FieldCondition;
   bookingMode?: 'custom' | 'fixed';
   slotDuration?: number; // minutes (15, 30, 45, 60, etc.)
-  startHour?: number;
-  endHour?: number;
-  availableDays?: number[]; // 0=Sun, 1=Mon, ... 6=Sat
+  weeklySchedule?: Record<number, Array<{ start: string; end: string }>>; // 0=Sun..6=Sat
 }
 
 const fieldTypes: { type: FieldType; label: string; icon: typeof TextT }[] = [
@@ -872,85 +871,30 @@ export default function EditFormPage({ params }: { params: Promise<{ id: string 
                       </select>
                     </div>
                     {(selectedField.bookingMode === 'fixed') && (
-                      <>
-                        <div className="form-field">
-                          <label className="form-label">Slot Duration</label>
-                          <select
-                            value={selectedField.slotDuration || 30}
-                            onChange={(e) =>
-                              updateField(selectedField.id, { slotDuration: parseInt(e.target.value) })
-                            }
-                            className="input"
-                          >
-                            <option value={15}>15 minutes</option>
-                            <option value={30}>30 minutes</option>
-                            <option value={45}>45 minutes</option>
-                            <option value={60}>1 hour</option>
-                            <option value={90}>1.5 hours</option>
-                            <option value={120}>2 hours</option>
-                          </select>
-                        </div>
-                        <div className="form-field">
-                          <label className="form-label">Available Hours</label>
-                          <div className="flex items-center gap-2">
-                            <select
-                              value={selectedField.startHour ?? 9}
-                              onChange={(e) =>
-                                updateField(selectedField.id, { startHour: parseInt(e.target.value) })
-                              }
-                              className="input flex-1"
-                            >
-                              {Array.from({ length: 24 }, (_, i) => (
-                                <option key={i} value={i}>
-                                  {i === 0 ? '12 AM' : i < 12 ? `${i} AM` : i === 12 ? '12 PM' : `${i - 12} PM`}
-                                </option>
-                              ))}
-                            </select>
-                            <span className="text-sm text-gray-400">to</span>
-                            <select
-                              value={selectedField.endHour ?? 17}
-                              onChange={(e) =>
-                                updateField(selectedField.id, { endHour: parseInt(e.target.value) })
-                              }
-                              className="input flex-1"
-                            >
-                              {Array.from({ length: 24 }, (_, i) => i + 1).map(h => (
-                                <option key={h} value={h}>
-                                  {h === 12 ? '12 PM' : h < 12 ? `${h} AM` : h === 24 ? '12 AM' : `${h - 12} PM`}
-                                </option>
-                              ))}
-                            </select>
-                          </div>
-                        </div>
-                      </>
+                      <div className="form-field">
+                        <label className="form-label">Slot Duration</label>
+                        <select
+                          value={selectedField.slotDuration || 30}
+                          onChange={(e) =>
+                            updateField(selectedField.id, { slotDuration: parseInt(e.target.value) })
+                          }
+                          className="input"
+                        >
+                          <option value={15}>15 minutes</option>
+                          <option value={30}>30 minutes</option>
+                          <option value={45}>45 minutes</option>
+                          <option value={60}>1 hour</option>
+                          <option value={90}>1.5 hours</option>
+                          <option value={120}>2 hours</option>
+                        </select>
+                      </div>
                     )}
                     <div className="form-field">
-                      <label className="form-label">Available Days</label>
-                      <div className="flex flex-wrap gap-1.5">
-                        {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day, i) => {
-                          const days = selectedField.availableDays ?? [1, 2, 3, 4, 5];
-                          const isActive = days.includes(i);
-                          return (
-                            <button
-                              key={day}
-                              type="button"
-                              onClick={() => {
-                                const updated = isActive
-                                  ? days.filter((d: number) => d !== i)
-                                  : [...days, i].sort();
-                                updateField(selectedField.id, { availableDays: updated });
-                              }}
-                              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                                isActive
-                                  ? 'bg-safety-orange text-white'
-                                  : 'bg-gray-100 text-gray-400'
-                              }`}
-                            >
-                              {day}
-                            </button>
-                          );
-                        })}
-                      </div>
+                      <label className="form-label">Weekly Availability</label>
+                      <WeeklyScheduleEditor
+                        value={selectedField.weeklySchedule}
+                        onChange={(schedule) => updateField(selectedField.id, { weeklySchedule: schedule })}
+                      />
                     </div>
                   </div>
                 )}

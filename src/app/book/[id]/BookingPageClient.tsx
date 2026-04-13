@@ -16,9 +16,7 @@ interface FormField {
   currency?: string;
   bookingMode?: 'custom' | 'fixed';
   slotDuration?: number;
-  startHour?: number;
-  endHour?: number;
-  availableDays?: number[];
+  weeklySchedule?: Record<number, Array<{ start: string; end: string }>>;
 }
 
 interface FormSettings {
@@ -222,9 +220,7 @@ export default function BookingPageClient({ formId }: { formId: string }) {
             isLightBg={isLightBg}
             bookingMode={bookingField.bookingMode}
             slotDuration={bookingField.slotDuration}
-            startHour={bookingField.startHour}
-            endHour={bookingField.endHour}
-            availableDays={bookingField.availableDays}
+            weeklySchedule={bookingField.weeklySchedule}
           />
         </div>
 
