@@ -166,14 +166,7 @@ export default function WeeklyScheduleEditor({ value, enabled = false, onToggle,
   };
 
   const handleToggle = (on: boolean) => {
-    // Don't allow turning on if there are no schedules — user needs to add one first
-    if (on && entries.length === 0) {
-      // Open the add form instead
-      setAdding(true);
-      return;
-    }
     if (onToggle) onToggle(on);
-    // Don't clear schedules when toggling off — just disable the rules
   };
 
   return (
