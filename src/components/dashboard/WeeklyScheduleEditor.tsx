@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Plus, X, Copy } from '@phosphor-icons/react';
+import { Plus, X, Copy, Check } from '@phosphor-icons/react';
 
 interface TimeBlock {
   start: string;
@@ -68,6 +68,14 @@ export default function WeeklyScheduleEditor({ value, onChange }: Props) {
     onChange({ ...s, [day]: blocks });
   };
 
+  const toggleDay = (day: number, enabled: boolean) => {
+    if (enabled) {
+      updateDay(day, [{ start: '09:00', end: '17:00' }]);
+    } else {
+      updateDay(day, []);
+    }
+  };
+
   const addBlock = (day: number) => {
     const blocks = schedule[day] || [];
     const lastEnd = blocks.length > 0 ? blocks[blocks.length - 1].end : '08:00';
@@ -101,75 +109,86 @@ export default function WeeklyScheduleEditor({ value, onChange }: Props) {
   };
 
   return (
-    <div className="space-y-1">
+    <div className="rounded-xl border border-gray-200 divide-y divide-gray-100 bg-white">
       {[0, 1, 2, 3, 4, 5, 6].map((day) => {
         const blocks = schedule[day] || [];
         const isActive = blocks.length > 0;
 
         return (
-          <div
-            key={day}
-            className="flex items-start gap-2 py-2 border-b border-gray-100 last:border-0"
-          >
-            {/* Day label */}
-            <div className="w-12 shrink-0 mt-1.5">
-              <span className={`text-xs font-semibold ${isActive ? 'text-gray-800' : 'text-gray-400'}`}>
+          <div key={day} className="flex items-start gap-3 px-4 py-3">
+            {/* Checkbox + Day name */}
+            <label className="flex items-center gap-2.5 w-20 shrink-0 pt-1.5 cursor-pointer select-none">
+              <div
+                className={`w-4.5 h-4.5 rounded flex items-center justify-center border-2 transition-colors ${
+                  isActive
+                    ? 'bg-safety-orange border-safety-orange'
+                    : 'border-gray-300 bg-white'
+                }`}
+                onClick={() => toggleDay(day, !isActive)}
+              >
+                {isActive && <Check size={10} weight="bold" className="text-white" />}
+              </div>
+              <span className={`text-sm font-medium ${isActive ? 'text-gray-900' : 'text-gray-400'}`}>
                 {DAY_SHORT[day]}
               </span>
-            </div>
+            </label>
 
-            {/* Time blocks */}
+            {/* Time blocks or "Unavailable" */}
             <div className="flex-1 min-w-0">
-              {blocks.map((block, i) => (
-                <div key={i} className="flex items-center gap-1.5 mb-1.5">
-                  <select
-                    value={block.start}
-                    onChange={(e) => updateBlock(day, i, 'start', e.target.value)}
-                    className="input py-1.5 px-2 text-xs flex-1 min-w-0"
-                  >
-                    {TIME_OPTIONS.map(t => (
-                      <option key={t} value={t}>{formatTime(t)}</option>
-                    ))}
-                  </select>
-                  <span className="text-gray-300 text-xs">–</span>
-                  <select
-                    value={block.end}
-                    onChange={(e) => updateBlock(day, i, 'end', e.target.value)}
-                    className="input py-1.5 px-2 text-xs flex-1 min-w-0"
-                  >
-                    {TIME_OPTIONS.map(t => (
-                      <option key={t} value={t}>{formatTime(t)}</option>
-                    ))}
-                  </select>
-                  <button
-                    type="button"
-                    onClick={() => removeBlock(day, i)}
-                    className="p-1 text-red-400 hover:text-red-600 transition-colors shrink-0"
-                  >
-                    <X size={12} />
-                  </button>
+              {isActive ? (
+                <div className="space-y-2">
+                  {blocks.map((block, i) => (
+                    <div key={i} className="flex items-center gap-2">
+                      <select
+                        value={block.start}
+                        onChange={(e) => updateBlock(day, i, 'start', e.target.value)}
+                        className="input py-1.5 px-2.5 text-sm flex-1 min-w-0"
+                      >
+                        {TIME_OPTIONS.map(t => (
+                          <option key={t} value={t}>{formatTime(t)}</option>
+                        ))}
+                      </select>
+                      <span className="text-gray-400 text-xs font-medium">to</span>
+                      <select
+                        value={block.end}
+                        onChange={(e) => updateBlock(day, i, 'end', e.target.value)}
+                        className="input py-1.5 px-2.5 text-sm flex-1 min-w-0"
+                      >
+                        {TIME_OPTIONS.map(t => (
+                          <option key={t} value={t}>{formatTime(t)}</option>
+                        ))}
+                      </select>
+                      <button
+                        type="button"
+                        onClick={() => removeBlock(day, i)}
+                        className="p-1.5 rounded-md text-gray-300 hover:text-red-500 hover:bg-red-50 transition-colors shrink-0"
+                      >
+                        <X size={14} />
+                      </button>
+                    </div>
+                  ))}
+                  <div className="flex items-center gap-3 pt-0.5">
+                    <button
+                      type="button"
+                      onClick={() => addBlock(day)}
+                      className="text-xs text-safety-orange hover:text-accent-200 font-medium flex items-center gap-1"
+                    >
+                      <Plus size={11} weight="bold" />
+                      Add hours
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => applyToAll(day)}
+                      className="text-xs text-gray-400 hover:text-gray-600 font-medium flex items-center gap-1"
+                    >
+                      <Copy size={11} />
+                      {copiedFrom === day ? 'Applied!' : 'Apply to all'}
+                    </button>
+                  </div>
                 </div>
-              ))}
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  onClick={() => addBlock(day)}
-                  className="text-[11px] text-safety-orange hover:text-accent-200 flex items-center gap-0.5"
-                >
-                  <Plus size={10} />
-                  {isActive ? 'Add' : 'Set hours'}
-                </button>
-                {isActive && (
-                  <button
-                    type="button"
-                    onClick={() => applyToAll(day)}
-                    className="text-[11px] text-gray-400 hover:text-gray-600 flex items-center gap-0.5"
-                  >
-                    <Copy size={10} />
-                    {copiedFrom === day ? 'Applied!' : 'Apply to all'}
-                  </button>
-                )}
-              </div>
+              ) : (
+                <p className="text-sm text-gray-400 pt-1.5">Unavailable</p>
+              )}
             </div>
           </div>
         );
