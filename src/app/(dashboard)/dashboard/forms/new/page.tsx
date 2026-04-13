@@ -45,6 +45,7 @@ import QRCode from 'react-qr-code';
 import { cn, generateId } from '@/lib/utils';
 import { useWorkspace } from '@/contexts/workspace-context';
 import WeeklyScheduleEditor from '@/components/dashboard/WeeklyScheduleEditor';
+import UpgradeModal from '@/components/dashboard/UpgradeModal';
 
 interface FormSettings {
   branding?: {
@@ -368,6 +369,7 @@ export default function NewFormPage() {
   const [formSettings, setFormSettings] = useState<FormSettings>({});
   const [showFormSettings, setShowFormSettings] = useState(false);
   const [planType, setPlanType] = useState<string>('free');
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [showPublishModal, setShowPublishModal] = useState(false);
   const [publishedFormId, setPublishedFormId] = useState<string | null>(null);
   const [linkCopied, setLinkCopied] = useState(false);
@@ -552,7 +554,7 @@ export default function NewFormPage() {
             <span className="hidden sm:inline">Settings</span>
           </button>
           <button
-            onClick={() => setShowAIModal(true)}
+            onClick={() => planType === 'free' ? setShowUpgradeModal(true) : setShowAIModal(true)}
             className="btn btn-secondary bg-safety-orange/10 border-safety-orange/30 text-safety-orange hover:bg-safety-orange/20 px-2 sm:px-3 hidden sm:flex"
             title="AI Generate"
           >
@@ -1428,6 +1430,12 @@ export default function NewFormPage() {
           </>
         )}
       </AnimatePresence>
+
+      <UpgradeModal
+        open={showUpgradeModal}
+        onClose={() => setShowUpgradeModal(false)}
+        feature="AI Form Generator"
+      />
     </div>
   );
 }

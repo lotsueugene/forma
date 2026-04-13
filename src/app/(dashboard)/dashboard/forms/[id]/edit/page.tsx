@@ -41,6 +41,7 @@ import {
 import { cn, generateId } from '@/lib/utils';
 import { useWorkspace } from '@/contexts/workspace-context';
 import WeeklyScheduleEditor from '@/components/dashboard/WeeklyScheduleEditor';
+import UpgradeModal from '@/components/dashboard/UpgradeModal';
 
 interface FormSettings {
   branding?: {
@@ -346,6 +347,7 @@ export default function EditFormPage({ params }: { params: Promise<{ id: string 
   const router = useRouter();
   const { currentWorkspace } = useWorkspace();
   const [planType, setPlanType] = useState<string>('free');
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [formName, setFormName] = useState('');
   const [formDescription, setFormDescription] = useState('');
@@ -583,7 +585,7 @@ export default function EditFormPage({ params }: { params: Promise<{ id: string 
             <span className="hidden sm:inline">Settings</span>
           </button>
           <button
-            onClick={() => setShowAIModal(true)}
+            onClick={() => planType === 'free' ? setShowUpgradeModal(true) : setShowAIModal(true)}
             className="btn btn-secondary bg-safety-orange/10 border-safety-orange/30 text-safety-orange hover:bg-safety-orange/20 px-2 sm:px-3"
             title="AI Generate"
           >
@@ -1627,6 +1629,12 @@ export default function EditFormPage({ params }: { params: Promise<{ id: string 
           </>
         )}
       </AnimatePresence>
+
+      <UpgradeModal
+        open={showUpgradeModal}
+        onClose={() => setShowUpgradeModal(false)}
+        feature="AI Form Generator"
+      />
     </div>
   );
 }
