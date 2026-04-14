@@ -819,13 +819,13 @@ function IntegrationsPageContent() {
               <GlobeHemisphereWest size={18} />
               Custom Domain
             </h2>
-            {!loading && !domainFeatureEnabled && <span className="badge badge-warning">Pro required</span>}
+            {!loading && !domainFeatureEnabled && <span className="badge badge-warning">Trial/Pro required</span>}
           </div>
 
           {loading ? (
             <div className="text-sm text-gray-600">Loading…</div>
           ) : !domainFeatureEnabled ? (
-            <p className="text-sm text-gray-600">Upgrade to Pro to connect your own domain for hosted form URLs.</p>
+            <p className="text-sm text-gray-600">Upgrade to Trial or Pro to connect your own domain for hosted form URLs.</p>
           ) : customDomain?.status === 'verified' ? (
             /* ── Verified domain view ── */
             <div className="space-y-4">
