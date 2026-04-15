@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Spinner, Check, UploadSimple, Star, File as FileIcon, X } from '@phosphor-icons/react';
+import { Spinner, Check, UploadSimple, Star, File as FileIcon, X, Stack } from '@phosphor-icons/react';
 import BookingField from '@/components/forms/BookingField';
 import Link from 'next/link';
 
@@ -172,10 +172,13 @@ export default function BookingPageClient({ formId }: { formId: string }) {
             {thankYou?.message || 'Your booking has been submitted successfully. You will receive a confirmation shortly.'}
           </p>
           {thankYou?.showBranding !== false && (
-            <p className="text-xs pt-4" style={{ color: `${textColor}33` }}>
-              Powered by{' '}
-              <Link href="https://withforma.io" className="underline" target="_blank">Forma</Link>
-            </p>
+            <div className="flex items-center justify-center gap-1.5 text-xs pt-4" style={{ color: `${textColor}77` }}>
+              <span>Powered by</span>
+              <Link href="https://withforma.io" className="flex items-center gap-1 font-medium hover:opacity-80" style={{ color: accent }} target="_blank">
+                <Stack size={14} weight="fill" />
+                Forma
+              </Link>
+            </div>
           )}
         </div>
       </div>
@@ -183,7 +186,7 @@ export default function BookingPageClient({ formId }: { formId: string }) {
   }
 
   return (
-    <div className="min-h-screen py-8 px-4" style={{ backgroundColor: bgColor }}>
+    <div className="min-h-screen py-8 pb-12 px-4" style={{ backgroundColor: bgColor }}>
       <div className="max-w-lg mx-auto space-y-6">
         {/* Header */}
         <div className="text-center space-y-2">
@@ -299,10 +302,13 @@ export default function BookingPageClient({ formId }: { formId: string }) {
         )}
 
         {/* Powered by */}
-        <p className="text-center text-xs pt-2" style={{ color: `${textColor}33` }}>
-          Powered by{' '}
-          <Link href="https://withforma.io" className="underline" target="_blank">Forma</Link>
-        </p>
+        <div className="flex items-center justify-center gap-1.5 text-xs pt-4" style={{ color: `${textColor}77` }}>
+          <span>Powered by</span>
+          <Link href="https://withforma.io" className="flex items-center gap-1 font-medium hover:opacity-80" style={{ color: accent }} target="_blank">
+            <Stack size={14} weight="fill" />
+            Forma
+          </Link>
+        </div>
       </div>
     </div>
   );
