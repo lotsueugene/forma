@@ -380,7 +380,7 @@ export default function AutomationsView({ formId, fields }: Props) {
         </div>
       ) : (
         <div>
-          {automations.length === 0 && (
+          {automations.length === 0 ? (
             <div className="card p-8 sm:p-12 text-center">
               <div className="w-14 h-14 rounded-2xl bg-safety-orange/10 flex items-center justify-center mx-auto mb-4">
                 <Lightning size={24} weight="fill" className="text-safety-orange" />
@@ -389,16 +389,25 @@ export default function AutomationsView({ formId, fields }: Props) {
               <p className="text-sm text-gray-500 mb-4 max-w-sm mx-auto">
                 Send auto-reply emails, follow-up sequences, and more when someone submits this form.
               </p>
+              <button
+                type="button"
+                onClick={() => setShowCreate(true)}
+                className="btn btn-primary mx-auto flex"
+              >
+                <Plus size={14} weight="bold" />
+                Create Automation
+              </button>
             </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setShowCreate(true)}
+              className="text-sm text-safety-orange hover:text-accent-200 font-medium flex items-center gap-1.5"
+            >
+              <Plus size={14} weight="bold" />
+              Create Automation
+            </button>
           )}
-          <button
-            type="button"
-            onClick={() => setShowCreate(true)}
-            className={`${automations.length === 0 ? 'btn btn-primary mx-auto flex' : 'text-sm text-safety-orange hover:text-accent-200 font-medium flex items-center gap-1.5'}`}
-          >
-            <Plus size={14} weight="bold" />
-            Create Automation
-          </button>
         </div>
       )}
     </div>
