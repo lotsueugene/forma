@@ -145,6 +145,9 @@ function replaceTemplateVars(
     result = result.replace(new RegExp(`\\{\\{${escapeRegex(field.id)}\\}\\}`, 'gi'), displayValue);
   }
 
+  // Remove any remaining unresolved {{variables}} (empty/missing fields)
+  result = result.replace(/\{\{[^}]+\}\}/g, '');
+
   return result;
 }
 
