@@ -447,41 +447,41 @@ export default function TeamPage() {
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: index * 0.05 }}
-                  className="p-3 sm:p-4 flex items-center justify-between gap-3 hover:bg-gray-100 transition-colors"
+                  className="p-3 sm:p-4 grid grid-cols-[auto_1fr_auto] sm:grid-cols-[auto_1fr_auto_auto] lg:grid-cols-[auto_1fr_auto_9rem_auto] items-center gap-3 hover:bg-gray-50 transition-colors"
                 >
-                  <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
-                    <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-linear-to-br from-accent-100 to-accent-200 flex items-center justify-center text-gray-900 font-semibold text-sm flex-shrink-0">
-                      {getInitials(member.name, member.email)}
-                    </div>
-                    <div className="min-w-0">
-                      <div className="font-medium text-gray-900 truncate">
-                        {member.name || member.email}
-                      </div>
-                      {member.name && (
-                        <div className="text-sm text-gray-600 truncate">{member.email}</div>
-                      )}
-                    </div>
+                  {/* Avatar */}
+                  <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-linear-to-br from-accent-100 to-accent-200 flex items-center justify-center text-gray-900 font-semibold text-sm">
+                    {getInitials(member.name, member.email)}
                   </div>
 
-                  <div className="flex items-center gap-2 sm:gap-4 shrink-0">
-                    <div className="w-18 sm:w-22">
-                      <div
-                        className={cn(
-                          'inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-1 rounded-full text-[10px] sm:text-xs font-medium capitalize',
-                          roleColor
-                        )}
-                      >
-                        <RoleIcon size={12} className="sm:hidden" />
-                        <RoleIcon size={14} className="hidden sm:block" />
-                        <span className="hidden sm:inline">{member.role}</span>
-                      </div>
+                  {/* Name + Email */}
+                  <div className="min-w-0">
+                    <div className="font-medium text-gray-900 truncate">
+                      {member.name || member.email}
                     </div>
+                    {member.name && (
+                      <div className="text-sm text-gray-500 truncate">{member.email}</div>
+                    )}
+                  </div>
 
-                    <div className="hidden lg:block text-sm text-gray-600 w-36 truncate">
-                      Joined {formatDate(member.createdAt)}
-                    </div>
+                  {/* Role badge */}
+                  <div
+                    className={cn(
+                      'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium capitalize whitespace-nowrap',
+                      roleColor
+                    )}
+                  >
+                    <RoleIcon size={14} />
+                    {member.role}
+                  </div>
 
-                    {canManageTeam && !isOwner && (
+                  {/* Joined date */}
+                  <div className="hidden lg:block text-sm text-gray-500 truncate">
+                    Joined {formatDate(member.createdAt)}
+                  </div>
+
+                  {/* Actions menu */}
+                  {canManageTeam && !isOwner ? (
                       <div className="relative">
                         <button
                           onClick={() =>
@@ -601,8 +601,7 @@ export default function TeamPage() {
                           )}
                         </AnimatePresence>
                       </div>
-                    )}
-                  </div>
+                  ) : <div className="hidden sm:block" />}
                 </motion.div>
               );
             })
