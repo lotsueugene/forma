@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { checkLimit } from '@/lib/subscription';
 
 // GET /api/invitations/[token] - Get invitation details
 export async function GET(
@@ -133,6 +134,15 @@ export async function POST(
         message: 'You are already a member of this workspace',
         workspaceId: invitation.workspaceId,
       });
+    }
+
+    // Re-check member limits (plan may have changed since invitation was sent)
+    const limitCheck = await checkLimit(invitation.workspaceId, 'inviteMember');
+    if (!limitCheck.allowed) {
+      return NextResponse.json(
+        { error: limitCheck.reason || 'This workspace has reached its member limit.' },
+        { status: 402 }
+      );
     }
 
     // Add user to workspace and delete invitation in a transaction

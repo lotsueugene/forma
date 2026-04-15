@@ -85,10 +85,11 @@ export default function InvitePage() {
 
       setAccepted(true);
 
-      // Redirect to dashboard after a short delay
-      setTimeout(() => {
-        router.push('/dashboard');
-      }, 2000);
+      // Auto-switch to the new workspace and redirect immediately
+      if (data.workspaceId) {
+        localStorage.setItem('forma_current_workspace', data.workspaceId);
+      }
+      router.push('/dashboard');
     } catch (err) {
       setError('Failed to accept invitation');
       setIsAccepting(false);
@@ -247,16 +248,17 @@ export default function InvitePage() {
                   )}
                 </button>
               ) : (
-                <div className="space-y-4">
-                  <div className="p-3 bg-amber-50 border border-amber-100 rounded-lg text-amber-700 text-sm">
-                    You're logged in as <strong>{session.user?.email}</strong>, but this invitation was sent to <strong>{invitation?.email}</strong>.
+                <div className="space-y-3">
+                  <div className="p-3 bg-amber-50 border border-amber-100 rounded-lg text-sm">
+                    <p className="text-amber-800 font-medium mb-1">Wrong account</p>
+                    <p className="text-amber-700">You're signed in as <strong>{session.user?.email}</strong>. This invitation is for <strong>{invitation?.email}</strong>.</p>
                   </div>
                   <Link
-                    href={`/login?callbackUrl=${encodeURIComponent(callbackUrl)}`}
+                    href={`/api/auth/signout?callbackUrl=${encodeURIComponent(`/login?callbackUrl=${encodeURIComponent(callbackUrl)}&email=${encodeURIComponent(invitation?.email || '')}`)}`}
                     className="btn btn-primary w-full justify-center"
                   >
                     <SignIn size={18} />
-                    Sign in as {invitation?.email}
+                    Switch Account
                   </Link>
                 </div>
               )
