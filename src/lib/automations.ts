@@ -53,12 +53,27 @@ export async function processAutomations({
         const body = wrapInEmailTemplate(replaceTemplateVars(action.body, data, fields));
 
         if (action.delay === 0) {
-          // Send immediately
+          // Send immediately and log it
+          let status = 'sent';
           try {
             await sendEmail({ to, subject, html: body });
           } catch (err) {
             console.error(`Failed to send auto-reply for automation ${automation.id}:`, err);
+            status = 'failed';
           }
+          await prisma.scheduledEmail.create({
+            data: {
+              automationId: automation.id,
+              submissionId,
+              actionIndex: i,
+              to,
+              subject,
+              body,
+              scheduledFor: new Date(),
+              sentAt: status === 'sent' ? new Date() : null,
+              status,
+            },
+          });
         } else {
           // Schedule for later
           const scheduledFor = new Date(Date.now() + action.delay * 60 * 1000);
