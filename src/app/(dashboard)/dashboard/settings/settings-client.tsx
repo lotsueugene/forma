@@ -26,6 +26,7 @@ import {
 } from '@phosphor-icons/react';
 import { cn } from '@/lib/utils';
 import { useWorkspace } from '@/contexts/workspace-context';
+import ConfirmModal from '@/components/ui/ConfirmModal';
 // Removed hardcoded plan-catalog, using database plans instead
 
 interface PricingPlan {
@@ -254,6 +255,10 @@ export default function SettingsPage() {
   const [isDeletingAccount, setIsDeletingAccount] = useState(false);
   const [showDeleteAccountModal, setShowDeleteAccountModal] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState('');
+  const [confirmAction, setConfirmAction] = useState<{
+    title: string; message: string; confirmText: string;
+    variant: 'danger' | 'warning' | 'default'; onConfirm: () => Promise<void>;
+  } | null>(null);
 
   // Workspace settings state
   const [workspaceName, setWorkspaceName] = useState('');
@@ -553,20 +558,26 @@ export default function SettingsPage() {
   };
 
   // Delete API key
-  const handleDeleteApiKey = async (keyId: string) => {
-    if (!currentWorkspace || !confirm('Are you sure you want to delete this API key?')) return;
-
-    try {
-      const response = await fetch(`/api/workspaces/${currentWorkspace.id}/api-keys/${keyId}`, {
-        method: 'DELETE',
-      });
-
-      if (response.ok) {
-        setApiKeys((prev) => prev.filter((k) => k.id !== keyId));
-      }
-    } catch (error) {
-      console.error('Error deleting API key:', error);
-    }
+  const handleDeleteApiKey = (keyId: string) => {
+    if (!currentWorkspace) return;
+    setConfirmAction({
+      title: 'Delete API Key',
+      message: 'This API key will stop working immediately. Any integrations using it will break.',
+      confirmText: 'Delete',
+      variant: 'danger',
+      onConfirm: async () => {
+        try {
+          const response = await fetch(`/api/workspaces/${currentWorkspace.id}/api-keys/${keyId}`, {
+            method: 'DELETE',
+          });
+          if (response.ok) {
+            setApiKeys((prev) => prev.filter((k) => k.id !== keyId));
+          }
+        } catch (error) {
+          console.error('Error deleting API key:', error);
+        }
+      },
+    });
   };
 
   // Copy API key
@@ -610,25 +621,24 @@ export default function SettingsPage() {
   };
 
   // Delete workspace
-  const handleDeleteWorkspace = async () => {
+  const handleDeleteWorkspace = () => {
     if (!currentWorkspace) return;
-    if (!confirm(`Delete "${currentWorkspace.name}"? This will permanently delete all forms, submissions, and data in this workspace. This cannot be undone.`)) return;
-    if (!confirm('Are you absolutely sure? Type the workspace name to confirm.')) return;
-
-    try {
-      const response = await fetch(`/api/workspaces/${currentWorkspace.id}`, {
-        method: 'DELETE',
-      });
-
-      if (response.ok) {
-        window.location.href = '/dashboard';
-      } else {
-        const data = await response.json();
-        alert(data.error || 'Failed to delete workspace');
-      }
-    } catch {
-      alert('Failed to delete workspace');
-    }
+    setConfirmAction({
+      title: 'Delete Workspace',
+      message: `"${currentWorkspace.name}" and all its forms, submissions, and data will be permanently deleted. This cannot be undone.`,
+      confirmText: 'Delete Workspace',
+      variant: 'danger',
+      onConfirm: async () => {
+        try {
+          const response = await fetch(`/api/workspaces/${currentWorkspace.id}`, {
+            method: 'DELETE',
+          });
+          if (response.ok) {
+            window.location.href = '/dashboard';
+          }
+        } catch {}
+      },
+    });
   };
 
   // Delete account
@@ -1852,6 +1862,21 @@ export default function SettingsPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {confirmAction && (
+        <ConfirmModal
+          open={!!confirmAction}
+          onClose={() => setConfirmAction(null)}
+          onConfirm={async () => {
+            await confirmAction.onConfirm();
+            setConfirmAction(null);
+          }}
+          title={confirmAction.title}
+          message={confirmAction.message}
+          confirmText={confirmAction.confirmText}
+          variant={confirmAction.variant}
+        />
       )}
     </div>
   );

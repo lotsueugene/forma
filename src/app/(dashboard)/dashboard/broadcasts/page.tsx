@@ -19,6 +19,7 @@ import {
 import { cn } from '@/lib/utils';
 import { useWorkspace } from '@/contexts/workspace-context';
 import UpgradeModal from '@/components/dashboard/UpgradeModal';
+import ConfirmModal from '@/components/ui/ConfirmModal';
 
 interface FormOption {
   id: string;
@@ -49,6 +50,7 @@ export default function BroadcastsPage() {
   const [error, setError] = useState('');
   const [planType, setPlanType] = useState('free');
   const [showUpgrade, setShowUpgrade] = useState(false);
+  const [deletingBroadcastId, setDeletingBroadcastId] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
@@ -418,17 +420,7 @@ export default function BroadcastsPage() {
                 </span>
                 <button
                   type="button"
-                  onClick={async () => {
-                    if (!confirm('Delete this broadcast?')) return;
-                    try {
-                      await fetch(`/api/workspaces/${currentWorkspace?.id}/broadcasts`, {
-                        method: 'DELETE',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ broadcastId: broadcast.id }),
-                      });
-                      setBroadcasts(prev => prev.filter(b => b.id !== broadcast.id));
-                    } catch {}
-                  }}
+                  onClick={() => setDeletingBroadcastId(broadcast.id)}
                   className="p-1.5 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded transition-colors"
                 >
                   <Trash size={14} />
@@ -495,6 +487,27 @@ export default function BroadcastsPage() {
         open={showUpgrade}
         onClose={() => setShowUpgrade(false)}
         feature="Respondent broadcasts"
+      />
+
+      <ConfirmModal
+        open={!!deletingBroadcastId}
+        onClose={() => setDeletingBroadcastId(null)}
+        onConfirm={async () => {
+          if (!deletingBroadcastId) return;
+          try {
+            await fetch(`/api/workspaces/${currentWorkspace?.id}/broadcasts`, {
+              method: 'DELETE',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ broadcastId: deletingBroadcastId }),
+            });
+            setBroadcasts(prev => prev.filter(b => b.id !== deletingBroadcastId));
+          } catch {}
+          setDeletingBroadcastId(null);
+        }}
+        title="Delete Broadcast"
+        message="This broadcast record will be permanently deleted. This cannot be undone."
+        confirmText="Delete"
+        variant="danger"
       />
     </div>
   );

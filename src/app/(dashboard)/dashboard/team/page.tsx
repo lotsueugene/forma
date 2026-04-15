@@ -21,6 +21,7 @@ import { cn } from '@/lib/utils';
 import { useSession } from 'next-auth/react';
 import { useWorkspace } from '@/contexts/workspace-context';
 import UpgradeModal from '@/components/dashboard/UpgradeModal';
+import ConfirmModal from '@/components/ui/ConfirmModal';
 
 interface TeamMember {
   id: string;
@@ -107,6 +108,13 @@ export default function TeamPage() {
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [menuOpenId, setMenuOpenId] = useState<string | null>(null);
   const [showRoleModal, setShowRoleModal] = useState<string | null>(null);
+  const [confirmAction, setConfirmAction] = useState<{
+    title: string;
+    message: string;
+    confirmText: string;
+    variant: 'danger' | 'warning' | 'default';
+    onConfirm: () => Promise<void>;
+  } | null>(null);
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteRole, setInviteRole] = useState('viewer');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -224,86 +232,82 @@ export default function TeamPage() {
     }
   };
 
-  const handleRemoveMember = async (memberId: string) => {
+  const handleRemoveMember = (memberId: string) => {
     if (!currentWorkspace) return;
-
-    if (!confirm('Are you sure you want to remove this member?')) return;
-
-    try {
-      const response = await fetch(
-        `/api/workspaces/${currentWorkspace.id}/members/${memberId}`,
-        { method: 'DELETE' }
-      );
-
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || 'Failed to remove member');
-      }
-
-      await fetchTeamData();
-      setMenuOpenId(null);
-    } catch (err) {
-      console.error('Error removing member:', err);
-    }
-  };
-
-  const handleTransferOwnership = async (memberId: string, memberName: string) => {
-    if (!currentWorkspace) return;
-    if (!confirm(`Transfer ownership to ${memberName}? You will become a manager. The workspace will use the new owner's plan.`)) return;
-
-    try {
-      const response = await fetch(
-        `/api/workspaces/${currentWorkspace.id}/members/${memberId}`,
-        {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'transfer_ownership' }),
+    setConfirmAction({
+      title: 'Remove Member',
+      message: 'This member will lose access to the workspace immediately.',
+      confirmText: 'Remove',
+      variant: 'danger',
+      onConfirm: async () => {
+        try {
+          const response = await fetch(
+            `/api/workspaces/${currentWorkspace.id}/members/${memberId}`,
+            { method: 'DELETE' }
+          );
+          if (!response.ok) throw new Error('Failed');
+          await fetchTeamData();
+          setMenuOpenId(null);
+        } catch (err) {
+          console.error('Error removing member:', err);
         }
-      );
-
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || 'Failed to transfer ownership');
-      }
-
-      await fetchTeamData();
-      setMenuOpenId(null);
-    } catch (err) {
-      console.error('Error transferring ownership:', err);
-    }
+      },
+    });
   };
 
-  const handleLeaveWorkspace = async () => {
+  const handleTransferOwnership = (memberId: string, memberName: string) => {
     if (!currentWorkspace) return;
+    setConfirmAction({
+      title: 'Transfer Ownership',
+      message: `Transfer ownership to ${memberName}? You will become a manager and the workspace will use the new owner's plan.`,
+      confirmText: 'Transfer',
+      variant: 'warning',
+      onConfirm: async () => {
+        try {
+          const response = await fetch(
+            `/api/workspaces/${currentWorkspace.id}/members/${memberId}`,
+            {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ action: 'transfer_ownership' }),
+            }
+          );
+          if (!response.ok) throw new Error('Failed');
+          await fetchTeamData();
+          setMenuOpenId(null);
+        } catch (err) {
+          console.error('Error transferring ownership:', err);
+        }
+      },
+    });
+  };
 
-    // Find current user's membership
+  const handleLeaveWorkspace = () => {
+    if (!currentWorkspace) return;
     const myMembership = members.find(m => m.email === session?.user?.email);
     if (!myMembership) return;
 
     const isOwner = myMembership.role === 'owner';
-    const message = isOwner
-      ? 'You are the owner. Ownership will transfer to the next member. The workspace will use their plan. Continue?'
-      : 'Are you sure you want to leave this workspace?';
-
-    if (!confirm(message)) return;
-
-    try {
-      const response = await fetch(
-        `/api/workspaces/${currentWorkspace.id}/members/${myMembership.id}`,
-        { method: 'DELETE' }
-      );
-
-      if (!response.ok) {
-        const data = await response.json();
-        alert(data.error || 'Failed to leave workspace');
-        return;
-      }
-
-      // Redirect to dashboard
-      window.location.href = '/dashboard';
-    } catch (err) {
-      console.error('Error leaving workspace:', err);
-    }
+    setConfirmAction({
+      title: 'Leave Workspace',
+      message: isOwner
+        ? 'Ownership will transfer to the next member. The workspace will use their plan.'
+        : 'You will lose access to this workspace.',
+      confirmText: 'Leave',
+      variant: 'danger',
+      onConfirm: async () => {
+        try {
+          const response = await fetch(
+            `/api/workspaces/${currentWorkspace.id}/members/${myMembership.id}`,
+            { method: 'DELETE' }
+          );
+          if (!response.ok) return;
+          window.location.href = '/dashboard';
+        } catch (err) {
+          console.error('Error leaving workspace:', err);
+        }
+      },
+    });
   };
 
   const handleCancelInvitation = async (invitationId: string) => {
@@ -822,6 +826,21 @@ export default function TeamPage() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {confirmAction && (
+        <ConfirmModal
+          open={!!confirmAction}
+          onClose={() => setConfirmAction(null)}
+          onConfirm={async () => {
+            await confirmAction.onConfirm();
+            setConfirmAction(null);
+          }}
+          title={confirmAction.title}
+          message={confirmAction.message}
+          confirmText={confirmAction.confirmText}
+          variant={confirmAction.variant}
+        />
+      )}
     </div>
   );
 }
