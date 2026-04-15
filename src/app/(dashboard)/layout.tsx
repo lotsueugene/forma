@@ -130,7 +130,10 @@ function WorkspaceSwitcher() {
                 <div key={ws.id} className="flex items-center hover:bg-gray-100">
                   <button
                     onClick={() => {
-                      switchWorkspace(ws.id);
+                      if (ws.id !== currentWorkspace.id) {
+                        switchWorkspace(ws.id);
+                        router.push('/dashboard');
+                      }
                       setIsOpen(false);
                     }}
                     className="flex-1 px-3 py-2 text-left flex items-center justify-between min-w-0"
