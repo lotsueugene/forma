@@ -589,13 +589,16 @@ export default function FormPageClient({ formId }: FormPageClientProps) {
               textarea.forma-input { min-height: 130px; resize: vertical; }
               .forma-submit {
                 background: var(--forma-accent);
+                color: white;
                 box-shadow: 0 4px 14px color-mix(in srgb, var(--forma-accent) 25%, transparent);
               }
               .forma-label { color: var(--forma-text); }
               .forma-title { color: var(--forma-text); }
               .forma-description { color: var(--forma-text-muted); }
             `}</style>
-            {form?.settings?.customCss && <style>{form.settings.customCss}</style>}
+            {form?.settings?.customCss && (
+              <style dangerouslySetInnerHTML={{ __html: form.settings.customCss }} />
+            )}
             <div
               className="forma-page min-h-screen py-10 px-4 sm:py-16"
               style={{
@@ -723,7 +726,7 @@ export default function FormPageClient({ formId }: FormPageClientProps) {
                       type="submit"
                       disabled={isSubmitting}
                       className={cn(
-                        'forma-submit flex-1 px-8 py-3.5 rounded-xl font-semibold text-white flex items-center justify-center gap-2 transition-all duration-200',
+                        'forma-submit flex-1 px-8 py-3.5 rounded-xl font-semibold flex items-center justify-center gap-2 transition-all duration-200',
                         isSubmitting && 'opacity-70 cursor-not-allowed'
                       )}
                     >
