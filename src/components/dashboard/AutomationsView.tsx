@@ -54,6 +54,7 @@ export default function AutomationsView({ formId, fields }: Props) {
   const [showCreate, setShowCreate] = useState(false);
   const [saving, setSaving] = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [expandedAction, setExpandedAction] = useState<string | null>(null);
 
   // New automation form state
   const [newName, setNewName] = useState('');
@@ -197,20 +198,35 @@ export default function AutomationsView({ formId, fields }: Props) {
               {expandedId === automation.id && (
                 <div className="mt-4 pt-4 border-t border-gray-100 space-y-3">
                   {automation.actions.map((action, i) => (
-                    <div key={i} className="flex items-start gap-3">
-                      <div className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center shrink-0 mt-0.5">
-                        {action.delay === 0 ? (
-                          <EnvelopeSimple size={12} className="text-gray-500" />
-                        ) : (
-                          <Clock size={12} className="text-gray-500" />
-                        )}
-                      </div>
-                      <div>
-                        <p className="text-sm text-gray-700 font-medium">{action.subject}</p>
-                        <p className="text-xs text-gray-400">
-                          {formatDelay(action.delay)} &middot; To {action.to === 'respondent' ? 'respondent' : action.customEmail}
-                        </p>
-                      </div>
+                    <div key={i}>
+                      <button
+                        type="button"
+                        onClick={() => setExpandedAction(expandedAction === `${automation.id}-${i}` ? null : `${automation.id}-${i}`)}
+                        className="w-full flex items-start gap-3 text-left"
+                      >
+                        <div className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center shrink-0 mt-0.5">
+                          {action.delay === 0 ? (
+                            <EnvelopeSimple size={12} className="text-gray-500" />
+                          ) : (
+                            <Clock size={12} className="text-gray-500" />
+                          )}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm text-gray-700 font-medium">{action.subject}</p>
+                          <p className="text-xs text-gray-400">
+                            {formatDelay(action.delay)} &middot; To {action.to === 'respondent' ? 'respondent' : action.customEmail}
+                          </p>
+                          {expandedAction !== `${automation.id}-${i}` && action.body && (
+                            <p className="text-xs text-gray-400 mt-1 truncate">{action.body.replace(/<[^>]*>/g, '').slice(0, 80)}...</p>
+                          )}
+                        </div>
+                        <CaretDown size={12} className={`text-gray-400 shrink-0 mt-1.5 transition-transform ${expandedAction === `${automation.id}-${i}` ? 'rotate-180' : ''}`} />
+                      </button>
+                      {expandedAction === `${automation.id}-${i}` && (
+                        <div className="mt-2 ml-9 p-3 bg-gray-50 rounded-lg text-sm text-gray-600 whitespace-pre-wrap break-words">
+                          {action.body.replace(/<[^>]*>/g, '')}
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
