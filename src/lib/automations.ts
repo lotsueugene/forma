@@ -133,11 +133,15 @@ function replaceTemplateVars(
       displayValue = String(value);
     }
     const varName = field.label.toLowerCase().replace(/\s+/g, '_');
-    // Escape regex special characters in variable name
-    const escapeRegex = (s: string) => s.replace(/[.*+?^${}()|[\]\\&]/g, '\\$&');
+    // Also create HTML-entity version (TipTap encodes & to &amp;)
+    const varNameHtml = varName.replace(/&/g, '&amp;');
+    const escapeRegex = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
-    // Replace both {{var_name}} and {{field_id}}
+    // Replace {{var_name}}, {{var_name_html_encoded}}, and {{field_id}}
     result = result.replace(new RegExp(`\\{\\{${escapeRegex(varName)}\\}\\}`, 'gi'), displayValue);
+    if (varNameHtml !== varName) {
+      result = result.replace(new RegExp(`\\{\\{${escapeRegex(varNameHtml)}\\}\\}`, 'gi'), displayValue);
+    }
     result = result.replace(new RegExp(`\\{\\{${escapeRegex(field.id)}\\}\\}`, 'gi'), displayValue);
   }
 
