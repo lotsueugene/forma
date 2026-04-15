@@ -323,7 +323,7 @@ export default function ConversationalForm({
       )}
 
       {/* Main content area */}
-      <div className="flex-1 flex items-center justify-center p-6 sm:p-10">
+      <div className="flex-1 flex items-center justify-center p-6 pb-24 sm:p-10 sm:pb-24">
         <div className="w-full max-w-2xl">
           <AnimatePresence mode="wait" custom={direction}>
             {/* Welcome screen */}
@@ -479,51 +479,54 @@ export default function ConversationalForm({
         </div>
       </div>
 
-      {/* Bottom navigation */}
-      <div className="fixed bottom-6 right-6 sm:bottom-8 sm:right-8 flex items-center gap-2 z-40">
-        <button
-          onClick={goPrev}
-          disabled={currentIndex <= -1}
-          className={cn(
-            'w-10 h-10 rounded-lg flex items-center justify-center transition-all',
-            currentIndex <= -1 ? 'opacity-20 cursor-not-allowed' : 'hover:scale-105'
-          )}
-          style={{
-            backgroundColor: isLightBg ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.1)',
-            color: textColor,
-          }}
-        >
-          <ArrowUp size={18} />
-        </button>
-        <button
-          onClick={goNext}
-          disabled={currentIndex < 0 || !isCurrentFieldValid()}
-          className={cn(
-            'w-10 h-10 rounded-lg flex items-center justify-center transition-all rotate-180',
-            (currentIndex < 0 || !isCurrentFieldValid()) ? 'opacity-20 cursor-not-allowed' : 'hover:scale-105'
-          )}
-          style={{
-            backgroundColor: isLightBg ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.1)',
-            color: textColor,
-          }}
-        >
-          <ArrowUp size={18} />
-        </button>
-      </div>
-
-      {/* Branding */}
-      {form.settings?.thankYou?.showBranding !== false && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40">
+      {/* Bottom bar: navigation + branding */}
+      <div className="fixed bottom-0 left-0 right-0 z-40 px-4 py-3 sm:px-8 sm:py-4 flex items-center justify-between"
+        style={{ backgroundColor: `${bg}ee`, backdropFilter: 'blur(8px)' }}
+      >
+        {/* Branding */}
+        {form.settings?.thankYou?.showBranding !== false ? (
           <Link
             href="/"
-            className="flex items-center gap-2 text-sm font-medium transition-opacity hover:opacity-80"
+            className="flex items-center gap-1.5 text-xs font-medium transition-opacity hover:opacity-80"
             style={{ color: `${textColor}55` }}
           >
-            <Stack size={18} weight="fill" />
+            <Stack size={14} weight="fill" />
             Powered by <span style={{ color: accent }} className="font-semibold">Forma</span>
           </Link>
+        ) : <div />}
+
+        {/* Navigation arrows */}
+        <div className="flex items-center gap-1.5">
+          <button
+            onClick={goPrev}
+            disabled={currentIndex <= -1}
+            className={cn(
+              'w-9 h-9 rounded-lg flex items-center justify-center transition-all',
+              currentIndex <= -1 ? 'opacity-20 cursor-not-allowed' : 'hover:scale-105'
+            )}
+            style={{
+              backgroundColor: isLightBg ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.1)',
+              color: textColor,
+            }}
+          >
+            <ArrowUp size={16} />
+          </button>
+          <button
+            onClick={goNext}
+            disabled={currentIndex < 0 || !isCurrentFieldValid()}
+            className={cn(
+              'w-9 h-9 rounded-lg flex items-center justify-center transition-all rotate-180',
+              (currentIndex < 0 || !isCurrentFieldValid()) ? 'opacity-20 cursor-not-allowed' : 'hover:scale-105'
+            )}
+            style={{
+              backgroundColor: isLightBg ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.1)',
+              color: textColor,
+            }}
+          >
+            <ArrowUp size={16} />
+          </button>
         </div>
-      )}
+      </div>
     </div>
   );
 }
