@@ -609,6 +609,28 @@ export default function SettingsPage() {
     }
   };
 
+  // Delete workspace
+  const handleDeleteWorkspace = async () => {
+    if (!currentWorkspace) return;
+    if (!confirm(`Delete "${currentWorkspace.name}"? This will permanently delete all forms, submissions, and data in this workspace. This cannot be undone.`)) return;
+    if (!confirm('Are you absolutely sure? Type the workspace name to confirm.')) return;
+
+    try {
+      const response = await fetch(`/api/workspaces/${currentWorkspace.id}`, {
+        method: 'DELETE',
+      });
+
+      if (response.ok) {
+        window.location.href = '/dashboard';
+      } else {
+        const data = await response.json();
+        alert(data.error || 'Failed to delete workspace');
+      }
+    } catch {
+      alert('Failed to delete workspace');
+    }
+  };
+
   // Delete account
   const handleDeleteAccount = async () => {
     if (deleteConfirmText.toLowerCase() !== 'delete') return;
@@ -1622,22 +1644,41 @@ export default function SettingsPage() {
                 </div>
               </div>
 
-              <div className="card p-6 border-red-500/20">
+              <div className="card p-4 sm:p-6 border-red-500/20">
                 <h2 className="font-semibold text-red-600 mb-6">Danger Zone</h2>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="text-gray-900">Delete Account</div>
-                    <div className="text-sm text-gray-500">
-                      Permanently delete your account and all data
+                <div className="space-y-4">
+                  {currentWorkspace && !currentWorkspace.isPersonal && currentWorkspace.role === 'owner' && (
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="text-gray-900">Delete Workspace</div>
+                        <div className="text-sm text-gray-500">
+                          Permanently delete this workspace and all its data
+                        </div>
+                      </div>
+                      <button
+                        onClick={handleDeleteWorkspace}
+                        className="btn bg-red-500/10 text-red-600 hover:bg-red-500/20 border border-red-500/30"
+                      >
+                        <Trash size={16} />
+                        Delete
+                      </button>
                     </div>
+                  )}
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="text-gray-900">Delete Account</div>
+                      <div className="text-sm text-gray-500">
+                        Permanently delete your account and all data
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => setShowDeleteAccountModal(true)}
+                      className="btn bg-red-500/10 text-red-600 hover:bg-red-500/20 border border-red-500/30"
+                    >
+                      <Trash size={16} />
+                      Delete
+                    </button>
                   </div>
-                  <button
-                    onClick={() => setShowDeleteAccountModal(true)}
-                    className="btn bg-red-500/10 text-red-600 hover:bg-red-500/20 border border-red-500/30"
-                  >
-                    <Trash size={16} />
-                    Delete Account
-                  </button>
                 </div>
               </div>
             </motion.div>
