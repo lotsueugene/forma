@@ -150,7 +150,7 @@ function WorkspaceSwitcher() {
                     )}
                   </button>
                   <Link
-                    href="/dashboard/settings"
+                    href="/dashboard/settings?tab=workspace"
                     onClick={() => {
                       switchWorkspace(ws.id);
                       setIsOpen(false);

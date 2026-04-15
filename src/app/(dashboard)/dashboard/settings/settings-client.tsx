@@ -1011,6 +1011,27 @@ export default function SettingsPage() {
                   </button>
                 </div>
               </div>
+
+              {/* Delete Workspace */}
+              {currentWorkspace && !currentWorkspace.isPersonal && currentWorkspace.role === 'owner' && (
+                <div className="card p-4 sm:p-6 border-red-500/20">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="text-sm font-medium text-red-600">Delete Workspace</div>
+                      <div className="text-xs text-gray-500">
+                        Permanently delete this workspace and all its data
+                      </div>
+                    </div>
+                    <button
+                      onClick={handleDeleteWorkspace}
+                      className="btn bg-red-500/10 text-red-600 hover:bg-red-500/20 border border-red-500/30 text-sm"
+                    >
+                      <Trash size={16} />
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              )}
             </motion.div>
           )}
 
@@ -1647,23 +1668,6 @@ export default function SettingsPage() {
               <div className="card p-4 sm:p-6 border-red-500/20">
                 <h2 className="font-semibold text-red-600 mb-6">Danger Zone</h2>
                 <div className="space-y-4">
-                  {currentWorkspace && !currentWorkspace.isPersonal && currentWorkspace.role === 'owner' && (
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <div className="text-gray-900">Delete Workspace</div>
-                        <div className="text-sm text-gray-500">
-                          Permanently delete this workspace and all its data
-                        </div>
-                      </div>
-                      <button
-                        onClick={handleDeleteWorkspace}
-                        className="btn bg-red-500/10 text-red-600 hover:bg-red-500/20 border border-red-500/30"
-                      >
-                        <Trash size={16} />
-                        Delete
-                      </button>
-                    </div>
-                  )}
                   <div className="flex items-center justify-between">
                     <div>
                       <div className="text-gray-900">Delete Account</div>
