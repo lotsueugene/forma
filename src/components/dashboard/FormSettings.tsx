@@ -419,10 +419,13 @@ export default function FormSettingsPanel({
                       const input = (e.currentTarget as HTMLElement).querySelector('input');
                       input?.click();
                     }}
-                    className="border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors border-gray-300 hover:border-safety-orange/50"
+                    className="group border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all border-gray-200 hover:border-safety-orange/50 hover:bg-safety-orange/5"
                   >
-                    <UploadSimple size={24} className="mx-auto mb-2 text-gray-400" />
-                    <p className="text-sm text-gray-500">Click to upload image</p>
+                    <div className="w-12 h-12 rounded-xl bg-gray-100 group-hover:bg-safety-orange/10 flex items-center justify-center mx-auto mb-3 transition-colors">
+                      <UploadSimple size={22} className="text-gray-400 group-hover:text-safety-orange transition-colors" />
+                    </div>
+                    <p className="text-sm font-medium text-gray-700">Click to upload image</p>
+                    <p className="text-xs text-gray-400 mt-1">PNG, JPG or WebP</p>
                     <input
                       type="file"
                       accept="image/*"
@@ -466,10 +469,12 @@ export default function FormSettingsPanel({
                       const input = (e.currentTarget as HTMLElement).querySelector('input');
                       input?.click();
                     }}
-                    className="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg cursor-pointer text-sm text-gray-600 transition-colors hover:border-safety-orange/50"
+                    className="group inline-flex items-center gap-2.5 px-4 py-3 border-2 border-dashed border-gray-200 rounded-xl cursor-pointer text-sm transition-all hover:border-safety-orange/50 hover:bg-safety-orange/5"
                   >
-                    <UploadSimple size={16} />
-                    Upload favicon
+                    <div className="w-8 h-8 rounded-lg bg-gray-100 group-hover:bg-safety-orange/10 flex items-center justify-center transition-colors">
+                      <UploadSimple size={16} className="text-gray-400 group-hover:text-safety-orange transition-colors" />
+                    </div>
+                    <span className="text-gray-600 font-medium">Upload favicon</span>
                     <input
                       type="file"
                       accept=".ico,.png,image/x-icon,image/png"

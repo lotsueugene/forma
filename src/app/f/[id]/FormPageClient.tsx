@@ -884,10 +884,12 @@ function renderField(
               </button>
             </div>
           ) : (
-            <label className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center bg-gray-50 hover:bg-gray-100 hover:border-safety-orange/50 transition-colors cursor-pointer block">
-              <UploadSimple size={32} className="mx-auto mb-2 text-gray-400" />
+            <label className="group border-2 border-dashed border-gray-200 rounded-xl p-8 text-center transition-all cursor-pointer block hover:border-safety-orange/50 hover:bg-safety-orange/5">
+              <div className="w-12 h-12 rounded-xl bg-gray-100 group-hover:bg-safety-orange/10 flex items-center justify-center mx-auto mb-3 transition-colors">
+                <UploadSimple size={22} className="text-gray-400 group-hover:text-safety-orange transition-colors" />
+              </div>
               <p className="text-sm font-medium text-gray-700">Click to upload</p>
-              <p className="text-xs text-gray-500 mt-1">PDF, DOC, DOCX, images up to 10MB</p>
+              <p className="text-xs text-gray-400 mt-1">PDF, DOC, images up to 10MB</p>
               <input
                 type="file"
                 className="hidden"

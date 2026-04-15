@@ -478,14 +478,19 @@ function renderField(
       }
       return (
         <label
-          className="flex items-center justify-center gap-2 px-4 py-6 rounded-xl text-sm cursor-pointer transition-all hover:opacity-80 border-2 border-dashed"
+          className="group flex flex-col items-center justify-center gap-2 px-4 py-8 rounded-xl text-sm cursor-pointer transition-all border-2 border-dashed"
           style={{
-            borderColor: isLightBg ? 'rgba(0,0,0,0.12)' : 'rgba(255,255,255,0.15)',
+            borderColor: isLightBg ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.12)',
             color: `${textColor}66`,
           }}
         >
-          <UploadSimple size={18} />
-          <span>Click to upload</span>
+          <div
+            className="w-10 h-10 rounded-xl flex items-center justify-center mb-1 transition-colors"
+            style={{ backgroundColor: isLightBg ? 'rgba(0,0,0,0.04)' : 'rgba(255,255,255,0.06)' }}
+          >
+            <UploadSimple size={18} />
+          </div>
+          <span className="font-medium">Click to upload</span>
           <input
             type="file"
             className="hidden"
