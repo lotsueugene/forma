@@ -247,6 +247,8 @@ model Submission {
   data      String   // JSON string of submission data
   metadata  String?  // JSON string of metadata (IP, user agent, etc.)
   createdAt DateTime @default(now())
+
+  @@index([formId, createdAt])
 }
 
 // Blocked times set by form owner (unavailable slots)

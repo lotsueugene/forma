@@ -55,6 +55,22 @@ export async function POST(request: NextRequest) {
     }
 
     const buffer = Buffer.from(await file.arrayBuffer());
+
+    // Validate file content matches claimed type (magic bytes)
+    const validSignatures: Record<string, number[][]> = {
+      'image/jpeg': [[0xFF, 0xD8, 0xFF]],
+      'image/png': [[0x89, 0x50, 0x4E, 0x47]],
+      'image/gif': [[0x47, 0x49, 0x46, 0x38]],
+      'image/webp': [[0x52, 0x49, 0x46, 0x46]],
+      'application/pdf': [[0x25, 0x50, 0x44, 0x46]],
+    };
+    const sigs = validSignatures[file.type];
+    if (sigs) {
+      const matchesSig = sigs.some(sig => sig.every((byte, i) => buffer[i] === byte));
+      if (!matchesSig) {
+        return NextResponse.json({ error: 'File content does not match declared type' }, { status: 400 });
+      }
+    }
     const ext = file.name.split('.').pop() || 'bin';
     const key = `${folder}/${crypto.randomUUID()}.${ext}`;
 

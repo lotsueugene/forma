@@ -67,18 +67,35 @@ export async function GET(
       return NextResponse.json({ error: access.error }, { status: access.error === 'Form not found' ? 404 : 403 });
     }
 
-    const submissions = await prisma.submission.findMany({
-      where: { formId: id },
-      orderBy: { createdAt: 'desc' },
-    });
+    // Pagination
+    const url = request.nextUrl;
+    const page = parseInt(url.searchParams.get('page') || '1');
+    const limit = Math.min(parseInt(url.searchParams.get('limit') || '100'), 500);
+    const skip = (page - 1) * limit;
+
+    const [submissions, total] = await Promise.all([
+      prisma.submission.findMany({
+        where: { formId: id },
+        orderBy: { createdAt: 'desc' },
+        take: limit,
+        skip,
+      }),
+      prisma.submission.count({ where: { formId: id } }),
+    ]);
 
     return NextResponse.json({
       submissions: submissions.map((sub) => ({
         id: sub.id,
-        data: JSON.parse(sub.data),
-        metadata: sub.metadata ? JSON.parse(sub.metadata) : null,
+        data: (() => { try { return JSON.parse(sub.data); } catch { return {}; } })(),
+        metadata: (() => { try { return sub.metadata ? JSON.parse(sub.metadata) : null; } catch { return null; } })(),
         createdAt: sub.createdAt,
       })),
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
     });
   } catch (error) {
     console.error('Error fetching submissions:', error);
@@ -90,15 +107,21 @@ export async function GET(
 }
 
 // CORS headers for cross-origin form submissions
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type',
-};
+// Allow all origins for form submissions (forms can be embedded anywhere)
+// but restrict methods and headers
+function getCorsHeaders(request?: NextRequest): Record<string, string> {
+  const origin = request?.headers.get('origin') || '*';
+  return {
+    'Access-Control-Allow-Origin': origin,
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Max-Age': '86400',
+  };
+}
 
 // OPTIONS /api/forms/[id]/submissions - CORS preflight
-export async function OPTIONS() {
-  return new NextResponse(null, { status: 204, headers: corsHeaders });
+export async function OPTIONS(request: NextRequest) {
+  return new NextResponse(null, { status: 204, headers: getCorsHeaders(request) });
 }
 
 // POST /api/forms/[id]/submissions - Create a submission (public - no auth required)
@@ -106,6 +129,7 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const corsHeaders = getCorsHeaders(request);
   try {
     const { id } = await params;
 
@@ -260,8 +284,15 @@ export async function POST(
           }
         }
 
-        // Check for overlap
+        // Validate and check for overlap
+        const timeRegex = /^([01]\d|2[0-3]):([0-5]\d)$/;
         for (const newSlot of parsed.slots) {
+          if (!timeRegex.test(newSlot.start) || !timeRegex.test(newSlot.end)) {
+            return NextResponse.json(
+              { error: 'Invalid time format. Use HH:MM (24-hour).' },
+              { status: 400, headers: corsHeaders }
+            );
+          }
           const newStart = parseInt(newSlot.start.replace(':', ''));
           const newEnd = parseInt(newSlot.end.replace(':', ''));
           for (const existing of existingSlots) {

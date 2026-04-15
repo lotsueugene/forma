@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { verifyWorkspaceAccess } from '@/lib/workspace-auth';
+import { auditLog } from '@/lib/audit';
 
 // PUT /api/workspaces/[id]/members/[memberId] - Update member role or transfer ownership
 export async function PUT(
@@ -50,8 +51,14 @@ export async function PUT(
         }),
       ]);
 
-      // No downgrade needed — subscription is per-user, so the workspace
-      // now inherits the new owner's plan automatically
+      auditLog({
+        action: 'ownership_transferred',
+        userId: session.user.id,
+        resourceType: 'workspace',
+        resourceId: id,
+        details: { newOwnerId: targetMember.userId },
+      });
+
       return NextResponse.json({ success: true, message: 'Ownership transferred. Workspace now uses the new owner\'s plan.' });
     }
 

@@ -71,11 +71,11 @@ export async function checkSpam(params: SpamCheckParams): Promise<SpamCheckResul
     }
   }
 
-  // 2. Rate limiting
-  if (settings.rateLimit?.enabled && ip) {
+  // 2. Rate limiting (always enforced with defaults, configurable limits)
+  if (ip) {
     const config = {
-      maxPerMinute: settings.rateLimit.maxPerMinute || 5,
-      maxPerHour: settings.rateLimit.maxPerHour || 30,
+      maxPerMinute: settings.rateLimit?.maxPerMinute || 5,
+      maxPerHour: settings.rateLimit?.maxPerHour || 30,
     };
 
     // Rate limit by IP + formId combination

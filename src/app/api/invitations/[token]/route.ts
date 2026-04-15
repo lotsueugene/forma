@@ -106,7 +106,7 @@ export async function POST(
     if (user?.email?.toLowerCase() !== invitation.email.toLowerCase()) {
       return NextResponse.json(
         {
-          error: `This invitation was sent to ${invitation.email}. Please log in with that email address.`
+          error: 'This invitation was sent to a different email address. Please log in with the correct account.'
         },
         { status: 403 }
       );
