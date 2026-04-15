@@ -22,6 +22,21 @@ function getResend(): Resend | null {
 
 const EMAIL_FROM = process.env.EMAIL_FROM || 'Forma <notifications@withforma.io>';
 
+/**
+ * Send a generic email via Resend
+ */
+export async function sendEmail({ to, subject, html, from }: { to: string; subject: string; html: string; from?: string }) {
+  const resend = getResend();
+  if (!resend) throw new Error('Email not configured');
+
+  await resend.emails.send({
+    from: from || EMAIL_FROM,
+    to,
+    subject,
+    html,
+  });
+}
+
 export interface FormField {
   id: string;
   label: string;

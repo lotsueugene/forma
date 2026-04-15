@@ -223,6 +223,7 @@ model Form {
   submissions Submission[]
   integrations Integration[]
   bookingBlocks BookingBlock[]
+  automations Automation[]
   respondentBroadcasts RespondentBroadcast[]
   defaultForDomains CustomDomain[] @relation("DefaultForm")
 
@@ -618,4 +619,43 @@ model EmailUnsubscribe {
 
   @@unique([email, scope])
   @@index([email])
+}
+
+// Form automations (auto-reply, follow-up sequences, conditional actions)
+model Automation {
+  id          String   @id @default(cuid())
+  formId      String
+  form        Form     @relation(fields: [formId], references: [id], onDelete: Cascade)
+  name        String
+  trigger     String   @default("submission") // submission
+  enabled     Boolean  @default(true)
+  actions     String   // JSON array of actions [{type, config, delay}]
+  conditions  String?  // JSON conditions for when to trigger
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  scheduledEmails ScheduledEmail[]
+
+  @@index([formId, enabled])
+}
+
+// Scheduled emails for delayed automation actions
+model ScheduledEmail {
+  id            String   @id @default(cuid())
+  automationId  String
+  automation    Automation @relation(fields: [automationId], references: [id], onDelete: Cascade)
+  submissionId  String
+  actionIndex   Int      // Which action in the automation's actions array
+  to            String   // Recipient email
+  subject       String
+  body          String
+  scheduledFor  DateTime // When to send
+  sentAt        DateTime?
+  status        String   @default("pending") // pending, sent, failed, cancelled
+
+  createdAt     DateTime @default(now())
+
+  @@index([status, scheduledFor])
+  @@index([automationId])
 }

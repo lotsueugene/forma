@@ -34,11 +34,13 @@ import {
   Stack,
   Clock,
   CalendarCheck,
+  Lightning,
 } from '@phosphor-icons/react';
 import QRCode from 'react-qr-code';
 import { cn } from '@/lib/utils';
 import FormAnalytics from '@/components/dashboard/FormAnalytics';
 import BookingsView from '@/components/dashboard/BookingsView';
+import AutomationsView from '@/components/dashboard/AutomationsView';
 import { useWorkspace } from '@/contexts/workspace-context';
 import FormSettingsPanel from '@/components/dashboard/FormSettings';
 
@@ -63,7 +65,7 @@ interface Submission {
   createdAt: string;
 }
 
-type Tab = 'submissions' | 'bookings' | 'analytics' | 'settings';
+type Tab = 'submissions' | 'bookings' | 'automations' | 'analytics' | 'settings';
 
 export default function FormDetailPage() {
   const params = useParams();
@@ -773,6 +775,7 @@ export default function FormDetailPage() {
             ...(form.fields?.some((f: { type: string }) => f.type === 'booking')
               ? [{ id: 'bookings', label: 'Bookings', icon: CalendarCheck, count: undefined }]
               : []),
+            { id: 'automations', label: 'Automations', icon: Lightning },
             { id: 'analytics', label: 'Analytics', icon: ChartLineUp },
             { id: 'settings', label: 'Settings', icon: Gear },
           ].map((tab) => (
@@ -1454,6 +1457,13 @@ export default function FormDetailPage() {
               setForm((prev: any) => prev ? { ...prev, fields: updatedFields } : prev);
             } catch {}
           }}
+        />
+      )}
+
+      {activeTab === 'automations' && (
+        <AutomationsView
+          formId={formId}
+          fields={(form.fields || []).map((f: { id: string; type: string; label: string }) => ({ id: f.id, type: f.type, label: f.label }))}
         />
       )}
 

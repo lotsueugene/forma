@@ -10,6 +10,7 @@ import { checkSpam, parseSpamSettings, cleanSpamFields } from '@/lib/spam-protec
 import { sendSubmissionNotification, isEmailConfigured } from '@/lib/email';
 import { deliverToIntegrations } from '@/lib/integrations';
 import { stripe, getPlatformFeePercentage } from '@/lib/stripe';
+import { processAutomations } from '@/lib/automations';
 
 // Geolocation lookup using ip-api.com (free, no API key needed)
 async function fetchGeolocation(ip: string): Promise<{
@@ -496,6 +497,20 @@ export async function POST(
       metadata,
     }).catch((integrationErr) => {
       console.error('Error delivering to integrations:', integrationErr);
+    });
+
+    // Process automations (auto-reply, follow-ups — best effort, non-blocking)
+    processAutomations({
+      formId: form.id,
+      submissionId: submission.id,
+      data: cleanedData as Record<string, unknown>,
+      fields: formFields.map((f: { id?: string; type: string; label?: string }) => ({
+        id: f.id || '',
+        label: f.label || '',
+        type: f.type,
+      })),
+    }).catch((automationErr) => {
+      console.error('Error processing automations:', automationErr);
     });
 
     // Update submission with geolocation (non-blocking, don't await)
