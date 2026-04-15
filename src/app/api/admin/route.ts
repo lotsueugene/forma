@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { verifyAdmin } from '@/lib/admin-auth';
 import { STRIPE_PRICES } from '@/lib/stripe';
+import { checkApiRateLimit } from '@/lib/api-rate-limiter';
 
 // GET /api/admin - Get platform overview stats
 export async function GET() {
@@ -9,6 +10,10 @@ export async function GET() {
     const admin = await verifyAdmin();
     if (!admin) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    if (!checkApiRateLimit(`admin:${admin.user.id}`, 30)) {
+      return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
     }
 
     // Get counts in parallel

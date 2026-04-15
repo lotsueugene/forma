@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { motion } from 'framer-motion';
 import { Stack } from '@phosphor-icons/react';
 
@@ -12,7 +13,7 @@ const COMPETITORS = [
     id: 'typeform',
     name: 'Typeform',
     logo: (
-      <img src="/logos/typeform.svg" alt="Typeform" width={20} height={20} />
+      <Image src="/logos/typeform.svg" alt="Typeform" width={20} height={20} />
     ),
     pricing: [
       { threshold: 0, price: 29 },
@@ -25,7 +26,7 @@ const COMPETITORS = [
     id: 'jotform',
     name: 'Jotform',
     logo: (
-      <img src="/logos/jotform.png" alt="Jotform" width={20} height={20} className="rounded" />
+      <Image src="/logos/jotform.png" alt="Jotform" width={20} height={20} className="rounded" />
     ),
     pricing: [
       { threshold: 0, price: 0 },
@@ -38,7 +39,7 @@ const COMPETITORS = [
     id: 'tally',
     name: 'Tally',
     logo: (
-      <img src="https://tally.so/favicon.ico" alt="Tally" width={20} height={20} className="rounded" />
+      <Image src="https://tally.so/favicon.ico" alt="Tally" width={20} height={20} className="rounded" />
     ),
     pricing: [
       { threshold: 0, price: 0 },

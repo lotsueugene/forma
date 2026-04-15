@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { verifyFormAccess } from '@/lib/workspace-auth';
+import { getSubscriptionInfo } from '@/lib/subscription';
 
 // GET /api/forms/[id] - Get a single form
 export async function GET(
@@ -102,6 +103,23 @@ export async function PUT(
         });
         if (existingSlug) {
           return NextResponse.json({ error: 'This slug is already used by another form' }, { status: 400 });
+        }
+      }
+    }
+
+    // Enforce plan restrictions at save time
+    if (settings) {
+      const subInfo = await getSubscriptionInfo(existingForm.workspaceId);
+      if (subInfo.plan === 'free') {
+        // Strip pro-only settings for free users
+        if (settings.thankYou?.showBranding === false) {
+          settings.thankYou.showBranding = true;
+        }
+        if (settings.customCss) {
+          delete settings.customCss;
+        }
+        if (settings.saveAndResume) {
+          settings.saveAndResume = false;
         }
       }
     }
