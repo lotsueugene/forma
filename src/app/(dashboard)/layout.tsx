@@ -127,28 +127,39 @@ function WorkspaceSwitcher() {
               className="mt-2 py-2 bg-white border border-black/6 rounded-lg shadow-xl"
             >
               {workspaces.map((ws) => (
-                <button
-                  key={ws.id}
-                  onClick={() => {
-                    switchWorkspace(ws.id);
-                    setIsOpen(false);
-                  }}
-                  className="w-full px-3 py-2 text-left hover:bg-gray-100 flex items-center justify-between"
-                >
-                  <div className="flex items-center gap-2 min-w-0">
-                    <span className="text-sm text-gray-900 truncate">
-                      {ws.name}
-                    </span>
-                    {ws.isPersonal && (
-                      <span className="text-[10px] text-gray-500 uppercase tracking-wider">
-                        Personal
+                <div key={ws.id} className="flex items-center hover:bg-gray-100">
+                  <button
+                    onClick={() => {
+                      switchWorkspace(ws.id);
+                      setIsOpen(false);
+                    }}
+                    className="flex-1 px-3 py-2 text-left flex items-center justify-between min-w-0"
+                  >
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className="text-sm text-gray-900 truncate">
+                        {ws.name}
                       </span>
+                      {ws.isPersonal && (
+                        <span className="text-[10px] text-gray-500 uppercase tracking-wider">
+                          Personal
+                        </span>
+                      )}
+                    </div>
+                    {ws.id === currentWorkspace.id && (
+                      <Check size={14} className="text-safety-orange shrink-0" />
                     )}
-                  </div>
-                  {ws.id === currentWorkspace.id && (
-                    <Check size={14} className="text-safety-orange flex-shrink-0" />
-                  )}
-                </button>
+                  </button>
+                  <Link
+                    href="/dashboard/settings"
+                    onClick={() => {
+                      switchWorkspace(ws.id);
+                      setIsOpen(false);
+                    }}
+                    className="p-2 mr-1 text-gray-300 hover:text-gray-600 rounded transition-colors shrink-0"
+                  >
+                    <Gear size={14} />
+                  </Link>
+                </div>
               ))}
               <div className="border-t border-black/6 mt-2 pt-2 px-2">
                 <button
