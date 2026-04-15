@@ -81,8 +81,19 @@ export default function AutomationsView({ formId, fields }: Props) {
     setShowCreate(true);
   };
 
+  const [formError, setFormError] = useState('');
+
   const saveAutomation = async () => {
-    if (!newName.trim() || newActions.some(a => !a.subject.trim())) return;
+    setFormError('');
+    if (!newName.trim()) {
+      setFormError('Please enter an automation name');
+      return;
+    }
+    const emptySubject = newActions.find(a => !a.subject.trim());
+    if (emptySubject) {
+      setFormError('Please enter a subject for all email actions');
+      return;
+    }
     setSaving(true);
     try {
       if (editingId) {
@@ -417,11 +428,14 @@ export default function AutomationsView({ formId, fields }: Props) {
             </button>
           </div>
 
+          {formError && (
+            <p className="text-sm text-red-500">{formError}</p>
+          )}
           <div className="flex gap-2 pt-2">
             <button
               type="button"
               onClick={saveAutomation}
-              disabled={!newName.trim() || saving}
+              disabled={saving}
               className="btn btn-primary text-sm"
             >
               {saving ? 'Saving...' : editingId ? 'Save Changes' : 'Create Automation'}
