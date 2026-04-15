@@ -214,7 +214,7 @@ export default function ConversationalForm({
       window.location.href = thankYou.redirectUrl;
       return (
         <div className="forma-page min-h-screen flex items-center justify-center" style={{ backgroundColor: bg }}>
-          <Spinner size={32} className="animate-spin" style={{ color: accent }} />
+          <Spinner size={32} className="animate-spin" style={{ color: "var(--forma-accent)" }} />
         </div>
       );
     }
@@ -232,18 +232,18 @@ export default function ConversationalForm({
             className="w-20 h-20 mx-auto mb-8 rounded-full flex items-center justify-center"
             style={{ backgroundColor: `${accent}20` }}
           >
-            <Check size={40} style={{ color: accent }} />
+            <Check size={40} style={{ color: "var(--forma-accent)" }} />
           </motion.div>
-          <h1 className="text-3xl sm:text-4xl font-bold mb-3" style={{ color: textColor }}>
+          <h1 className="text-3xl sm:text-4xl font-bold mb-3" style={{ color: 'var(--forma-text)' }}>
             {thankYou?.heading || 'Thank you!'}
           </h1>
-          <p className="text-lg" style={{ color: `${textColor}88` }}>
+          <p className="text-lg" style={{ color: 'var(--forma-text-muted)' }}>
             {thankYou?.message || 'Your response has been submitted successfully.'}
           </p>
           {thankYou?.showBranding !== false && (
-            <div className="mt-10 flex items-center justify-center gap-2 text-sm" style={{ color: `${textColor}44` }}>
+            <div className="mt-10 flex items-center justify-center gap-2 text-sm" style={{ color: 'var(--forma-text-faint)' }}>
               <span>Powered by</span>
-              <Link href="/" className="flex items-center gap-1 font-medium" style={{ color: accent }}>
+              <Link href="/" className="flex items-center gap-1 font-medium" style={{ color: "var(--forma-accent)" }}>
                 <Stack size={16} weight="fill" />
                 Forma
               </Link>
@@ -307,7 +307,7 @@ export default function ConversationalForm({
       <div className="fixed top-0 left-0 right-0 z-50 h-1" style={{ backgroundColor: `${textColor}10` }}>
         <motion.div
           className="h-full"
-          style={{ backgroundColor: accent }}
+          style={{ backgroundColor: "var(--forma-accent)" }}
           animate={{ width: `${currentIndex < 0 ? 0 : ((currentIndex + 1) / totalQuestions) * 100}%` }}
           transition={{ duration: 0.4, ease: 'easeOut' }}
         />
@@ -316,7 +316,7 @@ export default function ConversationalForm({
       {/* Question counter */}
       {isOnQuestion && (
         <div className="fixed top-4 right-4 sm:top-6 sm:right-8 z-40">
-          <span className="text-sm font-mono" style={{ color: `${textColor}44` }}>
+          <span className="text-sm font-mono" style={{ color: 'var(--forma-text-faint)' }}>
             {currentIndex + 1} / {totalQuestions}
           </span>
         </div>
@@ -352,7 +352,7 @@ export default function ConversationalForm({
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.2 }}
                     className="text-lg sm:text-xl mb-10 leading-relaxed"
-                    style={{ color: `${textColor}77` }}
+                    style={{ color: 'var(--forma-text-muted)' }}
                   >
                     {form.description}
                   </motion.p>
@@ -363,7 +363,7 @@ export default function ConversationalForm({
                   transition={{ delay: 0.3 }}
                   onClick={() => { setDirection(1); setCurrentIndex(0); }}
                   className="inline-flex items-center gap-3 px-8 py-4 rounded-xl font-semibold text-white text-lg transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
-                  style={{ backgroundColor: accent, boxShadow: `0 4px 14px ${accent}40` }}
+                  style={{ backgroundColor: 'var(--forma-accent)', boxShadow: '0 4px 14px color-mix(in srgb, var(--forma-accent) 25%, transparent)' }}
                 >
                   Start
                   <ArrowRight size={20} weight="bold" />
@@ -373,7 +373,7 @@ export default function ConversationalForm({
                   animate={{ opacity: 1 }}
                   transition={{ delay: 0.5 }}
                   className="mt-4 text-sm"
-                  style={{ color: `${textColor}33` }}
+                  style={{ color: 'var(--forma-text-faint)' }}
                 >
                   Takes about {Math.max(1, Math.ceil(totalQuestions * 0.3))} min
                 </motion.p>
@@ -393,20 +393,20 @@ export default function ConversationalForm({
               >
                 {/* Question number */}
                 <div className="flex items-center gap-2 mb-4">
-                  <span className="text-sm font-mono" style={{ color: accent }}>
+                  <span className="text-sm font-mono" style={{ color: "var(--forma-accent)" }}>
                     {currentIndex + 1}
                   </span>
-                  <ArrowRight size={12} style={{ color: `${textColor}33` }} />
+                  <ArrowRight size={12} style={{ color: 'var(--forma-text-faint)' }} />
                 </div>
 
                 {/* Question label */}
                 <h2 className="forma-label text-2xl sm:text-3xl font-semibold mb-2 leading-snug">
                   {currentField.label}
-                  {currentField.required && <span style={{ color: accent }}> *</span>}
+                  {currentField.required && <span style={{ color: "var(--forma-accent)" }}> *</span>}
                 </h2>
 
                 {currentField.placeholder && currentField.type !== 'select' && (
-                  <p className="text-base mb-6" style={{ color: `${textColor}55` }}>
+                  <p className="text-base mb-6" style={{ color: 'var(--forma-text-muted)' }}>
                     {currentField.placeholder}
                   </p>
                 )}
@@ -468,7 +468,7 @@ export default function ConversationalForm({
                       )}
                       {!isSubmitting && <Check size={16} weight="bold" />}
                     </button>
-                    <span className="text-xs" style={{ color: `${textColor}33` }}>
+                    <span className="text-xs" style={{ color: 'var(--forma-text-faint)' }}>
                       press <strong>Enter ↵</strong>
                     </span>
                   </motion.div>
@@ -488,10 +488,10 @@ export default function ConversationalForm({
           <Link
             href="/"
             className="flex items-center gap-1.5 text-xs font-medium transition-opacity hover:opacity-80"
-            style={{ color: `${textColor}55` }}
+            style={{ color: 'var(--forma-text-muted)' }}
           >
             <Stack size={14} weight="fill" />
-            Powered by <span style={{ color: accent }} className="font-semibold">Forma</span>
+            Powered by <span style={{ color: "var(--forma-accent)" }} className="font-semibold">Forma</span>
           </Link>
         ) : <div />}
 
@@ -623,10 +623,10 @@ function renderConversationalField(
                 >
                   {letter}
                 </span>
-                <span className="text-base font-medium" style={{ color: textColor }}>
+                <span className="text-base font-medium" style={{ color: 'var(--forma-text)' }}>
                   {option}
                 </span>
-                {isSelected && <Check size={18} weight="bold" className="ml-auto" style={{ color: accent }} />}
+                {isSelected && <Check size={18} weight="bold" className="ml-auto" style={{ color: "var(--forma-accent)" }} />}
               </motion.button>
             );
           })}
@@ -664,10 +664,10 @@ function renderConversationalField(
                 >
                   {letter}
                 </span>
-                <span className="text-base font-medium" style={{ color: textColor }}>
+                <span className="text-base font-medium" style={{ color: 'var(--forma-text)' }}>
                   {option}
                 </span>
-                {isSelected && <Check size={18} weight="bold" className="ml-auto" style={{ color: accent }} />}
+                {isSelected && <Check size={18} weight="bold" className="ml-auto" style={{ color: "var(--forma-accent)" }} />}
               </motion.button>
             );
           })}
@@ -703,13 +703,13 @@ function renderConversationalField(
                 >
                   {isChecked ? <Check size={14} weight="bold" /> : letter}
                 </span>
-                <span className="text-base font-medium" style={{ color: textColor }}>
+                <span className="text-base font-medium" style={{ color: 'var(--forma-text)' }}>
                   {option}
                 </span>
               </motion.button>
             );
           })}
-          <p className="text-xs" style={{ color: `${textColor}44` }}>
+          <p className="text-xs" style={{ color: 'var(--forma-text-faint)' }}>
             Choose as many as you like
           </p>
         </div>
@@ -724,17 +724,17 @@ function renderConversationalField(
               style={{ border: `2px solid ${accent}40`, backgroundColor: `${accent}08` }}
             >
               <div className="w-12 h-12 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${accent}15` }}>
-                <FileIcon size={24} style={{ color: accent }} />
+                <FileIcon size={24} style={{ color: "var(--forma-accent)" }} />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="font-medium truncate" style={{ color: textColor }}>{fileData.name}</p>
-                <p className="text-sm" style={{ color: `${textColor}55` }}>{(fileData.size / 1024).toFixed(1)} KB</p>
+                <p className="font-medium truncate" style={{ color: 'var(--forma-text)' }}>{fileData.name}</p>
+                <p className="text-sm" style={{ color: 'var(--forma-text-muted)' }}>{(fileData.size / 1024).toFixed(1)} KB</p>
               </div>
               <button
                 type="button"
                 onClick={() => onFileChange(field.id, null)}
                 className="p-2 rounded-lg transition-colors hover:bg-red-500/10"
-                style={{ color: `${textColor}44` }}
+                style={{ color: 'var(--forma-text-faint)' }}
               >
                 <X size={18} />
               </button>
@@ -747,9 +747,9 @@ function renderConversationalField(
                 backgroundColor: isLightBg ? 'rgba(0,0,0,0.02)' : 'rgba(255,255,255,0.03)',
               }}
             >
-              <UploadSimple size={36} className="mx-auto mb-3" style={{ color: `${textColor}33` }} />
-              <p className="font-medium mb-1" style={{ color: textColor }}>Choose a file or drag it here</p>
-              <p className="text-sm" style={{ color: `${textColor}44` }}>Max 50MB</p>
+              <UploadSimple size={36} className="mx-auto mb-3" style={{ color: 'var(--forma-text-faint)' }} />
+              <p className="font-medium mb-1" style={{ color: 'var(--forma-text)' }}>Choose a file or drag it here</p>
+              <p className="text-sm" style={{ color: 'var(--forma-text-faint)' }}>Max 50MB</p>
               <input
                 type="file"
                 className="hidden"
@@ -810,7 +810,7 @@ function renderConversationalField(
       return (
         <div className="rounded-xl p-6 text-center" style={{ backgroundColor: isLightBg ? 'rgba(0,0,0,0.03)' : 'rgba(255,255,255,0.05)' }}>
           <div className="text-4xl font-bold mb-1">{sym}{(field.amount || 0).toFixed(2)}</div>
-          <p className="text-sm" style={{ color: `${textColor}55` }}>One-time payment via Stripe</p>
+          <p className="text-sm" style={{ color: 'var(--forma-text-muted)' }}>One-time payment via Stripe</p>
         </div>
       );
     }
