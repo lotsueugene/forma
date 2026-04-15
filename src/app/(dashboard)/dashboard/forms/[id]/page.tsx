@@ -76,6 +76,9 @@ export default function FormDetailPage() {
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalSubmissions, setTotalSubmissions] = useState(0);
 
   const [activeTab, setActiveTab] = useState<Tab>('submissions');
   const [selectedSubmissions, setSelectedSubmissions] = useState<string[]>([]);
@@ -183,7 +186,7 @@ export default function FormDetailPage() {
 
   useEffect(() => {
     fetchFormData();
-  }, [formId]);
+  }, [formId, currentPage]);
 
   // Fetch workspace plan for QR branding
   useEffect(() => {
@@ -209,12 +212,16 @@ export default function FormDetailPage() {
       setForm(formData.form);
       setSlugInput(formData.form.slug || '');
 
-      // Fetch submissions
-      const submissionsResponse = await fetch(`/api/forms/${formId}/submissions`);
+      // Fetch submissions with pagination
+      const submissionsResponse = await fetch(`/api/forms/${formId}/submissions?page=${currentPage}&limit=100`);
       const submissionsData = await submissionsResponse.json();
 
       if (submissionsResponse.ok) {
         setSubmissions(submissionsData.submissions || []);
+        if (submissionsData.pagination) {
+          setTotalPages(submissionsData.pagination.totalPages);
+          setTotalSubmissions(submissionsData.pagination.total);
+        }
       }
     } catch (err) {
       setError('Failed to load form');
@@ -1273,6 +1280,70 @@ export default function FormDetailPage() {
                   </>
                 );
               })()}
+
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-between pt-2">
+                  <p className="text-sm text-gray-500">
+                    Showing {((currentPage - 1) * 100) + 1}-{Math.min(currentPage * 100, totalSubmissions)} of {totalSubmissions}
+                  </p>
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => setCurrentPage(1)}
+                      disabled={currentPage === 1}
+                      className="px-2.5 py-1.5 text-xs rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed"
+                    >
+                      First
+                    </button>
+                    <button
+                      onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                      disabled={currentPage === 1}
+                      className="px-2.5 py-1.5 text-xs rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed"
+                    >
+                      Prev
+                    </button>
+                    {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                      let page: number;
+                      if (totalPages <= 5) {
+                        page = i + 1;
+                      } else if (currentPage <= 3) {
+                        page = i + 1;
+                      } else if (currentPage >= totalPages - 2) {
+                        page = totalPages - 4 + i;
+                      } else {
+                        page = currentPage - 2 + i;
+                      }
+                      return (
+                        <button
+                          key={page}
+                          onClick={() => setCurrentPage(page)}
+                          className={`w-8 h-8 text-xs rounded-lg font-medium transition-colors ${
+                            page === currentPage
+                              ? 'bg-safety-orange text-white'
+                              : 'border border-gray-200 text-gray-600 hover:bg-gray-50'
+                          }`}
+                        >
+                          {page}
+                        </button>
+                      );
+                    })}
+                    <button
+                      onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                      disabled={currentPage === totalPages}
+                      className="px-2.5 py-1.5 text-xs rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed"
+                    >
+                      Next
+                    </button>
+                    <button
+                      onClick={() => setCurrentPage(totalPages)}
+                      disabled={currentPage === totalPages}
+                      className="px-2.5 py-1.5 text-xs rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed"
+                    >
+                      Last
+                    </button>
+                  </div>
+                </div>
+              )}
             </>
           )}
         </div>
