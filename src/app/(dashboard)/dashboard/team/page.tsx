@@ -14,8 +14,11 @@ import {
   ShieldCheck,
   Eye,
   Spinner,
+  ArrowsClockwise,
+  SignOut,
 } from '@phosphor-icons/react';
 import { cn } from '@/lib/utils';
+import { useSession } from 'next-auth/react';
 import { useWorkspace } from '@/contexts/workspace-context';
 import UpgradeModal from '@/components/dashboard/UpgradeModal';
 
@@ -95,6 +98,7 @@ function formatDate(dateString: string): string {
 }
 
 export default function TeamPage() {
+  const { data: session } = useSession();
   const { currentWorkspace } = useWorkspace();
   const [members, setMembers] = useState<TeamMember[]>([]);
   const [invitations, setInvitations] = useState<Invitation[]>([]);
@@ -240,6 +244,65 @@ export default function TeamPage() {
       setMenuOpenId(null);
     } catch (err) {
       console.error('Error removing member:', err);
+    }
+  };
+
+  const handleTransferOwnership = async (memberId: string, memberName: string) => {
+    if (!currentWorkspace) return;
+    if (!confirm(`Transfer ownership to ${memberName}? You will become a manager.`)) return;
+
+    try {
+      const response = await fetch(
+        `/api/workspaces/${currentWorkspace.id}/members/${memberId}`,
+        {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'transfer_ownership' }),
+        }
+      );
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to transfer ownership');
+      }
+
+      await fetchTeamData();
+      setMenuOpenId(null);
+    } catch (err) {
+      console.error('Error transferring ownership:', err);
+    }
+  };
+
+  const handleLeaveWorkspace = async () => {
+    if (!currentWorkspace) return;
+
+    // Find current user's membership
+    const myMembership = members.find(m => m.email === session?.user?.email);
+    if (!myMembership) return;
+
+    const isOwner = myMembership.role === 'owner';
+    const message = isOwner
+      ? 'You are the owner. Ownership will be transferred to the next member. Are you sure?'
+      : 'Are you sure you want to leave this workspace?';
+
+    if (!confirm(message)) return;
+
+    try {
+      const response = await fetch(
+        `/api/workspaces/${currentWorkspace.id}/members/${myMembership.id}`,
+        { method: 'DELETE' }
+      );
+
+      if (!response.ok) {
+        const data = await response.json();
+        alert(data.error || 'Failed to leave workspace');
+        return;
+      }
+
+      // Redirect to dashboard
+      window.location.href = '/dashboard';
+    } catch (err) {
+      console.error('Error leaving workspace:', err);
     }
   };
 
@@ -446,6 +509,15 @@ export default function TeamPage() {
                                   <PencilSimple size={16} />
                                   Change Role
                                 </button>
+                                {currentWorkspace?.role === 'owner' && (
+                                  <button
+                                    onClick={() => handleTransferOwnership(member.id, member.name || member.email)}
+                                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:text-gray-900 hover:bg-gray-100"
+                                  >
+                                    <ArrowsClockwise size={16} />
+                                    Transfer Ownership
+                                  </button>
+                                )}
                                 <button
                                   onClick={() => handleRemoveMember(member.id)}
                                   className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:text-red-700 hover:bg-gray-100"
@@ -611,6 +683,28 @@ export default function TeamPage() {
           })}
         </div>
       </div>
+
+      {/* Leave Workspace */}
+      {!currentWorkspace?.isPersonal && (
+        <div className="flex items-center justify-between p-4 sm:p-6 rounded-xl border border-red-200 bg-red-50">
+          <div>
+            <p className="text-sm font-medium text-gray-900">Leave Workspace</p>
+            <p className="text-xs text-gray-500">
+              {currentWorkspace?.role === 'owner'
+                ? 'Ownership will be transferred to the next member'
+                : 'You will lose access to this workspace'}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={handleLeaveWorkspace}
+            className="btn text-sm text-red-600 border border-red-300 hover:bg-red-100 flex items-center gap-1.5"
+          >
+            <SignOut size={14} />
+            Leave
+          </button>
+        </div>
+      )}
 
       {/* Invite Modal */}
       <AnimatePresence>
