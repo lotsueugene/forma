@@ -111,11 +111,14 @@ function replaceTemplateVars(
     if (value === undefined || value === null) continue;
 
     let displayValue: string;
-    if (field.type === 'booking' && typeof value === 'object') {
-      // Format booking as readable text
-      const booking = value as { date?: string; slots?: Array<{ start: string; end: string }> };
-      let parsed = booking;
-      if (typeof value === 'string') { try { parsed = JSON.parse(value as unknown as string); } catch { parsed = booking; } }
+    if (field.type === 'booking') {
+      // Format booking as readable text — value can be string or object
+      let parsed: { date?: string; slots?: Array<{ start: string; end: string }> } | null = null;
+      if (typeof value === 'string') {
+        try { parsed = JSON.parse(value); } catch { parsed = null; }
+      } else if (typeof value === 'object') {
+        parsed = value as { date?: string; slots?: Array<{ start: string; end: string }> };
+      }
       if (parsed?.date && Array.isArray(parsed.slots)) {
         const dateStr = new Date(parsed.date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
         const fmt = (t: string) => { const [h, m] = t.split(':').map(Number); const ap = h >= 12 ? 'PM' : 'AM'; return `${h === 0 ? 12 : h > 12 ? h - 12 : h}:${m.toString().padStart(2, '0')} ${ap}`; };
