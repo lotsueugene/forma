@@ -53,6 +53,7 @@ interface FormSettings {
     redirectUrl?: string;
     showBranding?: boolean;
   };
+  customCss?: string;
 }
 
 interface Form {
@@ -212,13 +213,13 @@ export default function ConversationalForm({
     if (thankYou?.redirectUrl && typeof window !== 'undefined') {
       window.location.href = thankYou.redirectUrl;
       return (
-        <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: bg }}>
+        <div className="forma-page min-h-screen flex items-center justify-center" style={{ backgroundColor: bg }}>
           <Spinner size={32} className="animate-spin" style={{ color: accent }} />
         </div>
       );
     }
     return (
-      <div className="min-h-screen flex items-center justify-center p-6" style={{ backgroundColor: bg }}>
+      <div className="forma-page min-h-screen flex items-center justify-center p-6" style={{ backgroundColor: bg }}>
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -255,12 +256,15 @@ export default function ConversationalForm({
 
   return (
     <div
-      className="min-h-screen flex flex-col"
+      className="forma-page min-h-screen flex flex-col"
       style={{
         backgroundColor: bg,
         color: textColor,
       }}
     >
+      {form.settings?.customCss && (
+        <style dangerouslySetInnerHTML={{ __html: form.settings.customCss }} />
+      )}
       {/* Progress bar */}
       <div className="fixed top-0 left-0 right-0 z-50 h-1" style={{ backgroundColor: `${textColor}10` }}>
         <motion.div
