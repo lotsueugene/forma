@@ -110,9 +110,21 @@ function replaceTemplateVars(
  * Wrap plain text body in a simple HTML email template
  */
 function wrapInEmailTemplate(body: string): string {
-  // If body already contains HTML tags, use as-is
+  // If body already contains HTML tags, wrap in base template
   if (body.includes('<') && body.includes('>')) {
-    return body;
+    return `
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+<body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;line-height:1.6;color:#1f2937;margin:0;padding:0;background-color:#ffffff;">
+  <div style="max-width:600px;margin:0 auto;padding:40px 20px;">
+    ${body}
+    <div style="padding:24px 0 0;border-top:1px solid #e5e7eb;color:#9ca3af;font-size:12px;">
+      Sent via <a href="https://withforma.io" style="color:#ef6f2e;text-decoration:none">Forma</a>
+    </div>
+  </div>
+</body>
+</html>`;
   }
 
   // Convert plain text to HTML (newlines to <br>, links to <a>)
@@ -124,11 +136,18 @@ function wrapInEmailTemplate(body: string): string {
     .replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" style="color:#ef6f2e">$1</a>');
 
   return `
-    <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;max-width:600px;margin:0 auto;padding:32px 24px;color:#1f2937">
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+<body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;line-height:1.6;color:#1f2937;margin:0;padding:0;background-color:#ffffff;">
+  <div style="max-width:600px;margin:0 auto;padding:40px 20px;">
+    <div style="color:#374151;font-size:15px;line-height:1.7;">
       ${htmlBody}
-      <div style="margin-top:32px;padding-top:16px;border-top:1px solid #e5e7eb;font-size:12px;color:#9ca3af">
-        Sent via <a href="https://withforma.io" style="color:#ef6f2e;text-decoration:none">Forma</a>
-      </div>
     </div>
-  `;
+    <div style="padding:24px 0 0;border-top:1px solid #e5e7eb;color:#9ca3af;font-size:12px;">
+      Sent via <a href="https://withforma.io" style="color:#ef6f2e;text-decoration:none">Forma</a>
+    </div>
+  </div>
+</body>
+</html>`;
 }

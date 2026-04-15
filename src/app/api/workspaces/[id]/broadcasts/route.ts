@@ -248,25 +248,25 @@ function buildBroadcastEmail(content: string, senderName: string, logoUrl?: stri
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
-<body style="margin:0;padding:0;background-color:#f8f9fb;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+<body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;line-height:1.6;color:#1f2937;margin:0;padding:0;background-color:#ffffff;">
   <div style="max-width:600px;margin:0 auto;padding:40px 20px;">
-    <div style="background:white;border-radius:16px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.04);">
-      <!-- Header -->
-      <div style="padding:32px 32px 24px;border-bottom:1px solid #f0f0f0;">
-        ${logoUrl
-          ? `<img src="${logoUrl}" alt="${senderName}" style="height:32px;margin-bottom:8px;" />`
-          : `<div style="font-size:18px;font-weight:600;color:#111827;">${senderName}</div>`
-        }
-      </div>
-      <!-- Content -->
-      <div style="padding:32px;color:#374151;font-size:15px;line-height:1.7;">
-        ${content}
-      </div>
+    <!-- Header -->
+    <div style="padding:0 0 24px;">
+      ${logoUrl
+        ? `<img src="${logoUrl}" alt="${senderName}" style="height:32px;display:block;" />`
+        : `<div style="font-size:18px;font-weight:700;color:#1f2937;">${senderName}</div>`
+      }
     </div>
+
+    <!-- Content -->
+    <div style="padding:0 0 32px;color:#374151;font-size:15px;line-height:1.7;">
+      ${content}
+    </div>
+
     <!-- Footer -->
-    <div style="text-align:center;padding:24px 0;color:#9ca3af;font-size:12px;">
+    <div style="padding:24px 0 0;border-top:1px solid #e5e7eb;color:#9ca3af;font-size:12px;">
       Sent by ${senderName} via <a href="https://withforma.io" style="color:#ef6f2e;text-decoration:none;">Forma</a>
-      ${unsubscribeUrl ? `<br><a href="${unsubscribeUrl}" style="color:#9ca3af;text-decoration:underline;font-size:11px;">Unsubscribe</a>` : ''}
+      ${unsubscribeUrl ? `<br><a href="${unsubscribeUrl}" style="color:#9ca3af;text-decoration:underline;font-size:11px;margin-top:4px;display:inline-block;">Unsubscribe</a>` : ''}
     </div>
   </div>
 </body>
