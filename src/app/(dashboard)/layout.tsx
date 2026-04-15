@@ -240,6 +240,14 @@ function WorkspaceSwitcher() {
 function DashboardContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { data: session, status } = useSession();
+
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (status === 'unauthenticated') {
+      window.location.href = '/login';
+    }
+  }, [status]);
+
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
@@ -294,11 +302,17 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
   // Intentionally not closing dropdowns on route change here to satisfy
   // react-hooks/set-state-in-effect (menus close on click-outside / next interaction).
 
+  // Don't render dashboard while checking auth or redirecting
+  if (status === 'loading' || status === 'unauthenticated') {
+    return (
+      <div className="min-h-screen bg-[#f8f9fb] flex items-center justify-center">
+        <div className="animate-spin w-8 h-8 border-2 border-safety-orange border-t-transparent rounded-full" />
+      </div>
+    );
+  }
+
   const user = session?.user;
-  const isSessionLoading = status === 'loading';
-  const userInitials = isSessionLoading
-    ? '...'
-    : user?.name
+  const userInitials = user?.name
       ? user.name
           .split(' ')
           .map((n) => n[0])
