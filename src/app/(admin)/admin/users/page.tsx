@@ -239,27 +239,54 @@ export default function AdminUsersPage() {
         {pagination.totalPages > 1 && (
           <div className="flex items-center justify-between px-4 py-3 border-t border-gray-200">
             <div className="text-sm text-gray-500">
-              Showing {((pagination.page - 1) * pagination.limit) + 1} to{' '}
-              {Math.min(pagination.page * pagination.limit, pagination.total)} of{' '}
-              {pagination.total} users
+              Showing {((pagination.page - 1) * pagination.limit) + 1}-{Math.min(pagination.page * pagination.limit, pagination.total)} of {pagination.total}
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => setPagination(p => ({ ...p, page: 1 }))}
+                disabled={pagination.page === 1}
+                className="px-2.5 py-1.5 text-xs rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed"
+              >
+                First
+              </button>
               <button
                 onClick={() => setPagination(p => ({ ...p, page: p.page - 1 }))}
                 disabled={pagination.page === 1}
-                className="btn btn-ghost disabled:opacity-50"
+                className="px-2.5 py-1.5 text-xs rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed"
               >
-                <CaretLeft size={16} />
+                Prev
               </button>
-              <span className="text-sm text-gray-600">
-                Page {pagination.page} of {pagination.totalPages}
-              </span>
+              {Array.from({ length: Math.min(5, pagination.totalPages) }, (_, i) => {
+                let pg: number;
+                if (pagination.totalPages <= 5) pg = i + 1;
+                else if (pagination.page <= 3) pg = i + 1;
+                else if (pagination.page >= pagination.totalPages - 2) pg = pagination.totalPages - 4 + i;
+                else pg = pagination.page - 2 + i;
+                return (
+                  <button
+                    key={pg}
+                    onClick={() => setPagination(p => ({ ...p, page: pg }))}
+                    className={`w-8 h-8 text-xs rounded-lg font-medium transition-colors ${
+                      pg === pagination.page ? 'bg-safety-orange text-white' : 'border border-gray-200 text-gray-600 hover:bg-gray-50'
+                    }`}
+                  >
+                    {pg}
+                  </button>
+                );
+              })}
               <button
                 onClick={() => setPagination(p => ({ ...p, page: p.page + 1 }))}
                 disabled={pagination.page === pagination.totalPages}
-                className="btn btn-ghost disabled:opacity-50"
+                className="px-2.5 py-1.5 text-xs rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed"
               >
-                <CaretRight size={16} />
+                Next
+              </button>
+              <button
+                onClick={() => setPagination(p => ({ ...p, page: pagination.totalPages }))}
+                disabled={pagination.page === pagination.totalPages}
+                className="px-2.5 py-1.5 text-xs rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed"
+              >
+                Last
               </button>
             </div>
           </div>
@@ -348,28 +375,24 @@ export default function AdminUsersPage() {
 
         {/* Pagination - Mobile */}
         {pagination.totalPages > 1 && (
-          <div className="card p-4">
-            <div className="flex items-center justify-between">
+          <div className="flex items-center justify-center gap-1 pt-2">
               <button
                 onClick={() => setPagination(p => ({ ...p, page: p.page - 1 }))}
                 disabled={pagination.page === 1}
-                className="btn btn-ghost disabled:opacity-50"
+                className="px-2.5 py-1.5 text-xs rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed"
               >
-                <CaretLeft size={16} />
                 Prev
               </button>
-              <span className="text-sm text-gray-600">
+              <span className="text-xs text-gray-500 px-2">
                 {pagination.page} / {pagination.totalPages}
               </span>
               <button
                 onClick={() => setPagination(p => ({ ...p, page: p.page + 1 }))}
                 disabled={pagination.page === pagination.totalPages}
-                className="btn btn-ghost disabled:opacity-50"
+                className="px-2.5 py-1.5 text-xs rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed"
               >
                 Next
-                <CaretRight size={16} />
               </button>
-            </div>
           </div>
         )}
       </div>

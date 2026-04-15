@@ -421,23 +421,52 @@ export default function BroadcastsPage() {
 
       {/* Pagination */}
       {totalPages > 1 && (
-        <div className="flex items-center justify-center gap-2">
+        <div className="flex items-center justify-center gap-1">
+          <button
+            onClick={() => setPage(1)}
+            disabled={page === 1}
+            className="px-2.5 py-1.5 text-xs rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed"
+          >
+            First
+          </button>
           <button
             onClick={() => setPage(p => Math.max(1, p - 1))}
             disabled={page === 1}
-            className="btn btn-secondary text-sm disabled:opacity-40"
+            className="px-2.5 py-1.5 text-xs rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed"
           >
-            Previous
+            Prev
           </button>
-          <span className="text-sm text-gray-500">
-            Page {page} of {totalPages}
-          </span>
+          {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+            let pg: number;
+            if (totalPages <= 5) pg = i + 1;
+            else if (page <= 3) pg = i + 1;
+            else if (page >= totalPages - 2) pg = totalPages - 4 + i;
+            else pg = page - 2 + i;
+            return (
+              <button
+                key={pg}
+                onClick={() => setPage(pg)}
+                className={`w-8 h-8 text-xs rounded-lg font-medium transition-colors ${
+                  pg === page ? 'bg-safety-orange text-white' : 'border border-gray-200 text-gray-600 hover:bg-gray-50'
+                }`}
+              >
+                {pg}
+              </button>
+            );
+          })}
           <button
             onClick={() => setPage(p => Math.min(totalPages, p + 1))}
             disabled={page === totalPages}
-            className="btn btn-secondary text-sm disabled:opacity-40"
+            className="px-2.5 py-1.5 text-xs rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed"
           >
             Next
+          </button>
+          <button
+            onClick={() => setPage(totalPages)}
+            disabled={page === totalPages}
+            className="px-2.5 py-1.5 text-xs rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed"
+          >
+            Last
           </button>
         </div>
       )}

@@ -22,17 +22,27 @@ export async function GET(
       return NextResponse.json({ error: access.error }, { status: 403 });
     }
 
-    const automations = await prisma.automation.findMany({
-      where: { formId: id },
-      orderBy: { createdAt: 'asc' },
-    });
+    const page = parseInt(request.nextUrl.searchParams.get('page') || '1');
+    const limit = Math.min(parseInt(request.nextUrl.searchParams.get('limit') || '50'), 200);
+    const skip = (page - 1) * limit;
+
+    const [automations, total] = await Promise.all([
+      prisma.automation.findMany({
+        where: { formId: id },
+        orderBy: { createdAt: 'asc' },
+        take: limit,
+        skip,
+      }),
+      prisma.automation.count({ where: { formId: id } }),
+    ]);
 
     return NextResponse.json({
       automations: automations.map(a => ({
         ...a,
-        actions: JSON.parse(a.actions),
-        conditions: a.conditions ? JSON.parse(a.conditions) : null,
+        actions: (() => { try { return JSON.parse(a.actions); } catch { return []; } })(),
+        conditions: (() => { try { return a.conditions ? JSON.parse(a.conditions) : null; } catch { return null; } })(),
       })),
+      pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
     });
   } catch (error) {
     console.error('Error fetching automations:', error);
