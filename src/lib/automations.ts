@@ -133,10 +133,12 @@ function replaceTemplateVars(
       displayValue = String(value);
     }
     const varName = field.label.toLowerCase().replace(/\s+/g, '_');
+    // Escape regex special characters in variable name
+    const escapeRegex = (s: string) => s.replace(/[.*+?^${}()|[\]\\&]/g, '\\$&');
 
     // Replace both {{var_name}} and {{field_id}}
-    result = result.replace(new RegExp(`\\{\\{${varName}\\}\\}`, 'gi'), displayValue);
-    result = result.replace(new RegExp(`\\{\\{${field.id}\\}\\}`, 'gi'), displayValue);
+    result = result.replace(new RegExp(`\\{\\{${escapeRegex(varName)}\\}\\}`, 'gi'), displayValue);
+    result = result.replace(new RegExp(`\\{\\{${escapeRegex(field.id)}\\}\\}`, 'gi'), displayValue);
   }
 
   return result;
