@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Plus, Lightning, Trash, EnvelopeSimple, Clock, Check, X, CaretDown } from '@phosphor-icons/react';
-import TimeInput from '@/components/ui/TimeInput';
+import { Plus, Lightning, Trash, EnvelopeSimple, Clock, Check, X, CaretDown, PaperPlaneTilt, Warning } from '@phosphor-icons/react';
+import ConfirmModal from '@/components/ui/ConfirmModal';
 
 interface AutomationAction {
   type: 'send_email';
@@ -60,6 +60,15 @@ export default function AutomationsView({ formId, fields }: Props) {
     { type: 'send_email', to: 'respondent', subject: '', body: '', delay: 0 },
   ]);
 
+  // Email log state
+  const [sentEmails, setSentEmails] = useState<Array<{
+    id: string; to: string; subject: string; status: string;
+    scheduledFor: string; sentAt: string | null; createdAt: string; automationName: string;
+  }>>([]);
+  const [emailPage, setEmailPage] = useState(1);
+  const [emailTotalPages, setEmailTotalPages] = useState(1);
+  const [deletingEmailId, setDeletingEmailId] = useState<string | null>(null);
+
   // Fetch automations
   useEffect(() => {
     fetch(`/api/forms/${formId}/automations`)
@@ -67,7 +76,16 @@ export default function AutomationsView({ formId, fields }: Props) {
       .then(data => setAutomations(data.automations || []))
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, [formId]);
+
+    // Fetch sent emails
+    fetch(`/api/forms/${formId}/automations/emails?page=${emailPage}`)
+      .then(res => res.ok ? res.json() : { emails: [] })
+      .then(data => {
+        setSentEmails(data.emails || []);
+        if (data.pagination) setEmailTotalPages(data.pagination.totalPages);
+      })
+      .catch(() => {});
+  }, [formId, emailPage]);
 
   const createAutomation = async () => {
     if (!newName.trim() || newActions.some(a => !a.subject.trim())) return;
@@ -410,6 +428,88 @@ export default function AutomationsView({ formId, fields }: Props) {
           )}
         </div>
       )}
+
+      {/* Sent Email Log */}
+      {sentEmails.length > 0 && (
+        <div className="card p-4 sm:p-5 space-y-3">
+          <h3 className="text-sm font-medium text-gray-900 flex items-center gap-2">
+            <PaperPlaneTilt size={16} />
+            Email Log
+          </h3>
+          <div className="divide-y divide-gray-100">
+            {sentEmails.map((email) => (
+              <div key={email.id} className="flex items-center justify-between py-2.5">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className={`w-2 h-2 rounded-full shrink-0 ${
+                    email.status === 'sent' ? 'bg-emerald-400' :
+                    email.status === 'pending' ? 'bg-amber-400' :
+                    email.status === 'failed' ? 'bg-red-400' :
+                    'bg-gray-300'
+                  }`} />
+                  <div className="min-w-0">
+                    <p className="text-sm text-gray-800 truncate">{email.subject}</p>
+                    <p className="text-xs text-gray-400">
+                      {email.to} &middot; {email.automationName} &middot;{' '}
+                      {email.sentAt
+                        ? `Sent ${new Date(email.sentAt).toLocaleDateString()}`
+                        : email.status === 'pending'
+                          ? `Scheduled for ${new Date(email.scheduledFor).toLocaleString()}`
+                          : email.status}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setDeletingEmailId(email.id)}
+                  className="p-1.5 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded transition-colors shrink-0"
+                >
+                  <Trash size={14} />
+                </button>
+              </div>
+            ))}
+          </div>
+          {emailTotalPages > 1 && (
+            <div className="flex items-center justify-center gap-1 pt-2">
+              <button
+                onClick={() => setEmailPage(p => Math.max(1, p - 1))}
+                disabled={emailPage === 1}
+                className="px-2.5 py-1.5 text-xs rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed"
+              >
+                Prev
+              </button>
+              <span className="text-xs text-gray-500 px-2">{emailPage} / {emailTotalPages}</span>
+              <button
+                onClick={() => setEmailPage(p => Math.min(emailTotalPages, p + 1))}
+                disabled={emailPage === emailTotalPages}
+                className="px-2.5 py-1.5 text-xs rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed"
+              >
+                Next
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
+      <ConfirmModal
+        open={!!deletingEmailId}
+        onClose={() => setDeletingEmailId(null)}
+        onConfirm={async () => {
+          if (!deletingEmailId) return;
+          try {
+            await fetch(`/api/forms/${formId}/automations/emails`, {
+              method: 'DELETE',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ emailId: deletingEmailId }),
+            });
+            setSentEmails(prev => prev.filter(e => e.id !== deletingEmailId));
+          } catch {}
+          setDeletingEmailId(null);
+        }}
+        title="Delete Email"
+        message="This email record will be permanently deleted. If pending, it will be cancelled."
+        confirmText="Delete"
+        variant="danger"
+      />
     </div>
   );
 }

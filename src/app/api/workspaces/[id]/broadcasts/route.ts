@@ -298,7 +298,7 @@ function buildBroadcastEmail(content: string, senderName: string, logoUrl?: stri
 
     <!-- Footer -->
     <div style="padding:24px 0 0;border-top:1px solid #e5e7eb;color:#9ca3af;font-size:12px;">
-      Sent by ${senderName} via <a href="https://withforma.io" style="color:#ef6f2e;text-decoration:none;">Forma</a>
+      Sent by ${senderName} via <a href="https://withforma.io" style="color:#ef6f2e;text-decoration:none;"><img src="https://withforma.io/icon.svg" alt="Forma" width="14" height="14" style="display:inline-block;vertical-align:middle;margin-right:3px;" />Forma</a>
       ${unsubscribeUrl ? `<br><a href="${unsubscribeUrl}" style="color:#9ca3af;text-decoration:underline;font-size:11px;margin-top:4px;display:inline-block;">Unsubscribe</a>` : ''}
     </div>
   </div>

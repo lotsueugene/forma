@@ -120,7 +120,7 @@ function wrapInEmailTemplate(body: string): string {
   <div style="max-width:600px;margin:0 auto;padding:40px 20px;">
     ${body}
     <div style="padding:24px 0 0;border-top:1px solid #e5e7eb;color:#9ca3af;font-size:12px;">
-      Sent via <a href="https://withforma.io" style="color:#ef6f2e;text-decoration:none">Forma</a>
+      Sent via <a href="https://withforma.io" style="color:#ef6f2e;text-decoration:none"><img src="https://withforma.io/icon.svg" alt="Forma" width="14" height="14" style="display:inline-block;vertical-align:middle;margin-right:3px;" />Forma</a>
     </div>
   </div>
 </body>
@@ -145,7 +145,7 @@ function wrapInEmailTemplate(body: string): string {
       ${htmlBody}
     </div>
     <div style="padding:24px 0 0;border-top:1px solid #e5e7eb;color:#9ca3af;font-size:12px;">
-      Sent via <a href="https://withforma.io" style="color:#ef6f2e;text-decoration:none">Forma</a>
+      Sent via <a href="https://withforma.io" style="color:#ef6f2e;text-decoration:none"><img src="https://withforma.io/icon.svg" alt="Forma" width="14" height="14" style="display:inline-block;vertical-align:middle;margin-right:3px;" />Forma</a>
     </div>
   </div>
 </body>
