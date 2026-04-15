@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Plus, Lightning, Trash, EnvelopeSimple, Clock, Check, X, CaretDown, ClockCounterClockwise } from '@phosphor-icons/react';
+import { Plus, Lightning, Trash, EnvelopeSimple, Clock, Check, X, CaretDown, ClockCounterClockwise, PencilSimple } from '@phosphor-icons/react';
 import Link from 'next/link';
 import ConfirmModal from '@/components/ui/ConfirmModal';
 
@@ -52,6 +52,7 @@ export default function AutomationsView({ formId, fields }: Props) {
   const [automations, setAutomations] = useState<Automation[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [expandedAction, setExpandedAction] = useState<string | null>(null);
@@ -71,28 +72,60 @@ export default function AutomationsView({ formId, fields }: Props) {
       .finally(() => setLoading(false));
   }, [formId]);
 
-  const createAutomation = async () => {
+  // createAutomation is now handled by saveAutomation above
+
+  const startEditing = (automation: Automation) => {
+    setEditingId(automation.id);
+    setNewName(automation.name);
+    setNewActions(automation.actions);
+    setShowCreate(true);
+  };
+
+  const saveAutomation = async () => {
     if (!newName.trim() || newActions.some(a => !a.subject.trim())) return;
     setSaving(true);
     try {
-      const res = await fetch(`/api/forms/${formId}/automations`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: newName,
-          trigger: 'submission',
-          actions: newActions,
-        }),
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setAutomations(prev => [...prev, data.automation]);
-        setShowCreate(false);
-        setNewName('');
-        setNewActions([{ type: 'send_email', to: 'respondent', subject: '', body: '', delay: 0 }]);
+      if (editingId) {
+        // Update existing
+        const res = await fetch(`/api/forms/${formId}/automations`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            automationId: editingId,
+            name: newName,
+            actions: newActions,
+          }),
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setAutomations(prev => prev.map(a => a.id === editingId ? data.automation : a));
+        }
+      } else {
+        // Create new
+        const res = await fetch(`/api/forms/${formId}/automations`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: newName,
+            trigger: 'submission',
+            actions: newActions,
+          }),
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setAutomations(prev => [...prev, data.automation]);
+        }
       }
+      resetForm();
     } catch {}
     setSaving(false);
+  };
+
+  const resetForm = () => {
+    setShowCreate(false);
+    setEditingId(null);
+    setNewName('');
+    setNewActions([{ type: 'send_email', to: 'respondent', subject: '', body: '', delay: 0 }]);
   };
 
   const toggleAutomation = async (id: string, enabled: boolean) => {
@@ -183,6 +216,13 @@ export default function AutomationsView({ formId, fields }: Props) {
                     className="p-1.5 text-gray-400 hover:text-gray-600 rounded"
                   >
                     <CaretDown size={14} className={`transition-transform ${expandedId === automation.id ? 'rotate-180' : ''}`} />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => startEditing(automation)}
+                    className="p-1.5 text-gray-400 hover:text-safety-orange hover:bg-safety-orange/10 rounded transition-colors"
+                  >
+                    <PencilSimple size={14} />
                   </button>
                   <button
                     type="button"
@@ -380,15 +420,15 @@ export default function AutomationsView({ formId, fields }: Props) {
           <div className="flex gap-2 pt-2">
             <button
               type="button"
-              onClick={createAutomation}
+              onClick={saveAutomation}
               disabled={!newName.trim() || saving}
               className="btn btn-primary text-sm"
             >
-              {saving ? 'Creating...' : 'Create Automation'}
+              {saving ? 'Saving...' : editingId ? 'Save Changes' : 'Create Automation'}
             </button>
             <button
               type="button"
-              onClick={() => setShowCreate(false)}
+              onClick={resetForm}
               className="btn btn-ghost text-sm"
             >
               Cancel
