@@ -496,22 +496,7 @@ export default function FormSettingsPanel({
 
               <hr className="border-gray-200" />
 
-              {/* Custom CSS */}
-              <div className="form-field">
-                <label className="form-label">Custom CSS {planType === 'free' && <span className="badge badge-accent text-[10px] ml-1">Pro</span>}</label>
-                <p className="text-xs text-gray-500 mb-2">
-                  Add custom styles to your form. <a href="/docs/custom-css" target="_blank" className="text-safety-orange hover:underline">View CSS reference</a>
-                </p>
-                <textarea
-                  value={settings.customCss || ''}
-                  onChange={(e) => {
-                    if (requirePro('Custom CSS')) return;
-                    setSettings({ ...settings, customCss: e.target.value });
-                  }}
-                  onFocus={() => { if (planType === 'free') requirePro('Custom CSS'); }}
-                  className="input font-mono text-xs min-h-24"
-                />
-              </div>
+              {/* Custom CSS - hidden until properly implemented */}
 
               <button onClick={saveSettings} disabled={saving || !hasChanges} className={cn('btn btn-primary', !hasChanges && 'opacity-50')}>
                 {saving ? <><Spinner size={16} className="animate-spin" /> Saving...</> : 'Save Changes'}

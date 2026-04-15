@@ -578,7 +578,8 @@ function verifySignature(payload, signature, secret) {
       </>
     ),
   },
-  'custom-css': {
+  /* custom-css page hidden until feature is properly implemented */
+  'custom-css-hidden': {
     title: 'Custom CSS',
     description: 'Style your forms with custom CSS to match your brand.',
     content: (
