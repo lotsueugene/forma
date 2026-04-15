@@ -47,11 +47,16 @@ function formatTime(time: string): string {
   return `${h12}:${m.toString().padStart(2, '0')} ${ampm}`;
 }
 
+function effectiveEnd(start: number, end: number): number {
+  // If end <= start, it wraps past midnight (e.g. 21:00–01:00 = 21:00–25:00)
+  return end <= start ? end + 24 * 60 : end;
+}
+
 function slotsOverlap(a: BookingSlot, b: BookingSlot): boolean {
   const aStart = timeToMinutes(a.start);
-  const aEnd = timeToMinutes(a.end);
+  const aEnd = effectiveEnd(aStart, timeToMinutes(a.end));
   const bStart = timeToMinutes(b.start);
-  const bEnd = timeToMinutes(b.end);
+  const bEnd = effectiveEnd(bStart, timeToMinutes(b.end));
   return aStart < bEnd && bStart < aEnd;
 }
 
@@ -173,8 +178,8 @@ export default function BookingField({
       setError('Select both start and end time');
       return;
     }
-    if (timeToMinutes(endTime) <= timeToMinutes(startTime)) {
-      setError('End time must be after start time');
+    if (startTime === endTime) {
+      setError('Start and end time cannot be the same');
       return;
     }
 

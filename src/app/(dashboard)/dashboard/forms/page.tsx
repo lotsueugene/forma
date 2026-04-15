@@ -35,9 +35,14 @@ interface Form {
 type ViewMode = 'grid' | 'list';
 type SortOption = 'newest' | 'oldest' | 'most-submissions' | 'alphabetical';
 
+const roleLevel: Record<string, number> = { owner: 4, manager: 3, editor: 2, viewer: 1 };
+
 export default function FormsPage() {
   const router = useRouter();
   const { currentWorkspace } = useWorkspace();
+  const userRole = currentWorkspace?.role || 'viewer';
+  const canCreate = roleLevel[userRole] >= roleLevel['editor'];
+  const canDelete = roleLevel[userRole] >= roleLevel['manager'];
   const [forms, setForms] = useState<Form[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
@@ -190,19 +195,21 @@ export default function FormsPage() {
           <h1 className="text-2xl font-semibold text-gray-900">Forms</h1>
           <p className="text-gray-500">{forms.length} forms total</p>
         </div>
-        <div className="flex gap-2">
-          <button
-            onClick={() => setShowQuickCreate(true)}
-            className="btn btn-secondary"
-          >
-            <Lightning size={18} weight="fill" />
-            Get Endpoint
-          </button>
-          <Link href="/dashboard/forms/new" className="btn btn-primary">
-            <Plus size={18} weight="bold" />
-            Build Form
-          </Link>
-        </div>
+        {canCreate && (
+          <div className="flex gap-2">
+            <button
+              onClick={() => setShowQuickCreate(true)}
+              className="btn btn-secondary"
+            >
+              <Lightning size={18} weight="fill" />
+              Get Endpoint
+            </button>
+            <Link href="/dashboard/forms/new" className="btn btn-primary">
+              <Plus size={18} weight="bold" />
+              Build Form
+            </Link>
+          </div>
+        )}
       </div>
 
       {/* Error Message */}
@@ -362,7 +369,7 @@ export default function FormsPage() {
                               <Eye size={16} className="text-gray-500" />
                               View
                             </Link>
-                            {form.formType === 'builder' && (
+                            {canCreate && form.formType === 'builder' && (
                               <Link
                                 href={`/dashboard/forms/${form.id}/edit`}
                                 className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:text-gray-900 hover:bg-gray-100"
@@ -371,18 +378,20 @@ export default function FormsPage() {
                                 Edit Fields
                               </Link>
                             )}
-                            <button
-                              onClick={() => setDeleteTargetId(form.id)}
-                              disabled={deletingId === form.id}
-                              className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:text-red-700 hover:bg-red-50 disabled:opacity-50"
-                            >
-                              {deletingId === form.id ? (
-                                <Spinner size={16} className="animate-spin" />
-                              ) : (
-                                <Trash size={16} />
-                              )}
-                              Delete
-                            </button>
+                            {canDelete && (
+                              <button
+                                onClick={() => setDeleteTargetId(form.id)}
+                                disabled={deletingId === form.id}
+                                className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:text-red-700 hover:bg-red-50 disabled:opacity-50"
+                              >
+                                {deletingId === form.id ? (
+                                  <Spinner size={16} className="animate-spin" />
+                                ) : (
+                                  <Trash size={16} />
+                                )}
+                                Delete
+                              </button>
+                            )}
                           </motion.div>
                         </>
                       )}
@@ -514,7 +523,7 @@ export default function FormsPage() {
                                 <Eye size={16} className="text-gray-500" />
                                 View
                               </Link>
-                              {form.formType === 'builder' && (
+                              {canCreate && form.formType === 'builder' && (
                                 <Link
                                   href={`/dashboard/forms/${form.id}/edit`}
                                   className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:text-gray-900 hover:bg-gray-100"
@@ -523,18 +532,20 @@ export default function FormsPage() {
                                   Edit Fields
                                 </Link>
                               )}
-                              <button
-                                onClick={() => setDeleteTargetId(form.id)}
-                                disabled={deletingId === form.id}
-                                className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:text-red-700 hover:bg-red-50 disabled:opacity-50"
-                              >
-                                {deletingId === form.id ? (
-                                  <Spinner size={16} className="animate-spin" />
-                                ) : (
-                                  <Trash size={16} />
-                                )}
-                                Delete
-                              </button>
+                              {canDelete && (
+                                <button
+                                  onClick={() => setDeleteTargetId(form.id)}
+                                  disabled={deletingId === form.id}
+                                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:text-red-700 hover:bg-red-50 disabled:opacity-50"
+                                >
+                                  {deletingId === form.id ? (
+                                    <Spinner size={16} className="animate-spin" />
+                                  ) : (
+                                    <Trash size={16} />
+                                  )}
+                                  Delete
+                                </button>
+                              )}
                             </motion.div>
                           </>
                         )}
@@ -560,19 +571,21 @@ export default function FormsPage() {
               ? 'Try adjusting your search or filters'
               : 'Get started by creating your first form'}
           </p>
-          <div className="flex justify-center gap-2">
-            <button
-              onClick={() => setShowQuickCreate(true)}
-              className="btn btn-secondary"
-            >
-              <Lightning size={18} weight="fill" />
-              Get Endpoint
-            </button>
-            <Link href="/dashboard/forms/new" className="btn btn-primary">
-              <Plus size={18} weight="bold" />
-              Build Form
-            </Link>
-          </div>
+          {canCreate && (
+            <div className="flex justify-center gap-2">
+              <button
+                onClick={() => setShowQuickCreate(true)}
+                className="btn btn-secondary"
+              >
+                <Lightning size={18} weight="fill" />
+                Get Endpoint
+              </button>
+              <Link href="/dashboard/forms/new" className="btn btn-primary">
+                <Plus size={18} weight="bold" />
+                Build Form
+              </Link>
+            </div>
+          )}
         </div>
       )}
 

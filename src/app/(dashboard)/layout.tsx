@@ -32,15 +32,17 @@ import { AnnouncementBanner } from '@/components/announcement-banner';
 import { UpgradeBanner } from '@/components/dashboard/UpgradeBanner';
 
 const navigation = [
-  { name: 'Dashboard', href: '/dashboard', icon: House },
-  { name: 'Forms', href: '/dashboard/forms', icon: Files },
-  { name: 'Analytics', href: '/dashboard/analytics', icon: ChartLineUp },
-  { name: 'Integrations', href: '/dashboard/integrations', icon: Lightning },
-  { name: 'Team', href: '/dashboard/team', icon: Users },
-  { name: 'Broadcasts', href: '/dashboard/broadcasts', icon: Megaphone },
-  { name: 'Notifications', href: '/dashboard/notifications', icon: Bell },
-  { name: 'Settings', href: '/dashboard/settings', icon: Gear },
+  { name: 'Dashboard', href: '/dashboard', icon: House, minRole: 'viewer' },
+  { name: 'Forms', href: '/dashboard/forms', icon: Files, minRole: 'viewer' },
+  { name: 'Analytics', href: '/dashboard/analytics', icon: ChartLineUp, minRole: 'viewer' },
+  { name: 'Integrations', href: '/dashboard/integrations', icon: Lightning, minRole: 'manager' },
+  { name: 'Team', href: '/dashboard/team', icon: Users, minRole: 'manager' },
+  { name: 'Broadcasts', href: '/dashboard/broadcasts', icon: Megaphone, minRole: 'manager' },
+  { name: 'Notifications', href: '/dashboard/notifications', icon: Bell, minRole: 'viewer' },
+  { name: 'Settings', href: '/dashboard/settings', icon: Gear, minRole: 'viewer' },
 ];
+
+const roleLevel: Record<string, number> = { owner: 4, manager: 3, editor: 2, viewer: 1 };
 
 function WorkspaceSwitcher() {
   const { currentWorkspace, workspaces, switchWorkspace, isLoading } = useWorkspace();
@@ -240,6 +242,12 @@ function WorkspaceSwitcher() {
 function DashboardContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { data: session, status } = useSession();
+  const { currentWorkspace } = useWorkspace();
+  const userRole = currentWorkspace?.role || 'viewer';
+  const userRoleLevel = roleLevel[userRole] || 1;
+  const filteredNavigation = navigation.filter(
+    (item) => userRoleLevel >= (roleLevel[item.minRole] || 1)
+  );
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -364,7 +372,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
 
         {/* Navigation */}
         <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
-          {navigation.map((item) => {
+          {filteredNavigation.map((item) => {
             // `/dashboard` must not match child routes (e.g. `/dashboard/forms`), or Dashboard stays orange everywhere
             const isActive =
               item.href === '/dashboard'
@@ -392,16 +400,18 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
           })}
         </nav>
 
-        {/* Create Form Button */}
-        <div className="p-4 border-t border-black/6">
-          <Link
-            href="/dashboard/forms/new"
-            className="w-full flex items-center justify-center gap-2 py-3 font-mono text-[13px] uppercase tracking-[-0.015rem] bg-safety-orange text-white rounded-lg hover:bg-accent-200 border border-transparent transition-all duration-200 shadow-[0_2px_8px_rgba(239,111,46,0.3)]"
-          >
-            <Plus size={18} weight="bold" />
-            Create Form
-          </Link>
-        </div>
+        {/* Create Form Button - hidden for viewers */}
+        {userRoleLevel >= roleLevel['editor'] && (
+          <div className="p-4 border-t border-black/6">
+            <Link
+              href="/dashboard/forms/new"
+              className="w-full flex items-center justify-center gap-2 py-3 font-mono text-[13px] uppercase tracking-[-0.015rem] bg-safety-orange text-white rounded-lg hover:bg-accent-200 border border-transparent transition-all duration-200 shadow-[0_2px_8px_rgba(239,111,46,0.3)]"
+            >
+              <Plus size={18} weight="bold" />
+              Create Form
+            </Link>
+          </div>
+        )}
 
         {/* User Section */}
         <div className="p-4 border-t border-black/6">

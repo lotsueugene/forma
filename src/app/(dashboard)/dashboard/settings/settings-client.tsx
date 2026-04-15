@@ -59,13 +59,15 @@ interface NotificationSettings {
   notifyBilling: boolean;
 }
 
+const roleLevel: Record<string, number> = { owner: 4, manager: 3, editor: 2, viewer: 1 };
+
 const tabs = [
-  { id: 'profile', label: 'Profile', icon: User },
-  { id: 'workspace', label: 'Workspace', icon: Buildings },
-  { id: 'notifications', label: 'Notifications', icon: Bell },
-  { id: 'api', label: 'API Keys', icon: Key },
-  { id: 'billing', label: 'Plans & billing', icon: CreditCard },
-  { id: 'security', label: 'Security', icon: ShieldCheck },
+  { id: 'profile', label: 'Profile', icon: User, minRole: 'viewer' },
+  { id: 'workspace', label: 'Workspace', icon: Buildings, minRole: 'viewer' },
+  { id: 'notifications', label: 'Notifications', icon: Bell, minRole: 'viewer' },
+  { id: 'api', label: 'API Keys', icon: Key, minRole: 'editor' },
+  { id: 'billing', label: 'Plans & billing', icon: CreditCard, minRole: 'owner' },
+  { id: 'security', label: 'Security', icon: ShieldCheck, minRole: 'viewer' },
 ];
 
 const SETTINGS_TAB_IDS: SettingsTab[] = [
@@ -217,6 +219,11 @@ export default function SettingsPage() {
   const { data: session, update: updateSession } = useSession();
   const searchParams = useSearchParams();
   const { currentWorkspace, isLoading: workspaceLoading } = useWorkspace();
+  const userRole = currentWorkspace?.role || 'viewer';
+  const userRoleLevel = roleLevel[userRole] || 1;
+  const filteredTabs = tabs.filter(
+    (tab) => userRoleLevel >= (roleLevel[tab.minRole] || 1)
+  );
   const [activeTab, setActiveTab] = useState<SettingsTab>('profile');
 
   // Profile state
@@ -315,7 +322,11 @@ export default function SettingsPage() {
   useEffect(() => {
     const tab = searchParams.get('tab');
     if (tab && SETTINGS_TAB_IDS.includes(tab as SettingsTab)) {
-      setActiveTab(tab as SettingsTab);
+      // Only allow tab if the user has permission
+      const tabDef = tabs.find((t) => t.id === tab);
+      if (!tabDef || userRoleLevel >= (roleLevel[tabDef.minRole] || 1)) {
+        setActiveTab(tab as SettingsTab);
+      }
     }
   }, [searchParams]);
 
@@ -745,7 +756,7 @@ export default function SettingsPage() {
             onChange={(e) => setActiveTab(e.target.value as SettingsTab)}
             className="w-full h-12 px-4 text-base bg-white border border-gray-300 rounded-lg outline-none focus:border-safety-orange"
           >
-            {tabs.map((tab) => (
+            {filteredTabs.map((tab) => (
               <option key={tab.id} value={tab.id}>
                 {tab.label}
               </option>
@@ -755,7 +766,7 @@ export default function SettingsPage() {
 
         {/* Desktop Sidebar */}
         <div className="hidden lg:block lg:w-64 space-y-1">
-          {tabs.map((tab) => (
+          {filteredTabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id as SettingsTab)}

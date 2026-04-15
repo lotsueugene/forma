@@ -294,10 +294,13 @@ export async function POST(
             );
           }
           const newStart = parseInt(newSlot.start.replace(':', ''));
-          const newEnd = parseInt(newSlot.end.replace(':', ''));
+          const rawNewEnd = parseInt(newSlot.end.replace(':', ''));
+          // Handle overnight slots (e.g. 2100–0100 → treat end as 2500)
+          const newEnd = rawNewEnd <= newStart ? rawNewEnd + 2400 : rawNewEnd;
           for (const existing of existingSlots) {
             const exStart = parseInt(existing.start.replace(':', ''));
-            const exEnd = parseInt(existing.end.replace(':', ''));
+            const rawExEnd = parseInt(existing.end.replace(':', ''));
+            const exEnd = rawExEnd <= exStart ? rawExEnd + 2400 : rawExEnd;
             if (newStart < exEnd && exStart < newEnd) {
               return NextResponse.json(
                 { error: `Time slot ${newSlot.start}-${newSlot.end} overlaps with an existing booking (${existing.start}-${existing.end})` },

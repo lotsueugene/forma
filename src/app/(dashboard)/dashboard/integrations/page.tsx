@@ -88,8 +88,23 @@ export default function IntegrationsPage() {
   );
 }
 
+const roleLevel: Record<string, number> = { owner: 4, manager: 3, editor: 2, viewer: 1 };
+
 function IntegrationsPageContent() {
   const { currentWorkspace } = useWorkspace();
+
+  // Role guard: manager+ only
+  const userRole = currentWorkspace?.role || 'viewer';
+  if (roleLevel[userRole] < roleLevel['manager']) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <h2 className="text-lg font-semibold text-gray-900 mb-2">Access Restricted</h2>
+          <p className="text-gray-500">You need manager or owner access to manage integrations.</p>
+        </div>
+      </div>
+    );
+  }
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

@@ -48,7 +48,7 @@ export async function POST(
     }
 
     const { id } = await params;
-    const access = await verifyWorkspaceAccess(session.user.id, id, 'manager');
+    const access = await verifyWorkspaceAccess(session.user.id, id, 'owner');
 
     if (!access.allowed) {
       return NextResponse.json({ error: access.error }, { status: 403 });

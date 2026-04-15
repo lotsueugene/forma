@@ -98,9 +98,25 @@ function formatDate(dateString: string): string {
   }
 }
 
+const roleLevel: Record<string, number> = { owner: 4, manager: 3, editor: 2, viewer: 1 };
+
 export default function TeamPage() {
   const { data: session } = useSession();
   const { currentWorkspace } = useWorkspace();
+
+  // Role guard: manager+ only
+  const userRole = currentWorkspace?.role || 'viewer';
+  if (roleLevel[userRole] < roleLevel['manager']) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <h2 className="text-lg font-semibold text-gray-900 mb-2">Access Restricted</h2>
+          <p className="text-gray-500">You need manager or owner access to view team settings.</p>
+        </div>
+      </div>
+    );
+  }
+
   const [members, setMembers] = useState<TeamMember[]>([]);
   const [invitations, setInvitations] = useState<Invitation[]>([]);
   const [isLoading, setIsLoading] = useState(true);
