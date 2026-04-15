@@ -447,7 +447,7 @@ export default function ConversationalForm({
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.2 }}
-                    className="flex items-center gap-3"
+                    className="flex items-center gap-2"
                   >
                     <button
                       onClick={goNext}
@@ -468,9 +468,42 @@ export default function ConversationalForm({
                       )}
                       {!isSubmitting && <Check size={16} weight="bold" />}
                     </button>
-                    <span className="text-xs" style={{ color: 'var(--forma-text-faint)' }}>
+                    <span className="text-xs hidden sm:inline" style={{ color: 'var(--forma-text-faint)' }}>
                       press <strong>Enter ↵</strong>
                     </span>
+                    {/* Navigation arrows - inline with OK button */}
+                    <div className="flex items-center gap-1 ml-2">
+                      <button
+                        type="button"
+                        onClick={goPrev}
+                        disabled={currentIndex <= 0}
+                        className={cn(
+                          'w-8 h-8 rounded-md flex items-center justify-center transition-all',
+                          currentIndex <= 0 ? 'opacity-20 cursor-not-allowed' : 'hover:scale-105'
+                        )}
+                        style={{
+                          backgroundColor: isLightBg ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.1)',
+                          color: 'var(--forma-text)',
+                        }}
+                      >
+                        <ArrowUp size={14} />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={goNext}
+                        disabled={!isCurrentFieldValid()}
+                        className={cn(
+                          'w-8 h-8 rounded-md flex items-center justify-center transition-all rotate-180',
+                          !isCurrentFieldValid() ? 'opacity-20 cursor-not-allowed' : 'hover:scale-105'
+                        )}
+                        style={{
+                          backgroundColor: isLightBg ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.1)',
+                          color: 'var(--forma-text)',
+                        }}
+                      >
+                        <ArrowUp size={14} />
+                      </button>
+                    </div>
                   </motion.div>
                 )}
               </motion.div>
@@ -479,54 +512,19 @@ export default function ConversationalForm({
         </div>
       </div>
 
-      {/* Bottom bar: navigation + branding */}
-      <div className="fixed bottom-0 left-0 right-0 z-40 px-4 py-3 sm:px-8 sm:py-4 flex items-center justify-between"
-        style={{ backgroundColor: `${bg}ee`, backdropFilter: 'blur(8px)' }}
-      >
-        {/* Branding */}
-        {form.settings?.thankYou?.showBranding !== false ? (
+      {/* Powered by Forma - centered at bottom */}
+      {form.settings?.thankYou?.showBranding !== false && (
+        <div className="fixed bottom-4 left-0 right-0 z-40 flex justify-center pointer-events-none">
           <Link
             href="/"
-            className="flex items-center gap-1.5 text-xs font-medium transition-opacity hover:opacity-80"
-            style={{ color: 'var(--forma-text-muted)' }}
+            className="flex items-center gap-1.5 text-xs font-medium transition-opacity hover:opacity-80 pointer-events-auto"
+            style={{ color: 'var(--forma-text-faint)' }}
           >
             <Stack size={14} weight="fill" />
             Powered by <span style={{ color: "var(--forma-accent)" }} className="font-semibold">Forma</span>
           </Link>
-        ) : <div />}
-
-        {/* Navigation arrows */}
-        <div className="flex items-center gap-1.5">
-          <button
-            onClick={goPrev}
-            disabled={currentIndex <= -1}
-            className={cn(
-              'w-9 h-9 rounded-lg flex items-center justify-center transition-all',
-              currentIndex <= -1 ? 'opacity-20 cursor-not-allowed' : 'hover:scale-105'
-            )}
-            style={{
-              backgroundColor: isLightBg ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.1)',
-              color: textColor,
-            }}
-          >
-            <ArrowUp size={16} />
-          </button>
-          <button
-            onClick={goNext}
-            disabled={currentIndex < 0 || !isCurrentFieldValid()}
-            className={cn(
-              'w-9 h-9 rounded-lg flex items-center justify-center transition-all rotate-180',
-              (currentIndex < 0 || !isCurrentFieldValid()) ? 'opacity-20 cursor-not-allowed' : 'hover:scale-105'
-            )}
-            style={{
-              backgroundColor: isLightBg ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.1)',
-              color: textColor,
-            }}
-          >
-            <ArrowUp size={16} />
-          </button>
         </div>
-      </div>
+      )}
     </div>
   );
 }
