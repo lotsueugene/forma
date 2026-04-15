@@ -262,9 +262,47 @@ export default function ConversationalForm({
         color: textColor,
       }}
     >
-      {form.settings?.customCss && (
-        <style dangerouslySetInnerHTML={{ __html: form.settings.customCss }} />
-      )}
+      <style dangerouslySetInnerHTML={{ __html: `
+        .forma-page {
+          --forma-accent: ${accent};
+          --forma-bg: ${bg};
+          --forma-text: ${textColor};
+          --forma-text-muted: ${textColor}88;
+          --forma-text-faint: ${textColor}44;
+        }
+        .forma-input {
+          width: 100%;
+          padding: 16px 0;
+          border: none;
+          border-bottom: 2px solid ${isLightBg ? 'rgba(0,0,0,0.15)' : 'rgba(255,255,255,0.2)'};
+          background: transparent;
+          color: var(--forma-text);
+          font-size: 20px;
+          line-height: 1.5;
+          outline: none;
+          transition: border-color 0.2s;
+        }
+        .forma-input:focus {
+          border-bottom-color: var(--forma-accent);
+        }
+        .forma-input::placeholder {
+          color: var(--forma-text-faint);
+        }
+        .forma-submit {
+          background: var(--forma-accent);
+          color: white;
+        }
+        .forma-label {
+          color: var(--forma-text);
+        }
+        .forma-title {
+          color: var(--forma-text);
+        }
+        .forma-description {
+          color: var(--forma-text-muted);
+        }
+        ${form.settings?.customCss || ''}
+      ` }} />
       {/* Progress bar */}
       <div className="fixed top-0 left-0 right-0 z-50 h-1" style={{ backgroundColor: `${textColor}10` }}>
         <motion.div
@@ -362,7 +400,7 @@ export default function ConversationalForm({
                 </div>
 
                 {/* Question label */}
-                <h2 className="text-2xl sm:text-3xl font-semibold mb-2 leading-snug">
+                <h2 className="forma-label text-2xl sm:text-3xl font-semibold mb-2 leading-snug">
                   {currentField.label}
                   {currentField.required && <span style={{ color: accent }}> *</span>}
                 </h2>
@@ -415,12 +453,11 @@ export default function ConversationalForm({
                       onClick={goNext}
                       disabled={isSubmitting || (currentField.required && !isCurrentFieldValid())}
                       className={cn(
-                        'inline-flex items-center gap-2 px-6 py-3 rounded-lg font-semibold text-white transition-all duration-200',
+                        'forma-submit inline-flex items-center gap-2 px-6 py-3 rounded-lg font-semibold transition-all duration-200',
                         currentField.required && !isCurrentFieldValid()
                           ? 'opacity-40 cursor-not-allowed'
                           : 'hover:scale-[1.02] active:scale-[0.98]'
                       )}
-                      style={{ backgroundColor: accent }}
                     >
                       {isSubmitting ? (
                         <Spinner size={18} className="animate-spin" />
@@ -504,18 +541,8 @@ function renderConversationalField(
   isLightBg: boolean,
   formId?: string,
 ) {
-  const inputStyle: React.CSSProperties = {
-    width: '100%',
-    padding: '16px 0',
-    border: 'none',
-    borderBottom: `2px solid ${isLightBg ? 'rgba(0,0,0,0.15)' : 'rgba(255,255,255,0.2)'}`,
-    background: 'transparent',
-    color: textColor,
-    fontSize: '20px',
-    lineHeight: 1.5,
-    outline: 'none',
-    transition: 'border-color 0.2s',
-  };
+  // inputStyle kept for backwards compat but .forma-input CSS class takes priority
+  const inputStyle: React.CSSProperties = {};
 
   switch (field.type) {
     case 'text':
@@ -530,9 +557,8 @@ function renderConversationalField(
           placeholder="Type your answer here..."
           value={formData[field.id] as string}
           onChange={(e) => onChange(field.id, e.target.value)}
+          className="forma-input"
           style={inputStyle}
-          onFocus={(e) => (e.target.style.borderBottomColor = accent)}
-          onBlur={(e) => (e.target.style.borderBottomColor = isLightBg ? 'rgba(0,0,0,0.15)' : 'rgba(255,255,255,0.2)')}
           autoFocus
         />
       );
@@ -543,9 +569,8 @@ function renderConversationalField(
           type="date"
           value={formData[field.id] as string}
           onChange={(e) => onChange(field.id, e.target.value)}
+          className="forma-input"
           style={inputStyle}
-          onFocus={(e) => (e.target.style.borderBottomColor = accent)}
-          onBlur={(e) => (e.target.style.borderBottomColor = isLightBg ? 'rgba(0,0,0,0.15)' : 'rgba(255,255,255,0.2)')}
           autoFocus
         />
       );
@@ -557,9 +582,8 @@ function renderConversationalField(
           value={formData[field.id] as string}
           onChange={(e) => onChange(field.id, e.target.value)}
           rows={3}
-          style={{ ...inputStyle, resize: 'none', minHeight: '120px' }}
-          onFocus={(e) => (e.target.style.borderBottomColor = accent)}
-          onBlur={(e) => (e.target.style.borderBottomColor = isLightBg ? 'rgba(0,0,0,0.15)' : 'rgba(255,255,255,0.2)')}
+          className="forma-input"
+          style={{ resize: 'none', minHeight: '120px' }}
           autoFocus
         />
       );

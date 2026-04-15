@@ -717,8 +717,14 @@ input[type="radio"] {
   color: #1a2231;
 }`}</code></pre>
 
-        <h3>Works on Booking Pages Too</h3>
-        <p>Custom CSS applies to both the standard form page (<code>/f/[id]</code>) and the booking page (<code>/book/[id]</code>).</p>
+        <h3>Works on All Form Modes</h3>
+        <p>Custom CSS applies to all form display modes:</p>
+        <ul>
+          <li><strong>Classic mode</strong> (<code>/f/[id]</code>)</li>
+          <li><strong>Conversational mode</strong> (<code>/f/[id]</code> — the default)</li>
+          <li><strong>Booking page</strong> (<code>/book/[id]</code>)</li>
+        </ul>
+        <p>All modes use the same <code>.forma-*</code> classes and CSS variables.</p>
 
         <h3>Tips</h3>
         <ul>
