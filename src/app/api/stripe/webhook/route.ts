@@ -121,20 +121,25 @@ export async function POST(request: NextRequest) {
           break;
         }
 
-        if (workspaceId && session.subscription) {
-          // Find the workspace owner's userId
-          const wsOwner = await prisma.workspaceMember.findFirst({
-            where: { workspaceId, role: 'owner' },
-            select: { userId: true },
-          });
+        if (session.subscription) {
+          // Use userId from metadata directly (best practice)
+          // Fall back to workspace owner lookup for legacy checkouts
+          let userId = session.metadata?.userId;
+          if (!userId && workspaceId) {
+            const wsOwner = await prisma.workspaceMember.findFirst({
+              where: { workspaceId, role: 'owner' },
+              select: { userId: true },
+            });
+            userId = wsOwner?.userId;
+          }
 
-          if (wsOwner) {
+          if (userId) {
             const subscription = await stripe.subscriptions.retrieve(
               session.subscription as string
             );
 
             await upgradeToProPlan(
-              wsOwner.userId,
+              userId,
               subscription.id,
               subscription.items.data[0].price.id,
               new Date(subscriptionPeriodEndUnix(subscription) * 1000)
@@ -184,22 +189,26 @@ export async function POST(request: NextRequest) {
         const subscription = event.data.object as Stripe.Subscription;
         const workspaceId = subscription.metadata?.workspaceId;
 
-        if (workspaceId) {
+        // Use userId from metadata directly, fall back to workspace owner lookup
+        let subUserId: string | undefined = subscription.metadata?.userId;
+        if (!subUserId && workspaceId) {
           const wsOwner = await prisma.workspaceMember.findFirst({
             where: { workspaceId, role: 'owner' },
             select: { userId: true },
           });
-          const ownerUserId = wsOwner?.userId;
+          subUserId = wsOwner?.userId ?? undefined;
+        }
 
-          if (ownerUserId && subscription.status === 'active') {
+        if (subUserId) {
+          if (subscription.status === 'active') {
             await upgradeToProPlan(
-              ownerUserId,
+              subUserId,
               subscription.id,
               subscription.items.data[0].price.id,
               new Date(subscriptionPeriodEndUnix(subscription) * 1000)
             );
-          } else if (ownerUserId && (subscription.status === 'canceled' || subscription.status === 'unpaid')) {
-            await downgradeToFreePlan(ownerUserId);
+          } else if (subscription.status === 'canceled' || subscription.status === 'unpaid') {
+            await downgradeToFreePlan(subUserId);
 
             try {
               const members = await prisma.workspaceMember.findMany({
@@ -242,12 +251,18 @@ export async function POST(request: NextRequest) {
         const subscription = event.data.object as Stripe.Subscription;
         const workspaceId = subscription.metadata?.workspaceId;
 
-        if (workspaceId) {
+        // Use userId from metadata directly, fall back to workspace owner lookup
+        let delUserId: string | undefined = subscription.metadata?.userId;
+        if (!delUserId && workspaceId) {
           const wsOwner = await prisma.workspaceMember.findFirst({
             where: { workspaceId, role: 'owner' },
             select: { userId: true },
           });
-          if (wsOwner) await downgradeToFreePlan(wsOwner.userId);
+          delUserId = wsOwner?.userId ?? undefined;
+        }
+
+        if (delUserId) {
+          await downgradeToFreePlan(delUserId);
 
           try {
             const members = await prisma.workspaceMember.findMany({
@@ -282,7 +297,7 @@ export async function POST(request: NextRequest) {
             console.error('Error creating billing notifications:', notifyErr);
           }
 
-          console.log(`Downgraded workspace ${workspaceId} to Free`);
+          console.log(`Downgraded user ${delUserId} to Free`);
         }
         break;
       }

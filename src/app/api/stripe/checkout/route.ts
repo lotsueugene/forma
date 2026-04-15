@@ -84,10 +84,12 @@ export async function POST(request: NextRequest) {
       cancel_url: `${baseUrl}/dashboard/settings?tab=billing&canceled=true`,
       metadata: {
         workspaceId: workspace.id,
+        userId: session.user.id,
       },
       subscription_data: {
         metadata: {
           workspaceId: workspace.id,
+          userId: session.user.id,
         },
       },
       allow_promotion_codes: true,
