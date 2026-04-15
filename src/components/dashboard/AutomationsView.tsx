@@ -172,7 +172,7 @@ export default function AutomationsView({ formId, fields }: Props) {
 
   // Get available template variables from form fields
   const templateVars = fields
-    .filter(f => !['page_break', 'hidden', 'image', 'video', 'payment', 'booking'].includes(f.type))
+    .filter(f => !['page_break', 'hidden', 'image', 'video', 'payment'].includes(f.type))
     .map(f => ({ id: f.id, label: f.label }));
 
   if (loading) {

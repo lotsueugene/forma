@@ -110,7 +110,25 @@ function replaceTemplateVars(
     const value = data[field.id];
     if (value === undefined || value === null) continue;
 
-    const displayValue = typeof value === 'object' ? JSON.stringify(value) : String(value);
+    let displayValue: string;
+    if (field.type === 'booking' && typeof value === 'object') {
+      // Format booking as readable text
+      const booking = value as { date?: string; slots?: Array<{ start: string; end: string }> };
+      let parsed = booking;
+      if (typeof value === 'string') { try { parsed = JSON.parse(value as unknown as string); } catch { parsed = booking; } }
+      if (parsed?.date && Array.isArray(parsed.slots)) {
+        const dateStr = new Date(parsed.date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+        const fmt = (t: string) => { const [h, m] = t.split(':').map(Number); const ap = h >= 12 ? 'PM' : 'AM'; return `${h === 0 ? 12 : h > 12 ? h - 12 : h}:${m.toString().padStart(2, '0')} ${ap}`; };
+        const slotsStr = parsed.slots.map(s => `${fmt(s.start)} - ${fmt(s.end)}`).join(', ');
+        displayValue = `${dateStr} · ${slotsStr}`;
+      } else {
+        displayValue = String(value);
+      }
+    } else if (typeof value === 'object') {
+      displayValue = JSON.stringify(value);
+    } else {
+      displayValue = String(value);
+    }
     const varName = field.label.toLowerCase().replace(/\s+/g, '_');
 
     // Replace both {{var_name}} and {{field_id}}
