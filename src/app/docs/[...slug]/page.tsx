@@ -710,12 +710,23 @@ input[type="radio"] {
   --forma-accent: #8b5cf6;
 }`}</code></pre>
 
+        <h3>Submit Button Text Color</h3>
+        <p>To change the submit button text color (e.g., dark text on a light button), override both background and color:</p>
+        <pre><code>{`.forma-submit {
+  background: #f2b80c;
+  color: #1a2231;
+}`}</code></pre>
+
+        <h3>Works on Booking Pages Too</h3>
+        <p>Custom CSS applies to both the standard form page (<code>/f/[id]</code>) and the booking page (<code>/book/[id]</code>).</p>
+
         <h3>Tips</h3>
         <ul>
           <li>Use browser DevTools (F12) to inspect the form and find exact selectors</li>
-          <li>Custom CSS overrides Forma's default styles — no <code>!important</code> needed</li>
+          <li>Custom CSS overrides Forma&apos;s default styles — no <code>!important</code> needed</li>
           <li>Override CSS variables to change colors without targeting individual elements</li>
-          <li>Google Fonts can be imported with <code>@import url('https://fonts.googleapis.com/css2?family=...')</code></li>
+          <li>Google Fonts can be imported with <code>@import url(&apos;https://fonts.googleapis.com/css2?family=...&apos;)</code></li>
+          <li>The wrapper element has the class <code>.forma-page</code> — use it for page-level overrides</li>
         </ul>
       </>
     ),
