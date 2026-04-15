@@ -424,6 +424,12 @@ export default function BookingField({
           {bookingMode === 'fixed' ? (
             /* ── Fixed duration: clickable slots grouped by time of day ── */
             <div className="space-y-4">
+              <div className="flex items-center gap-2">
+                <Clock size={14} style={{ color: `${textColor}55` }} />
+                <span className="text-xs font-medium" style={{ color: `${textColor}55` }}>
+                  {slotDuration < 60 ? `${slotDuration} min` : slotDuration === 60 ? '1 hour' : `${slotDuration / 60} hours`} per slot
+                </span>
+              </div>
               {fixedSlotGroups.map((group) => (
                 <div key={group.label} className="space-y-2">
                   <p className="text-xs font-medium uppercase tracking-wider" style={{ color: `${textColor}55` }}>
