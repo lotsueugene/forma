@@ -35,7 +35,8 @@ export default function RichTextEditor({ value, onChange, placeholder, rows = 5 
         placeholder: placeholder || 'Type your message...',
       }),
     ],
-    content: value || '',
+    // Convert plain text \n to <br> for existing content
+    content: (value && !value.includes('<')) ? value.replace(/\n/g, '<br>') : (value || ''),
     onUpdate: ({ editor }) => {
       onChange(editor.getHTML());
     },
@@ -50,7 +51,8 @@ export default function RichTextEditor({ value, onChange, placeholder, rows = 5 
   // Sync external value changes
   useEffect(() => {
     if (editor && value !== editor.getHTML() && !editor.isFocused) {
-      editor.commands.setContent(value || '');
+      const content = (value && !value.includes('<')) ? value.replace(/\n/g, '<br>') : (value || '');
+      editor.commands.setContent(content);
     }
   }, [value, editor]);
 
