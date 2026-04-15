@@ -305,7 +305,7 @@ export default function BookingField({
         {/* Day headers */}
         <div className="grid grid-cols-7 gap-1 mb-1">
           {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map(d => (
-            <div key={d} className="text-center text-[11px] font-medium py-1" style={{ color: `${textColor}55` }}>
+            <div key={d} className="text-center text-[11px] font-medium py-1" style={{ color: `${textColor}99` }}>
               {d}
             </div>
           ))}
@@ -366,7 +366,7 @@ export default function BookingField({
 
           {/* Visual timeline */}
           <div>
-            <div className="flex justify-between text-[10px] mb-1" style={{ color: `${textColor}44` }}>
+            <div className="flex justify-between text-[10px] mb-1" style={{ color: `${textColor}88` }}>
               <span>12 AM</span>
               <span>6 AM</span>
               <span>12 PM</span>
@@ -405,7 +405,7 @@ export default function BookingField({
                 />
               ))}
             </div>
-            <div className="flex items-center gap-4 mt-2 text-[11px]" style={{ color: `${textColor}55` }}>
+            <div className="flex items-center gap-4 mt-2 text-[11px]" style={{ color: `${textColor}99` }}>
               <div className="flex items-center gap-1.5">
                 <div className="w-3 h-3 rounded bg-red-500/60" />
                 Booked
@@ -425,14 +425,14 @@ export default function BookingField({
             /* ── Fixed duration: clickable slots grouped by time of day ── */
             <div className="space-y-4">
               <div className="flex items-center gap-2">
-                <Clock size={14} style={{ color: `${textColor}55` }} />
-                <span className="text-xs font-medium" style={{ color: `${textColor}55` }}>
+                <Clock size={14} style={{ color: `${textColor}99` }} />
+                <span className="text-xs font-medium" style={{ color: `${textColor}99` }}>
                   {slotDuration < 60 ? `${slotDuration} min` : slotDuration === 60 ? '1 hour' : `${slotDuration / 60} hours`} per slot
                 </span>
               </div>
               {fixedSlotGroups.map((group) => (
                 <div key={group.label} className="space-y-2">
-                  <p className="text-xs font-medium uppercase tracking-wider" style={{ color: `${textColor}55` }}>
+                  <p className="text-xs font-medium uppercase tracking-wider" style={{ color: `${textColor}99` }}>
                     {group.label}
                   </p>
                   <div className="grid grid-cols-3 gap-2">
@@ -535,7 +535,7 @@ export default function BookingField({
                     <Clock size={16} />
                     Add a time slot
                   </div>
-                  <span className="text-[11px]" style={{ color: `${textColor}44` }}>
+                  <span className="text-[11px]" style={{ color: `${textColor}88` }}>
                     {slotDuration} min intervals
                   </span>
                 </div>
@@ -551,7 +551,7 @@ export default function BookingField({
                       color: textColor,
                     }}
                   />
-                  <span className="text-sm" style={{ color: `${textColor}44` }}>to</span>
+                  <span className="text-sm" style={{ color: `${textColor}88` }}>to</span>
                   <TimeInput
                     value={endTime}
                     onChange={(val) => { setEndTime(val); setError(''); }}
@@ -618,7 +618,7 @@ export default function BookingField({
       )}
 
       {loadingBookings && (
-        <p className="text-xs" style={{ color: `${textColor}44` }}>Loading availability...</p>
+        <p className="text-xs" style={{ color: `${textColor}88` }}>Loading availability...</p>
       )}
     </div>
   );
