@@ -523,11 +523,21 @@ export default function TeamPage() {
                                   </button>
                                 )}
                                 <button
-                                  onClick={() => handleRemoveMember(member.id)}
+                                  onClick={() => {
+                                    if (member.email === session?.user?.email) {
+                                      handleLeaveWorkspace();
+                                    } else {
+                                      handleRemoveMember(member.id);
+                                    }
+                                    setMenuOpenId(null);
+                                  }}
                                   className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:text-red-700 hover:bg-gray-100"
                                 >
-                                  <Trash size={16} />
-                                  Remove Member
+                                  {member.email === session?.user?.email ? (
+                                    <><SignOut size={16} /> Leave Workspace</>
+                                  ) : (
+                                    <><Trash size={16} /> Remove Member</>
+                                  )}
                                 </button>
                               </motion.div>
                             </>
