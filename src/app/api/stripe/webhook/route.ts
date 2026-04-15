@@ -122,17 +122,24 @@ export async function POST(request: NextRequest) {
         }
 
         if (workspaceId && session.subscription) {
-          // Fetch the subscription to get details
-          const subscription = await stripe.subscriptions.retrieve(
-            session.subscription as string
-          );
+          // Find the workspace owner's userId
+          const wsOwner = await prisma.workspaceMember.findFirst({
+            where: { workspaceId, role: 'owner' },
+            select: { userId: true },
+          });
 
-          await upgradeToProPlan(
-            workspaceId,
-            subscription.id,
-            subscription.items.data[0].price.id,
-            new Date(subscriptionPeriodEndUnix(subscription) * 1000)
-          );
+          if (wsOwner) {
+            const subscription = await stripe.subscriptions.retrieve(
+              session.subscription as string
+            );
+
+            await upgradeToProPlan(
+              wsOwner.userId,
+              subscription.id,
+              subscription.items.data[0].price.id,
+              new Date(subscriptionPeriodEndUnix(subscription) * 1000)
+            );
+          }
 
           // In-app notification to admins/owners
           try {
@@ -178,15 +185,21 @@ export async function POST(request: NextRequest) {
         const workspaceId = subscription.metadata?.workspaceId;
 
         if (workspaceId) {
-          if (subscription.status === 'active') {
+          const wsOwner = await prisma.workspaceMember.findFirst({
+            where: { workspaceId, role: 'owner' },
+            select: { userId: true },
+          });
+          const ownerUserId = wsOwner?.userId;
+
+          if (ownerUserId && subscription.status === 'active') {
             await upgradeToProPlan(
-              workspaceId,
+              ownerUserId,
               subscription.id,
               subscription.items.data[0].price.id,
               new Date(subscriptionPeriodEndUnix(subscription) * 1000)
             );
-          } else if (subscription.status === 'canceled' || subscription.status === 'unpaid') {
-            await downgradeToFreePlan(workspaceId);
+          } else if (ownerUserId && (subscription.status === 'canceled' || subscription.status === 'unpaid')) {
+            await downgradeToFreePlan(ownerUserId);
 
             try {
               const members = await prisma.workspaceMember.findMany({
@@ -230,7 +243,11 @@ export async function POST(request: NextRequest) {
         const workspaceId = subscription.metadata?.workspaceId;
 
         if (workspaceId) {
-          await downgradeToFreePlan(workspaceId);
+          const wsOwner = await prisma.workspaceMember.findFirst({
+            where: { workspaceId, role: 'owner' },
+            select: { userId: true },
+          });
+          if (wsOwner) await downgradeToFreePlan(wsOwner.userId);
 
           try {
             const members = await prisma.workspaceMember.findMany({

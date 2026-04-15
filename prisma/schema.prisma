@@ -55,6 +55,7 @@ model User {
   invitationsSent    Invitation[]
   settings           UserSettings?
   notifications      Notification[]
+  subscription       Subscription?
 }
 
 model VerificationToken {
@@ -123,11 +124,16 @@ model Notification {
 }
 
 // Subscription plans
-// free: 50 submissions/month, 3 forms, no team, no analytics
-// pro: unlimited submissions, unlimited forms, team, analytics ($29/month)
-// trial: same as pro for 14 days
+// Subscription is per-USER, not per-workspace
+// All workspaces owned by a Pro user get Pro features
 model Subscription {
   id                   String    @id @default(cuid())
+
+  // User-level subscription (primary)
+  userId               String?   @unique
+  user                 User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  // Legacy: workspace-level (kept for backward compat during migration)
   workspaceId          String?   @unique
   workspace            Workspace? @relation(fields: [workspaceId], references: [id], onDelete: SetNull)
 
@@ -142,7 +148,7 @@ model Subscription {
   // Trial info
   trialEndsAt          DateTime?
 
-  // Limits (can be overridden per workspace)
+  // Limits
   submissionsLimit     Int       @default(50)
   formsLimit           Int       @default(3)
   membersLimit         Int       @default(1) // 1 = owner only (no team)

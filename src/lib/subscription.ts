@@ -15,10 +15,21 @@ async function hasAdminOwner(workspaceId: string): Promise<boolean> {
   return !!adminOwner;
 }
 
+/**
+ * Get the owner's userId for a workspace
+ */
+async function getWorkspaceOwnerId(workspaceId: string): Promise<string | null> {
+  const owner = await prisma.workspaceMember.findFirst({
+    where: { workspaceId, role: 'owner' },
+    select: { userId: true },
+  });
+  return owner?.userId || null;
+}
+
 export interface SubscriptionInfo {
   plan: PlanType;
   status: string;
-  billingInterval: 'monthly' | 'yearly' | null; // null for free/trial
+  billingInterval: 'monthly' | 'yearly' | null;
   limits: {
     submissions: number;
     forms: number;
@@ -39,15 +50,64 @@ export interface SubscriptionInfo {
 }
 
 /**
- * Get or create subscription for a workspace
+ * Get or create subscription for a user
+ */
+export async function getOrCreateUserSubscription(userId: string) {
+  let subscription = await prisma.subscription.findUnique({
+    where: { userId },
+  });
+
+  if (!subscription) {
+    subscription = await prisma.subscription.create({
+      data: {
+        userId,
+        plan: 'free',
+        status: 'active',
+        submissionsLimit: PLAN_LIMITS.free.submissions,
+        formsLimit: PLAN_LIMITS.free.forms,
+        membersLimit: PLAN_LIMITS.free.members,
+      },
+    });
+  }
+
+  return subscription;
+}
+
+/**
+ * Get or create subscription for a workspace (finds owner, gets their subscription)
+ * This is the main entry point — everything still works through workspaceId
  */
 export async function getOrCreateSubscription(workspaceId: string) {
+  // First try user-level subscription (new model)
+  const ownerId = await getWorkspaceOwnerId(workspaceId);
+  if (ownerId) {
+    const userSub = await prisma.subscription.findUnique({
+      where: { userId: ownerId },
+    });
+    if (userSub) return userSub;
+  }
+
+  // Fall back to workspace-level subscription (legacy)
   let subscription = await prisma.subscription.findUnique({
     where: { workspaceId },
   });
 
+  if (!subscription && ownerId) {
+    // Create user-level subscription
+    subscription = await prisma.subscription.create({
+      data: {
+        userId: ownerId,
+        plan: 'free',
+        status: 'active',
+        submissionsLimit: PLAN_LIMITS.free.submissions,
+        formsLimit: PLAN_LIMITS.free.forms,
+        membersLimit: PLAN_LIMITS.free.members,
+      },
+    });
+  }
+
   if (!subscription) {
-    // Create free subscription by default
+    // Last resort: create workspace-level (shouldn't happen with proper data)
     subscription = await prisma.subscription.create({
       data: {
         workspaceId,
@@ -64,7 +124,7 @@ export async function getOrCreateSubscription(workspaceId: string) {
 }
 
 /**
- * Get current month's usage record
+ * Get current month's usage record (still per-workspace)
  */
 export async function getCurrentUsage(workspaceId: string) {
   const now = new Date();
@@ -108,12 +168,12 @@ export async function incrementSubmissionCount(workspaceId: string) {
 
 /**
  * Get full subscription info with usage and limits
+ * Looks up the workspace owner's subscription
  */
 export async function getSubscriptionInfo(workspaceId: string): Promise<SubscriptionInfo> {
   const subscription = await getOrCreateSubscription(workspaceId);
   const usage = await getCurrentUsage(workspaceId);
 
-  // Get actual counts (pending invites count toward seat usage for team invites)
   const [formsCount, membersCount, pendingInviteCount, isAdminWorkspace] = await Promise.all([
     prisma.form.count({ where: { workspaceId } }),
     prisma.workspaceMember.count({ where: { workspaceId } }),
@@ -125,20 +185,17 @@ export async function getSubscriptionInfo(workspaceId: string): Promise<Subscrip
 
   const plan = subscription.plan as PlanType;
 
-  // Check if trial is active (expired trials are treated as free below)
   const isTrialing =
     subscription.plan === 'trial' &&
     subscription.trialEndsAt != null &&
     new Date() < subscription.trialEndsAt;
 
-  // If trial expired, treat as free; admins always get Pro features
   let effectivePlan: PlanType = (subscription.plan === 'trial' && !isTrialing) ? 'free' : plan;
   if (isAdminWorkspace) {
-    effectivePlan = 'pro'; // Admins always get Pro features
+    effectivePlan = 'pro';
   }
   const effectiveConfig = PLAN_LIMITS[effectivePlan];
 
-  // Get limits from database (single source of truth)
   const dbLimits = await getPlanLimitsFromDB(effectivePlan);
   const limits = {
     submissions: dbLimits.submissions,
@@ -152,7 +209,6 @@ export async function getSubscriptionInfo(workspaceId: string): Promise<Subscrip
     members: membersCount,
   };
 
-  // Check if can do things
   const canSubmit = limits.submissions === -1 || currentUsage.submissions < limits.submissions;
   const canCreateForm = limits.forms === -1 || currentUsage.forms < limits.forms;
   const seatsCommitted = membersCount + pendingInviteCount;
@@ -160,7 +216,6 @@ export async function getSubscriptionInfo(workspaceId: string): Promise<Subscrip
     effectiveConfig.features.teamMembers &&
     (limits.members === -1 || seatsCommitted < limits.members);
 
-  // Determine billing interval from Stripe price ID
   let billingInterval: 'monthly' | 'yearly' | null = null;
   if (subscription.stripePriceId) {
     if (subscription.stripePriceId === STRIPE_PRICES.pro_monthly) {
@@ -240,14 +295,14 @@ export async function checkLimit(
 }
 
 /**
- * Start a trial for a workspace
+ * Start a trial for a user
  */
-export async function startTrial(workspaceId: string, days: number = 14) {
+export async function startTrial(userId: string, days: number = 14) {
   const trialEndsAt = new Date();
   trialEndsAt.setDate(trialEndsAt.getDate() + days);
 
   await prisma.subscription.upsert({
-    where: { workspaceId },
+    where: { userId },
     update: {
       plan: 'trial',
       status: 'trialing',
@@ -257,7 +312,7 @@ export async function startTrial(workspaceId: string, days: number = 14) {
       membersLimit: PLAN_LIMITS.trial.members,
     },
     create: {
-      workspaceId,
+      userId,
       plan: 'trial',
       status: 'trialing',
       trialEndsAt,
@@ -272,13 +327,13 @@ export async function startTrial(workspaceId: string, days: number = 14) {
  * Upgrade to pro plan (called after successful Stripe payment)
  */
 export async function upgradeToProPlan(
-  workspaceId: string,
+  userId: string,
   stripeSubscriptionId: string,
   stripePriceId: string,
   currentPeriodEnd: Date
 ) {
   await prisma.subscription.upsert({
-    where: { workspaceId },
+    where: { userId },
     update: {
       plan: 'pro',
       status: 'active',
@@ -291,7 +346,7 @@ export async function upgradeToProPlan(
       trialEndsAt: null,
     },
     create: {
-      workspaceId,
+      userId,
       plan: 'pro',
       status: 'active',
       stripeSubscriptionId,
@@ -305,11 +360,11 @@ export async function upgradeToProPlan(
 }
 
 /**
- * Downgrade to free plan (called when subscription canceled)
+ * Downgrade to free plan
  */
-export async function downgradeToFreePlan(workspaceId: string) {
+export async function downgradeToFreePlan(userId: string) {
   await prisma.subscription.upsert({
-    where: { workspaceId },
+    where: { userId },
     update: {
       plan: 'free',
       status: 'active',
@@ -321,7 +376,7 @@ export async function downgradeToFreePlan(workspaceId: string) {
       membersLimit: PLAN_LIMITS.free.members,
     },
     create: {
-      workspaceId,
+      userId,
       plan: 'free',
       status: 'active',
       submissionsLimit: PLAN_LIMITS.free.submissions,

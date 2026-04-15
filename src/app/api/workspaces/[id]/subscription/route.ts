@@ -63,7 +63,7 @@ export async function POST(
       );
     }
 
-    await startTrial(id, 14);
+    await startTrial(session.user.id, 14);
     const subscription = await getSubscriptionInfo(id);
 
     return NextResponse.json({ subscription });
