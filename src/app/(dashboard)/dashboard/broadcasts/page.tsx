@@ -20,6 +20,7 @@ import { cn } from '@/lib/utils';
 import { useWorkspace } from '@/contexts/workspace-context';
 import UpgradeModal from '@/components/dashboard/UpgradeModal';
 import ConfirmModal from '@/components/ui/ConfirmModal';
+import RichTextEditor from '@/components/ui/RichTextEditor';
 
 interface FormOption {
   id: string;
@@ -281,11 +282,11 @@ export default function BroadcastsPage() {
                     {/* Content */}
                     <div className="form-field">
                       <label className="form-label">Message</label>
-                      <textarea
+                      <RichTextEditor
                         value={content}
-                        onChange={(e) => setContent(e.target.value)}
-                        className="input min-h-40"
+                        onChange={setContent}
                         placeholder="Hi {{name}}, thanks for your submission!"
+                        rows={8}
                       />
                       <div className="flex flex-wrap gap-2 mt-2">
                         <span className="text-xs text-gray-400">Personalization:</span>

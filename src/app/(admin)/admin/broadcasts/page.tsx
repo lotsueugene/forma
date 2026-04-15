@@ -16,6 +16,7 @@ import {
   EnvelopeOpen,
 } from '@phosphor-icons/react';
 import { cn } from '@/lib/utils';
+import RichTextEditor from '@/components/ui/RichTextEditor';
 
 interface Broadcast {
   id: string;
@@ -331,19 +332,11 @@ export default function AdminBroadcastsPage() {
                 <label className="block text-sm text-gray-600 mb-1">
                   Message (use {"{{name}}"} to personalize with user&apos;s name)
                 </label>
-                <textarea
+                <RichTextEditor
                   value={formData.content}
-                  onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-                  className="input w-full h-48"
-                  placeholder="Hi {{name}},
-
-We're excited to share some updates with you!
-
-Your message here...
-
-Best,
-The Forma Team"
-                  required
+                  onChange={(val) => setFormData({ ...formData, content: val })}
+                  placeholder="Hi {{name}}, we're excited to share some updates with you!"
+                  rows={8}
                 />
                 <p className="text-xs text-gray-500 mt-1">
                   Just type your message. It will be automatically styled with the Forma email template.

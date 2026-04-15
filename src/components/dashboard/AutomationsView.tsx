@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { Plus, Lightning, Trash, EnvelopeSimple, Clock, Check, X, CaretDown, ClockCounterClockwise, PencilSimple } from '@phosphor-icons/react';
 import Link from 'next/link';
 import ConfirmModal from '@/components/ui/ConfirmModal';
+import RichTextEditor from '@/components/ui/RichTextEditor';
 
 interface AutomationAction {
   type: 'send_email';
@@ -381,15 +382,11 @@ export default function AutomationsView({ formId, fields }: Props) {
                 </div>
 
                 <div>
-                  <label className="text-xs text-gray-500 mb-1 block">
-                    Body
-                    <span className="text-gray-400 ml-1">(HTML supported)</span>
-                  </label>
-                  <textarea
+                  <label className="text-xs text-gray-500 mb-1 block">Body</label>
+                  <RichTextEditor
                     value={action.body}
-                    onChange={(e) => updateAction(i, { body: e.target.value })}
+                    onChange={(val) => updateAction(i, { body: val })}
                     placeholder={`Hi {{name}},\n\nThank you for reaching out! We'll get back to you shortly.\n\nBest regards`}
-                    className="input w-full min-h-[120px] resize-y"
                     rows={5}
                   />
                 </div>
