@@ -240,6 +240,39 @@ export async function POST(
   }
 }
 
+// DELETE /api/workspaces/[id]/broadcasts - Delete a broadcast
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const { id } = await params;
+    const access = await verifyWorkspaceAccess(session.user.id, id, 'manager');
+    if (!access.allowed) {
+      return NextResponse.json({ error: access.error }, { status: 403 });
+    }
+
+    const { broadcastId } = await request.json();
+    if (!broadcastId) {
+      return NextResponse.json({ error: 'broadcastId is required' }, { status: 400 });
+    }
+
+    await prisma.respondentBroadcast.delete({
+      where: { id: broadcastId, workspaceId: id },
+    });
+
+    return NextResponse.json({ deleted: true });
+  } catch (error) {
+    console.error('Error deleting broadcast:', error);
+    return NextResponse.json({ error: 'Failed to delete broadcast' }, { status: 500 });
+  }
+}
+
 function buildBroadcastEmail(content: string, senderName: string, logoUrl?: string | null, unsubscribeUrl?: string): string {
   return `
 <!DOCTYPE html>

@@ -14,6 +14,7 @@ import {
   Clock,
   CheckCircle,
   WarningCircle,
+  Trash,
 } from '@phosphor-icons/react';
 import { cn } from '@/lib/utils';
 import { useWorkspace } from '@/contexts/workspace-context';
@@ -405,15 +406,34 @@ export default function BroadcastsPage() {
                   </div>
                 </div>
               </div>
-              <span className={cn(
-                'badge shrink-0',
-                broadcast.status === 'sent' ? 'badge-success' :
-                broadcast.status === 'sending' ? 'badge-warning' :
-                broadcast.status === 'failed' ? 'badge-error' :
-                'bg-gray-100 text-gray-600'
-              )}>
-                {broadcast.status}
-              </span>
+              <div className="flex items-center gap-2 shrink-0">
+                <span className={cn(
+                  'badge',
+                  broadcast.status === 'sent' ? 'badge-success' :
+                  broadcast.status === 'sending' ? 'badge-warning' :
+                  broadcast.status === 'failed' ? 'badge-error' :
+                  'bg-gray-100 text-gray-600'
+                )}>
+                  {broadcast.status}
+                </span>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    if (!confirm('Delete this broadcast?')) return;
+                    try {
+                      await fetch(`/api/workspaces/${currentWorkspace?.id}/broadcasts`, {
+                        method: 'DELETE',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ broadcastId: broadcast.id }),
+                      });
+                      setBroadcasts(prev => prev.filter(b => b.id !== broadcast.id));
+                    } catch {}
+                  }}
+                  className="p-1.5 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded transition-colors"
+                >
+                  <Trash size={14} />
+                </button>
+              </div>
             </div>
           ))}
         </div>
