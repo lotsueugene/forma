@@ -539,34 +539,36 @@ export default function BookingField({
                     {slotDuration} min intervals
                   </span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <TimeInput
-                    value={startTime}
-                    onChange={(val) => { setStartTime(val); setError(''); }}
-                    placeholder="9:00 AM"
-                    className="flex-1 px-3 py-2.5 rounded-lg text-sm outline-none"
-                    style={{
-                      backgroundColor: isLightBg ? 'rgba(0,0,0,0.04)' : 'rgba(255,255,255,0.06)',
-                      border: `1.5px solid ${isLightBg ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.12)'}`,
-                      color: textColor,
-                    }}
-                  />
-                  <span className="text-sm" style={{ color: `${textColor}88` }}>to</span>
-                  <TimeInput
-                    value={endTime}
-                    onChange={(val) => { setEndTime(val); setError(''); }}
-                    placeholder="5:00 PM"
-                    className="flex-1 px-3 py-2.5 rounded-lg text-sm outline-none"
-                    style={{
-                      backgroundColor: isLightBg ? 'rgba(0,0,0,0.04)' : 'rgba(255,255,255,0.06)',
-                      border: `1.5px solid ${isLightBg ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.12)'}`,
-                      color: textColor,
-                    }}
-                  />
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <TimeInput
+                      value={startTime}
+                      onChange={(val) => { setStartTime(val); setError(''); }}
+                      placeholder="9:00 AM"
+                      className="flex-1 px-3 py-2.5 rounded-lg text-sm outline-none min-w-0"
+                      style={{
+                        backgroundColor: isLightBg ? 'rgba(0,0,0,0.04)' : 'rgba(255,255,255,0.06)',
+                        border: `1.5px solid ${isLightBg ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.12)'}`,
+                        color: textColor,
+                      }}
+                    />
+                    <span className="text-sm shrink-0" style={{ color: `${textColor}88` }}>to</span>
+                    <TimeInput
+                      value={endTime}
+                      onChange={(val) => { setEndTime(val); setError(''); }}
+                      placeholder="5:00 PM"
+                      className="flex-1 px-3 py-2.5 rounded-lg text-sm outline-none min-w-0"
+                      style={{
+                        backgroundColor: isLightBg ? 'rgba(0,0,0,0.04)' : 'rgba(255,255,255,0.06)',
+                        border: `1.5px solid ${isLightBg ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.12)'}`,
+                        color: textColor,
+                      }}
+                    />
+                  </div>
                   <button
                     type="button"
                     onClick={addSlot}
-                    className="px-4 py-2.5 rounded-lg text-white text-sm font-medium transition-all hover:opacity-90"
+                    className="w-full py-2.5 rounded-lg text-white text-sm font-medium transition-all hover:opacity-90"
                     style={{ backgroundColor: accent }}
                   >
                     Add
