@@ -254,7 +254,13 @@ export default function InvitePage() {
                     <p className="text-amber-700">You're signed in as <strong>{session.user?.email}</strong>. This invitation is for <strong>{invitation?.email}</strong>.</p>
                   </div>
                   <Link
-                    href={`/api/auth/signout?callbackUrl=${encodeURIComponent(`/login?callbackUrl=${encodeURIComponent(callbackUrl)}&email=${encodeURIComponent(invitation?.email || '')}`)}`}
+                    href="#"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      import('next-auth/react').then(({ signOut }) => {
+                        signOut({ callbackUrl: `/login?callbackUrl=${encodeURIComponent(callbackUrl)}&email=${encodeURIComponent(invitation?.email || '')}` });
+                      });
+                    }}
                     className="btn btn-primary w-full justify-center"
                   >
                     <SignIn size={18} />

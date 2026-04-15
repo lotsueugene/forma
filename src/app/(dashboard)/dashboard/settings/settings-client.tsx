@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useLayoutEffect } from 'react';
 import { motion } from 'framer-motion';
-import { useSession } from 'next-auth/react';
+import { useSession, signOut } from 'next-auth/react';
 import { useSearchParams } from 'next/navigation';
 import {
   User,
@@ -653,7 +653,7 @@ export default function SettingsPage() {
 
       if (response.ok) {
         // Sign out and redirect to home
-        window.location.href = '/api/auth/signout?callbackUrl=/';
+        signOut({ callbackUrl: '/' });
       } else {
         const data = await response.json();
         alert(data.error || 'Failed to delete account');
