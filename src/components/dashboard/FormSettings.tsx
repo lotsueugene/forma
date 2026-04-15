@@ -419,13 +419,17 @@ export default function FormSettingsPanel({
                       const input = (e.currentTarget as HTMLElement).querySelector('input');
                       input?.click();
                     }}
-                    className="group border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all border-gray-200 hover:border-safety-orange/50 hover:bg-safety-orange/5"
+                    className="group border-2 border-dashed rounded-xl p-4 text-center cursor-pointer transition-all border-gray-200 hover:border-safety-orange/50 hover:bg-safety-orange/5"
                   >
-                    <div className="w-12 h-12 rounded-xl bg-gray-100 group-hover:bg-safety-orange/10 flex items-center justify-center mx-auto mb-3 transition-colors">
-                      <UploadSimple size={22} className="text-gray-400 group-hover:text-safety-orange transition-colors" />
+                    <div className="flex items-center justify-center gap-3">
+                      <div className="w-9 h-9 rounded-lg bg-gray-100 group-hover:bg-safety-orange/10 flex items-center justify-center transition-colors shrink-0">
+                        <UploadSimple size={18} className="text-gray-400 group-hover:text-safety-orange transition-colors" />
+                      </div>
+                      <div className="text-left">
+                        <p className="text-sm font-medium text-gray-700">Upload image</p>
+                        <p className="text-xs text-gray-400">PNG, JPG or WebP · 1200x630</p>
+                      </div>
                     </div>
-                    <p className="text-sm font-medium text-gray-700">Click to upload image</p>
-                    <p className="text-xs text-gray-400 mt-1">PNG, JPG or WebP</p>
                     <input
                       type="file"
                       accept="image/*"

@@ -951,13 +951,15 @@ export default function SettingsPage() {
                             const input = (e.currentTarget as HTMLElement).querySelector('input');
                             input?.click();
                           }}
-                          className="group inline-flex flex-col items-center border-2 border-dashed border-gray-200 rounded-xl px-8 py-5 text-center cursor-pointer transition-all hover:border-safety-orange/50 hover:bg-safety-orange/5"
+                          className="group inline-flex items-center gap-3 border-2 border-dashed border-gray-200 rounded-xl px-4 py-3 cursor-pointer transition-all hover:border-safety-orange/50 hover:bg-safety-orange/5"
                         >
-                          <div className="w-10 h-10 rounded-xl bg-gray-100 group-hover:bg-safety-orange/10 flex items-center justify-center mb-2 transition-colors">
-                            <UploadSimple size={20} className="text-gray-400 group-hover:text-safety-orange transition-colors" />
+                          <div className="w-9 h-9 rounded-lg bg-gray-100 group-hover:bg-safety-orange/10 flex items-center justify-center transition-colors shrink-0">
+                            <UploadSimple size={18} className="text-gray-400 group-hover:text-safety-orange transition-colors" />
                           </div>
-                          <p className="text-sm font-medium text-gray-700">Upload logo</p>
-                          <p className="text-xs text-gray-400 mt-0.5">PNG, JPG or SVG</p>
+                          <div>
+                            <p className="text-sm font-medium text-gray-700">Upload logo</p>
+                            <p className="text-xs text-gray-400">PNG, JPG or SVG · 200x50</p>
+                          </div>
                           <input
                             type="file"
                             accept="image/*"
