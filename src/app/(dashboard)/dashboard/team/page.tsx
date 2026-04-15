@@ -249,7 +249,7 @@ export default function TeamPage() {
 
   const handleTransferOwnership = async (memberId: string, memberName: string) => {
     if (!currentWorkspace) return;
-    if (!confirm(`Transfer ownership to ${memberName}? You will become a manager.`)) return;
+    if (!confirm(`Transfer ownership to ${memberName}? You will become a manager and the workspace will be downgraded to the free plan. The new owner can upgrade.`)) return;
 
     try {
       const response = await fetch(
@@ -282,7 +282,7 @@ export default function TeamPage() {
 
     const isOwner = myMembership.role === 'owner';
     const message = isOwner
-      ? 'You are the owner. Ownership will be transferred to the next member. Are you sure?'
+      ? 'You are the owner. Ownership will transfer to the next member and the workspace will be downgraded to free. Continue?'
       : 'Are you sure you want to leave this workspace?';
 
     if (!confirm(message)) return;

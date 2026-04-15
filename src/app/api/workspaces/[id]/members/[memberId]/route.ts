@@ -3,6 +3,8 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { verifyWorkspaceAccess } from '@/lib/workspace-auth';
+import { downgradeToFreePlan } from '@/lib/subscription';
+import { stripe } from '@/lib/stripe';
 
 // PUT /api/workspaces/[id]/members/[memberId] - Update member role or transfer ownership
 export async function PUT(
@@ -40,19 +42,32 @@ export async function PUT(
 
       // Swap roles in a transaction
       await prisma.$transaction([
-        // Make target member the new owner
         prisma.workspaceMember.update({
           where: { id: memberId },
           data: { role: 'owner' },
         }),
-        // Demote current owner to admin
         prisma.workspaceMember.update({
           where: { id: access.membership!.id },
           data: { role: 'manager' },
         }),
       ]);
 
-      return NextResponse.json({ success: true, message: 'Ownership transferred' });
+      // Cancel Stripe subscription and downgrade to free
+      const subscription = await prisma.subscription.findUnique({
+        where: { workspaceId: id },
+      });
+
+      if (subscription?.stripeSubscriptionId && stripe) {
+        try {
+          await stripe.subscriptions.cancel(subscription.stripeSubscriptionId);
+        } catch (err) {
+          console.error('Failed to cancel Stripe subscription on ownership transfer:', err);
+        }
+      }
+
+      await downgradeToFreePlan(id);
+
+      return NextResponse.json({ success: true, message: 'Ownership transferred. Workspace downgraded to free plan.' });
     }
 
     // Regular role update
@@ -183,9 +198,24 @@ export async function DELETE(
         }),
       ]);
 
+      // Cancel Stripe subscription and downgrade to free
+      const subscription = await prisma.subscription.findUnique({
+        where: { workspaceId: id },
+      });
+
+      if (subscription?.stripeSubscriptionId && stripe) {
+        try {
+          await stripe.subscriptions.cancel(subscription.stripeSubscriptionId);
+        } catch (err) {
+          console.error('Failed to cancel Stripe subscription on owner leave:', err);
+        }
+      }
+
+      await downgradeToFreePlan(id);
+
       return NextResponse.json({
         success: true,
-        message: 'You have left the workspace. Ownership was transferred.',
+        message: 'You have left the workspace. Ownership was transferred. Workspace downgraded to free plan.',
         newOwnerId: nextOwner.userId,
       });
     }
