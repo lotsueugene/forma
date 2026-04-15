@@ -421,7 +421,7 @@ export default function BroadcastsPage() {
                 <button
                   type="button"
                   onClick={() => setDeletingBroadcastId(broadcast.id)}
-                  className="p-1.5 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded transition-colors"
+                  className="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
                 >
                   <Trash size={14} />
                 </button>

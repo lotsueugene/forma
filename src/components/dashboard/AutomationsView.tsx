@@ -203,7 +203,7 @@ export default function AutomationsView({ formId, fields }: Props) {
                   <button
                     type="button"
                     onClick={() => deleteAutomation(automation.id)}
-                    className="p-1.5 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded transition-colors"
+                    className="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
                   >
                     <Trash size={14} />
                   </button>
@@ -461,7 +461,7 @@ export default function AutomationsView({ formId, fields }: Props) {
                 <button
                   type="button"
                   onClick={() => setDeletingEmailId(email.id)}
-                  className="p-1.5 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded transition-colors shrink-0"
+                  className="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors shrink-0"
                 >
                   <Trash size={14} />
                 </button>
