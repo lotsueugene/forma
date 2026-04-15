@@ -129,7 +129,7 @@ export default function EmailLogPage({ params }: { params: Promise<{ id: string 
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search by email, subject, or automation..."
-            className="input w-full pl-9"
+            className="input w-full !pl-10"
           />
         </div>
         <div className="flex bg-gray-100 rounded-lg p-0.5 shrink-0">
