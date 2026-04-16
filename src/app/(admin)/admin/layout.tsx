@@ -25,20 +25,45 @@ import {
 } from '@phosphor-icons/react';
 import { cn } from '@/lib/utils';
 
-const navItems = [
-  { href: '/admin', label: 'Overview', icon: House },
-  { href: '/admin/users', label: 'Users', icon: Users },
-  { href: '/admin/workspaces', label: 'Workspaces', icon: Buildings },
-  { href: '/admin/forms', label: 'Forms', icon: Files },
-  { href: '/admin/pricing', label: 'Pricing', icon: CurrencyDollar },
-  { href: '/admin/pages', label: 'Static Pages', icon: FileText },
-  { href: '/admin/blog', label: 'Blog Posts', icon: Article },
-  { href: '/admin/careers', label: 'Careers', icon: Briefcase },
-  { href: '/admin/footer', label: 'Footer Links', icon: LinkIcon },
-  { href: '/admin/announcements', label: 'Announcements', icon: Megaphone },
-  { href: '/admin/broadcasts', label: 'Email Broadcasts', icon: EnvelopeSimple },
-  { href: '/admin/audit-log', label: 'Audit Log', icon: Shield },
-  { href: '/admin/settings', label: 'Platform Settings', icon: Gear },
+const navSections = [
+  {
+    label: null, // No header for top-level
+    items: [
+      { href: '/admin', label: 'Overview', icon: House },
+    ],
+  },
+  {
+    label: 'Platform',
+    items: [
+      { href: '/admin/users', label: 'Users', icon: Users },
+      { href: '/admin/workspaces', label: 'Workspaces', icon: Buildings },
+      { href: '/admin/forms', label: 'Forms', icon: Files },
+      { href: '/admin/pricing', label: 'Pricing', icon: CurrencyDollar },
+    ],
+  },
+  {
+    label: 'Content',
+    items: [
+      { href: '/admin/pages', label: 'Static Pages', icon: FileText },
+      { href: '/admin/blog', label: 'Blog Posts', icon: Article },
+      { href: '/admin/careers', label: 'Careers', icon: Briefcase },
+      { href: '/admin/footer', label: 'Footer Links', icon: LinkIcon },
+    ],
+  },
+  {
+    label: 'Engagement',
+    items: [
+      { href: '/admin/announcements', label: 'Announcements', icon: Megaphone },
+      { href: '/admin/broadcasts', label: 'Email Broadcasts', icon: EnvelopeSimple },
+    ],
+  },
+  {
+    label: 'System',
+    items: [
+      { href: '/admin/audit-log', label: 'Audit Log', icon: Shield },
+      { href: '/admin/settings', label: 'Settings', icon: Gear },
+    ],
+  },
 ];
 
 export default function AdminLayout({
@@ -125,25 +150,36 @@ export default function AdminLayout({
           <h1 className="text-lg font-semibold text-gray-900 mt-3">Admin Panel</h1>
         </div>
 
-        <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
-          {navItems.map((item) => {
-            const isActive = pathname === item.href || (item.href !== '/admin' && pathname.startsWith(item.href));
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={cn(
-                  'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors',
-                  isActive
-                    ? 'bg-safety-orange/10 text-safety-orange'
-                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
-                )}
-              >
-                <item.icon size={18} />
-                {item.label}
-              </Link>
-            );
-          })}
+        <nav className="flex-1 p-4 space-y-4 overflow-y-auto">
+          {navSections.map((section, sIndex) => (
+            <div key={sIndex}>
+              {section.label && (
+                <div className="px-3 mb-1 text-[10px] font-semibold uppercase tracking-wider text-gray-400">
+                  {section.label}
+                </div>
+              )}
+              <div className="space-y-0.5">
+                {section.items.map((item) => {
+                  const isActive = pathname === item.href || (item.href !== '/admin' && pathname.startsWith(item.href));
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      className={cn(
+                        'flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors',
+                        isActive
+                          ? 'bg-safety-orange/10 text-safety-orange'
+                          : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                      )}
+                    >
+                      <item.icon size={16} />
+                      {item.label}
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
         </nav>
 
         <div className="p-4 border-t border-gray-200">
