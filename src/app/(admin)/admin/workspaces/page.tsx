@@ -4,14 +4,12 @@ import { useEffect, useState, useCallback } from 'react';
 import {
   MagnifyingGlass,
   Spinner,
-  CaretLeft,
-  CaretRight,
   Buildings,
   Users,
   Files,
   Crown,
 } from '@phosphor-icons/react';
-import { cn } from '@/lib/utils';
+import Pagination from '@/components/ui/Pagination';
 
 interface Workspace {
   id: string;
@@ -181,22 +179,11 @@ export default function AdminWorkspacesPage() {
               <div className="text-sm text-gray-500">
                 Page {pagination.page} of {pagination.totalPages} ({pagination.total} total)
               </div>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setPagination((p) => ({ ...p, page: p.page - 1 }))}
-                  disabled={pagination.page <= 1}
-                  className="p-2 rounded-lg border border-gray-300 text-gray-600 hover:bg-white disabled:opacity-40 disabled:cursor-not-allowed"
-                >
-                  <CaretLeft size={16} />
-                </button>
-                <button
-                  onClick={() => setPagination((p) => ({ ...p, page: p.page + 1 }))}
-                  disabled={pagination.page >= pagination.totalPages}
-                  className="p-2 rounded-lg border border-gray-300 text-gray-600 hover:bg-white disabled:opacity-40 disabled:cursor-not-allowed"
-                >
-                  <CaretRight size={16} />
-                </button>
-              </div>
+              <Pagination
+                page={pagination.page}
+                totalPages={pagination.totalPages}
+                onPageChange={(p) => setPagination((prev) => ({ ...prev, page: p }))}
+              />
             </div>
           )}
         </div>

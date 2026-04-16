@@ -5,13 +5,12 @@ import { useSession } from 'next-auth/react';
 import {
   MagnifyingGlass,
   Spinner,
-  CaretLeft,
-  CaretRight,
   Shield,
   User as UserIcon,
   Trash,
   DotsThreeVertical,
 } from '@phosphor-icons/react';
+import Pagination from '@/components/ui/Pagination';
 import { cn } from '@/lib/utils';
 import { AnimatePresence, motion } from 'framer-motion';
 import ConfirmModal from '@/components/ui/ConfirmModal';
@@ -281,54 +280,11 @@ export default function AdminUsersPage() {
             <div className="text-sm text-gray-500">
               Showing {((pagination.page - 1) * pagination.limit) + 1}-{Math.min(pagination.page * pagination.limit, pagination.total)} of {pagination.total}
             </div>
-            <div className="flex items-center gap-1">
-              <button
-                onClick={() => setPagination(p => ({ ...p, page: 1 }))}
-                disabled={pagination.page === 1}
-                className="px-2.5 py-1.5 text-xs rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed"
-              >
-                First
-              </button>
-              <button
-                onClick={() => setPagination(p => ({ ...p, page: p.page - 1 }))}
-                disabled={pagination.page === 1}
-                className="px-2.5 py-1.5 text-xs rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed"
-              >
-                Prev
-              </button>
-              {Array.from({ length: Math.min(5, pagination.totalPages) }, (_, i) => {
-                let pg: number;
-                if (pagination.totalPages <= 5) pg = i + 1;
-                else if (pagination.page <= 3) pg = i + 1;
-                else if (pagination.page >= pagination.totalPages - 2) pg = pagination.totalPages - 4 + i;
-                else pg = pagination.page - 2 + i;
-                return (
-                  <button
-                    key={pg}
-                    onClick={() => setPagination(p => ({ ...p, page: pg }))}
-                    className={`w-8 h-8 text-xs rounded-lg font-medium transition-colors ${
-                      pg === pagination.page ? 'bg-safety-orange text-white' : 'border border-gray-200 text-gray-600 hover:bg-gray-50'
-                    }`}
-                  >
-                    {pg}
-                  </button>
-                );
-              })}
-              <button
-                onClick={() => setPagination(p => ({ ...p, page: p.page + 1 }))}
-                disabled={pagination.page === pagination.totalPages}
-                className="px-2.5 py-1.5 text-xs rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed"
-              >
-                Next
-              </button>
-              <button
-                onClick={() => setPagination(p => ({ ...p, page: pagination.totalPages }))}
-                disabled={pagination.page === pagination.totalPages}
-                className="px-2.5 py-1.5 text-xs rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed"
-              >
-                Last
-              </button>
-            </div>
+            <Pagination
+              page={pagination.page}
+              totalPages={pagination.totalPages}
+              onPageChange={(p) => setPagination((prev) => ({ ...prev, page: p }))}
+            />
           </div>
         )}
       </div>
@@ -415,24 +371,12 @@ export default function AdminUsersPage() {
 
         {/* Pagination - Mobile */}
         {pagination.totalPages > 1 && (
-          <div className="flex items-center justify-center gap-1 pt-2">
-              <button
-                onClick={() => setPagination(p => ({ ...p, page: p.page - 1 }))}
-                disabled={pagination.page === 1}
-                className="px-2.5 py-1.5 text-xs rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed"
-              >
-                Prev
-              </button>
-              <span className="text-xs text-gray-500 px-2">
-                {pagination.page} / {pagination.totalPages}
-              </span>
-              <button
-                onClick={() => setPagination(p => ({ ...p, page: p.page + 1 }))}
-                disabled={pagination.page === pagination.totalPages}
-                className="px-2.5 py-1.5 text-xs rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed"
-              >
-                Next
-              </button>
+          <div className="pt-2">
+            <Pagination
+              page={pagination.page}
+              totalPages={pagination.totalPages}
+              onPageChange={(p) => setPagination((prev) => ({ ...prev, page: p }))}
+            />
           </div>
         )}
       </div>

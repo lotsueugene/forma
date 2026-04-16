@@ -4,8 +4,6 @@ import { useEffect, useState, useCallback } from 'react';
 import {
   MagnifyingGlass,
   Spinner,
-  CaretLeft,
-  CaretRight,
   ShieldCheck,
   Warning,
   SignIn,
@@ -14,6 +12,7 @@ import {
   Key,
   ArrowsClockwise,
 } from '@phosphor-icons/react';
+import Pagination from '@/components/ui/Pagination';
 import { cn } from '@/lib/utils';
 
 interface AuditEntry {
@@ -228,22 +227,11 @@ export default function AdminAuditLogPage() {
               <div className="text-sm text-gray-500">
                 Page {pagination.page} of {pagination.totalPages}
               </div>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setPagination((p) => ({ ...p, page: p.page - 1 }))}
-                  disabled={pagination.page <= 1}
-                  className="p-2 rounded-lg border border-gray-300 text-gray-600 hover:bg-white disabled:opacity-40 disabled:cursor-not-allowed"
-                >
-                  <CaretLeft size={16} />
-                </button>
-                <button
-                  onClick={() => setPagination((p) => ({ ...p, page: p.page + 1 }))}
-                  disabled={pagination.page >= pagination.totalPages}
-                  className="p-2 rounded-lg border border-gray-300 text-gray-600 hover:bg-white disabled:opacity-40 disabled:cursor-not-allowed"
-                >
-                  <CaretRight size={16} />
-                </button>
-              </div>
+              <Pagination
+                page={pagination.page}
+                totalPages={pagination.totalPages}
+                onPageChange={(p) => setPagination((prev) => ({ ...prev, page: p }))}
+              />
             </div>
           )}
         </div>
