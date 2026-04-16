@@ -8,8 +8,8 @@ const MAIN_DOMAINS = [
   'withforma.io',
   'www.withforma.io',
   'forma.withforma.io',
-  // VPS IP
-  'SERVER_IP_REDACTED',
+  // VPS IP (from env)
+  process.env.SERVER_IP || '',
 ];
 
 export function middleware(request: NextRequest) {

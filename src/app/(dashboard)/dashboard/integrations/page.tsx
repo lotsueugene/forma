@@ -951,7 +951,7 @@ function IntegrationsPageContent() {
                       <div className="grid grid-cols-[80px_1fr] gap-1 text-gray-600">
                         <span>Type:</span><code className="bg-white px-1 rounded">A</code>
                         <span>Host:</span><code className="bg-white px-1 rounded">{subdomain}</code>
-                        <span>Value:</span><code className="bg-white px-1 rounded">SERVER_IP_REDACTED</code>
+                        <span>Value:</span><code className="bg-white px-1 rounded">{process.env.NEXT_PUBLIC_SERVER_IP || ''}</code>
                       </div>
                     </div>
                     <div className="space-y-1">

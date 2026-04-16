@@ -6,7 +6,7 @@ import { prisma } from '@/lib/prisma';
 import { verifyWorkspaceAccess } from '@/lib/workspace-auth';
 
 // The server's IP address that custom domains should point to
-const SERVER_IP = 'SERVER_IP_REDACTED';
+const SERVER_IP = process.env.SERVER_IP || '';
 const MAIN_DOMAIN = 'withforma.io';
 
 // Use Google's DNS for reliable lookups
