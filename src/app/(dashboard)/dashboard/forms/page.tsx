@@ -358,7 +358,7 @@ export default function FormsPage() {
                             initial={{ opacity: 0, scale: 0.95 }}
                             animate={{ opacity: 1, scale: 1 }}
                             exit={{ opacity: 0, scale: 0.95 }}
-                            className="absolute right-0 bottom-full mb-1 w-40 bg-white border border-gray-300 rounded-lg shadow-lg overflow-hidden z-50"
+                            className="absolute right-0 top-full mt-1 w-40 bg-white border border-gray-300 rounded-lg shadow-lg overflow-hidden z-50"
                           >
                             <Link
                               href={`/dashboard/forms/${form.id}`}
@@ -513,7 +513,10 @@ export default function FormsPage() {
                               initial={{ opacity: 0, scale: 0.95 }}
                               animate={{ opacity: 1, scale: 1 }}
                               exit={{ opacity: 0, scale: 0.95 }}
-                              className="absolute right-0 bottom-full mb-1 w-40 bg-white border border-gray-300 rounded-lg shadow-lg overflow-hidden z-50"
+                              className={cn(
+                                "absolute right-0 w-40 bg-white border border-gray-300 rounded-lg shadow-lg overflow-hidden z-50",
+                                index === 0 ? "top-full mt-1" : "bottom-full mb-1"
+                              )}
                             >
                               <Link
                                 href={`/dashboard/forms/${form.id}`}
