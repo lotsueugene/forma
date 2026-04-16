@@ -466,7 +466,7 @@ export default function ConversationalForm({
                   )}
                 </div>
 
-                {/* OK / Next button */}
+                {/* OK / Next / Submit button — hidden for radio/select (auto-advance handles it) */}
                 {currentField.type !== 'radio' && currentField.type !== 'select' && (
                   <motion.div
                     initial={{ opacity: 0, y: 10 }}
@@ -496,41 +496,54 @@ export default function ConversationalForm({
                     <span className="text-xs hidden sm:inline" style={{ color: 'var(--forma-text-faint)' }}>
                       press <strong>Enter ↵</strong>
                     </span>
-                    {/* Navigation arrows - inline with OK button */}
-                    <div className="flex items-center gap-1 ml-2">
-                      <button
-                        type="button"
-                        onClick={goPrev}
-                        disabled={currentIndex <= 0}
-                        className={cn(
-                          'w-8 h-8 rounded-md flex items-center justify-center transition-all',
-                          currentIndex <= 0 ? 'opacity-20 cursor-not-allowed' : 'hover:scale-105'
-                        )}
-                        style={{
-                          backgroundColor: isLightBg ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.1)',
-                          color: 'var(--forma-text)',
-                        }}
-                      >
-                        <ArrowUp size={14} />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={goNext}
-                        disabled={!isCurrentFieldValid()}
-                        className={cn(
-                          'w-8 h-8 rounded-md flex items-center justify-center transition-all rotate-180',
-                          !isCurrentFieldValid() ? 'opacity-20 cursor-not-allowed' : 'hover:scale-105'
-                        )}
-                        style={{
-                          backgroundColor: isLightBg ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.1)',
-                          color: 'var(--forma-text)',
-                        }}
-                      >
-                        <ArrowUp size={14} />
-                      </button>
-                    </div>
                   </motion.div>
                 )}
+
+                {/* Navigation arrows — shown on ALL question types */}
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.3 }}
+                  className="flex items-center gap-1 mt-4"
+                >
+                  <button
+                    type="button"
+                    onClick={goPrev}
+                    disabled={currentIndex <= 0}
+                    className={cn(
+                      'w-8 h-8 rounded-md flex items-center justify-center transition-all',
+                      currentIndex <= 0 ? 'opacity-20 cursor-not-allowed' : 'hover:scale-105'
+                    )}
+                    style={{
+                      backgroundColor: isLightBg ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.1)',
+                      color: 'var(--forma-text)',
+                    }}
+                  >
+                    <ArrowUp size={14} />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      // Navigate only — don't submit on last question
+                      if (!isCurrentFieldValid()) return;
+                      if (currentIndex < totalQuestions - 1) {
+                        setDirection(1);
+                        setCurrentIndex((i) => i + 1);
+                      }
+                    }}
+                    disabled={!isCurrentFieldValid() || currentIndex >= totalQuestions - 1}
+                    className={cn(
+                      'w-8 h-8 rounded-md flex items-center justify-center transition-all rotate-180',
+                      (!isCurrentFieldValid() || currentIndex >= totalQuestions - 1) ? 'opacity-20 cursor-not-allowed' : 'hover:scale-105'
+                    )}
+                    style={{
+                      backgroundColor: isLightBg ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.1)',
+                      color: 'var(--forma-text)',
+                    }}
+                  >
+                    <ArrowUp size={14} />
+                  </button>
+                </motion.div>
               </motion.div>
             )}
           </AnimatePresence>
