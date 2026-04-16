@@ -133,11 +133,13 @@ export async function GET(request: NextRequest) {
       };
     });
 
-    // Submissions by form (for pie chart)
-    const submissionsByForm = formStatsFormatted
-      .filter((f) => f.submissions > 0)
-      .slice(0, 5)
-      .map((f) => ({ name: f.name, value: f.submissions }));
+    // Submissions by form (for pie chart) — top 5 + "Other"
+    const formsWithSubs = formStatsFormatted.filter((f) => f.submissions > 0);
+    const top5 = formsWithSubs.slice(0, 5).map((f) => ({ name: f.name, value: f.submissions }));
+    const otherTotal = formsWithSubs.slice(5).reduce((sum, f) => sum + f.submissions, 0);
+    const submissionsByForm = otherTotal > 0
+      ? [...top5, { name: 'Other', value: otherTotal }]
+      : top5;
 
     // Hourly distribution (zero-fill 24 hours)
     const hourlyMap = Array(24).fill(0);
