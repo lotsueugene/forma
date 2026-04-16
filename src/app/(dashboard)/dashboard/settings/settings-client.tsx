@@ -897,146 +897,160 @@ export default function SettingsPage() {
                   </div>
                 )}
 
-                <div className="form-field">
-                  <label className="form-label">Name</label>
-                  <input
-                    type="text"
-                    value={workspaceName}
-                    onChange={(e) => setWorkspaceName(e.target.value)}
-                    placeholder="My Workspace"
-                    className="input"
-                  />
-                  <p className="text-xs text-gray-500 mt-1">
-                    This name is shown in the workspace switcher and team invites.
-                  </p>
-                </div>
+                {userRoleLevel >= roleLevel['manager'] ? (
+                  <>
+                    <div className="form-field">
+                      <label className="form-label">Name</label>
+                      <input
+                        type="text"
+                        value={workspaceName}
+                        onChange={(e) => setWorkspaceName(e.target.value)}
+                        placeholder="My Workspace"
+                        className="input"
+                      />
+                      <p className="text-xs text-gray-500 mt-1">
+                        This name is shown in the workspace switcher and team invites.
+                      </p>
+                    </div>
 
-                <div className="mt-6 flex justify-end">
-                  <button
-                    onClick={handleSaveWorkspaceName}
-                    disabled={isSavingWorkspaceName || !workspaceName.trim()}
-                    className="btn btn-primary"
-                  >
-                    {isSavingWorkspaceName ? (
-                      <>
-                        <Spinner size={16} className="animate-spin" />
-                        Saving...
-                      </>
-                    ) : (
-                      'Save Name'
-                    )}
-                  </button>
-                </div>
+                    <div className="mt-6 flex justify-end">
+                      <button
+                        onClick={handleSaveWorkspaceName}
+                        disabled={isSavingWorkspaceName || !workspaceName.trim()}
+                        className="btn btn-primary"
+                      >
+                        {isSavingWorkspaceName ? (
+                          <>
+                            <Spinner size={16} className="animate-spin" />
+                            Saving...
+                          </>
+                        ) : (
+                          'Save Name'
+                        )}
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <div className="form-field">
+                    <label className="form-label">Name</label>
+                    <p className="text-gray-900">{currentWorkspace?.name}</p>
+                    <p className="text-xs text-gray-400 mt-1">Only managers and owners can edit workspace settings.</p>
+                  </div>
+                )}
               </div>
 
-              {/* Workspace Logo */}
-              <div className="card p-4 sm:p-6">
-                <h2 className="font-semibold text-gray-900 mb-2">Workspace Logo</h2>
-                <p className="text-sm text-gray-500 mb-4">Used in broadcast emails and branding. Recommended size: 200x50px.</p>
-                {(() => {
-                  const currentLogo = currentWorkspace?.logoUrl;
-                  return (
-                    <div className="flex items-center gap-4">
-                      {currentLogo ? (
-                        <div className="flex items-center gap-4">
-                          <img src={currentLogo} alt="Logo" className="h-10 max-w-[200px] object-contain border border-gray-200 rounded-lg p-1" />
-                          <button
-                            onClick={async () => {
-                              try {
-                                await fetch(`/api/workspaces/${currentWorkspace?.id}`, {
-                                  method: 'PATCH',
-                                  headers: { 'Content-Type': 'application/json' },
-                                  body: JSON.stringify({ logoUrl: null }),
-                                });
-                                window.location.reload();
-                              } catch {}
-                            }}
-                            className="text-xs text-red-500 hover:text-red-700"
-                          >
-                            Remove
-                          </button>
-                        </div>
-                      ) : (
-                        <div
-                          onClick={async (e) => {
-                            const input = (e.currentTarget as HTMLElement).querySelector('input');
-                            input?.click();
-                          }}
-                          className="group inline-flex items-center gap-3 border-2 border-dashed border-gray-200 rounded-xl px-4 py-3 cursor-pointer transition-all hover:border-safety-orange/50 hover:bg-safety-orange/5"
-                        >
-                          <div className="w-9 h-9 rounded-lg bg-gray-100 group-hover:bg-safety-orange/10 flex items-center justify-center transition-colors shrink-0">
-                            <UploadSimple size={18} className="text-gray-400 group-hover:text-safety-orange transition-colors" />
-                          </div>
-                          <div>
-                            <p className="text-sm font-medium text-gray-700">Upload logo</p>
-                            <p className="text-xs text-gray-400">PNG, JPG or SVG · 200x50</p>
-                          </div>
-                          <input
-                            type="file"
-                            accept="image/*"
-                            className="hidden"
-                            onChange={async (e) => {
-                              const file = e.target.files?.[0];
-                              if (!file) return;
-                              const fd = new FormData();
-                              fd.append('file', file);
-                              fd.append('folder', 'logos');
-                              try {
-                                const uploadRes = await fetch('/api/upload', { method: 'POST', body: fd });
-                                const uploadData = await uploadRes.json();
-                                if (uploadData.url && currentWorkspace?.id) {
-                                  await fetch(`/api/workspaces/${currentWorkspace.id}`, {
+              {/* Workspace Logo — manager+ only */}
+              {userRoleLevel >= roleLevel['manager'] && (
+                <div className="card p-4 sm:p-6">
+                  <h2 className="font-semibold text-gray-900 mb-2">Workspace Logo</h2>
+                  <p className="text-sm text-gray-500 mb-4">Used in broadcast emails and branding. Recommended size: 200x50px.</p>
+                  {(() => {
+                    const currentLogo = currentWorkspace?.logoUrl;
+                    return (
+                      <div className="flex items-center gap-4">
+                        {currentLogo ? (
+                          <div className="flex items-center gap-4">
+                            <img src={currentLogo} alt="Logo" className="h-10 max-w-[200px] object-contain border border-gray-200 rounded-lg p-1" />
+                            <button
+                              onClick={async () => {
+                                try {
+                                  await fetch(`/api/workspaces/${currentWorkspace?.id}`, {
                                     method: 'PATCH',
                                     headers: { 'Content-Type': 'application/json' },
-                                    body: JSON.stringify({ logoUrl: uploadData.url }),
+                                    body: JSON.stringify({ logoUrl: null }),
                                   });
                                   window.location.reload();
-                                }
-                              } catch {}
+                                } catch {}
+                              }}
+                              className="text-xs text-red-500 hover:text-red-700"
+                            >
+                              Remove
+                            </button>
+                          </div>
+                        ) : (
+                          <div
+                            onClick={async (e) => {
+                              const input = (e.currentTarget as HTMLElement).querySelector('input');
+                              input?.click();
                             }}
-                          />
-                        </div>
+                            className="group inline-flex items-center gap-3 border-2 border-dashed border-gray-200 rounded-xl px-4 py-3 cursor-pointer transition-all hover:border-safety-orange/50 hover:bg-safety-orange/5"
+                          >
+                            <div className="w-9 h-9 rounded-lg bg-gray-100 group-hover:bg-safety-orange/10 flex items-center justify-center transition-colors shrink-0">
+                              <UploadSimple size={18} className="text-gray-400 group-hover:text-safety-orange transition-colors" />
+                            </div>
+                            <div>
+                              <p className="text-sm font-medium text-gray-700">Upload logo</p>
+                              <p className="text-xs text-gray-400">PNG, JPG or SVG · 200x50</p>
+                            </div>
+                            <input
+                              type="file"
+                              accept="image/*"
+                              className="hidden"
+                              onChange={async (e) => {
+                                const file = e.target.files?.[0];
+                                if (!file) return;
+                                const fd = new FormData();
+                                fd.append('file', file);
+                                fd.append('folder', 'logos');
+                                try {
+                                  const uploadRes = await fetch('/api/upload', { method: 'POST', body: fd });
+                                  const uploadData = await uploadRes.json();
+                                  if (uploadData.url && currentWorkspace?.id) {
+                                    await fetch(`/api/workspaces/${currentWorkspace.id}`, {
+                                      method: 'PATCH',
+                                      headers: { 'Content-Type': 'application/json' },
+                                      body: JSON.stringify({ logoUrl: uploadData.url }),
+                                    });
+                                    window.location.reload();
+                                  }
+                                } catch {}
+                              }}
+                            />
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })()}
+                </div>
+              )}
+
+              {/* Workspace Settings — manager+ only */}
+              {userRoleLevel >= roleLevel['manager'] && (
+                <div className="card p-4 sm:p-6">
+                  <h2 className="font-semibold text-gray-900 mb-6">Workspace Settings</h2>
+
+                  <div className="form-field">
+                    <label className="form-label">Notification Email</label>
+                    <input
+                      type="email"
+                      value={workspaceNotificationEmail}
+                      onChange={(e) => setWorkspaceNotificationEmail(e.target.value)}
+                      placeholder="notifications@yourcompany.com"
+                      className="input"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      Receive form submission notifications at this email instead of your account email.
+                    </p>
+                  </div>
+
+                  <div className="mt-6 flex justify-end">
+                    <button
+                      onClick={handleSaveWorkspace}
+                      disabled={isSavingWorkspace}
+                      className="btn btn-primary"
+                    >
+                      {isSavingWorkspace ? (
+                        <>
+                          <Spinner size={16} className="animate-spin" />
+                          Saving...
+                        </>
+                      ) : (
+                        'Save Changes'
                       )}
-                    </div>
-                  );
-                })()}
-              </div>
-
-              {/* Workspace Settings */}
-              <div className="card p-4 sm:p-6">
-                <h2 className="font-semibold text-gray-900 mb-6">Workspace Settings</h2>
-
-                <div className="form-field">
-                  <label className="form-label">Notification Email</label>
-                  <input
-                    type="email"
-                    value={workspaceNotificationEmail}
-                    onChange={(e) => setWorkspaceNotificationEmail(e.target.value)}
-                    placeholder="notifications@yourcompany.com"
-                    className="input"
-                  />
-                  <p className="text-xs text-gray-500 mt-1">
-                    Receive form submission notifications at this email instead of your account email.
-                  </p>
+                    </button>
+                  </div>
                 </div>
-
-                <div className="mt-6 flex justify-end">
-                  <button
-                    onClick={handleSaveWorkspace}
-                    disabled={isSavingWorkspace}
-                    className="btn btn-primary"
-                  >
-                    {isSavingWorkspace ? (
-                      <>
-                        <Spinner size={16} className="animate-spin" />
-                        Saving...
-                      </>
-                    ) : (
-                      'Save Changes'
-                    )}
-                  </button>
-                </div>
-              </div>
+              )}
 
               {/* Delete Workspace */}
               {currentWorkspace && !currentWorkspace.isPersonal && currentWorkspace.role === 'owner' && (

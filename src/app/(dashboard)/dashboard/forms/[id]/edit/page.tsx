@@ -343,10 +343,25 @@ function DraggableFieldItem({
   );
 }
 
+const roleLevel: Record<string, number> = { owner: 4, manager: 3, editor: 2, viewer: 1 };
+
 export default function EditFormPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const router = useRouter();
   const { currentWorkspace } = useWorkspace();
+
+  // Role guard: editor+ only
+  const userRole = currentWorkspace?.role || 'viewer';
+  if (roleLevel[userRole] < roleLevel['editor']) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <h2 className="text-lg font-semibold text-gray-900 mb-2">Access Restricted</h2>
+          <p className="text-gray-500">You need editor or higher access to edit forms.</p>
+        </div>
+      </div>
+    );
+  }
   const [planType, setPlanType] = useState<string>('free');
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [isLoading, setIsLoading] = useState(true);

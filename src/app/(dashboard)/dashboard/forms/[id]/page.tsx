@@ -67,10 +67,15 @@ interface Submission {
 
 type Tab = 'submissions' | 'bookings' | 'automations' | 'analytics' | 'settings';
 
+const roleLevel: Record<string, number> = { owner: 4, manager: 3, editor: 2, viewer: 1 };
+
 export default function FormDetailPage() {
   const params = useParams();
   const formId = params.id as string;
   const { currentWorkspace } = useWorkspace();
+  const userRole = currentWorkspace?.role || 'viewer';
+  const canEdit = roleLevel[userRole] >= roleLevel['editor'];
+  const canDelete = roleLevel[userRole] >= roleLevel['manager'];
 
   const [form, setForm] = useState<Form | null>(null);
   const [submissions, setSubmissions] = useState<Submission[]>([]);
@@ -425,6 +430,7 @@ export default function FormDetailPage() {
             <div className="flex items-center gap-3">
               <h1 className="text-2xl font-semibold text-gray-900">{form.name}</h1>
               <div className="relative">
+                {canEdit ? (
                 <button
                   onClick={() => setShowStatusMenu(!showStatusMenu)}
                   disabled={isUpdatingStatus}
@@ -445,6 +451,17 @@ export default function FormDetailPage() {
                     </>
                   )}
                 </button>
+                ) : (
+                  <span className={cn(
+                    'badge',
+                    form.status === 'active' ? 'badge-success' :
+                    form.status === 'paused' ? 'bg-amber-100 text-amber-700' :
+                    form.status === 'archived' ? 'bg-gray-100 text-gray-600' :
+                    'badge-warning'
+                  )}>
+                    {form.status}
+                  </span>
+                )}
                 <AnimatePresence>
                   {showStatusMenu && (
                     <>
@@ -501,7 +518,7 @@ export default function FormDetailPage() {
           </div>
         </div>
         <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0 flex-wrap">
-          {form.status === 'draft' && (
+          {canEdit && form.status === 'draft' && (
             <button
               onClick={() => updateFormStatus('active')}
               disabled={isUpdatingStatus}
@@ -515,7 +532,7 @@ export default function FormDetailPage() {
               <span className="hidden sm:inline">Publish</span>
             </button>
           )}
-          {form.formType === 'builder' && (
+          {canEdit && form.formType === 'builder' && (
             <Link
               href={`/dashboard/forms/${formId}/edit`}
               className="btn btn-secondary text-sm"
@@ -535,53 +552,57 @@ export default function FormDetailPage() {
             <span className="sm:hidden">View</span>
             <ArrowSquareOut size={14} className="hidden sm:block" />
           </Link>
-          {/* More menu with delete */}
-          <div className="relative">
-            <button
-              onClick={() => setShowMoreMenu(!showMoreMenu)}
-              className="btn btn-secondary text-sm px-2"
-            >
-              <DotsThree size={20} weight="bold" />
-            </button>
-            <AnimatePresence>
-              {showMoreMenu && (
-                <>
-                  <div className="fixed inset-0 z-10" onClick={() => setShowMoreMenu(false)} />
-                  <motion.div
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: 8 }}
-                    className="absolute right-0 mt-2 w-48 max-w-[calc(100vw-2rem)] bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden z-20"
-                  >
-                    <button
-                      onClick={handleDuplicate}
-                      disabled={isDuplicating}
-                      className="w-full px-4 py-3 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2 disabled:opacity-50"
+          {/* More menu with delete — editors can duplicate, managers can delete */}
+          {canEdit && (
+            <div className="relative">
+              <button
+                onClick={() => setShowMoreMenu(!showMoreMenu)}
+                className="btn btn-secondary text-sm px-2"
+              >
+                <DotsThree size={20} weight="bold" />
+              </button>
+              <AnimatePresence>
+                {showMoreMenu && (
+                  <>
+                    <div className="fixed inset-0 z-10" onClick={() => setShowMoreMenu(false)} />
+                    <motion.div
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 8 }}
+                      className="absolute right-0 mt-2 w-48 max-w-[calc(100vw-2rem)] bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden z-20"
                     >
-                      {isDuplicating ? (
-                        <Spinner size={16} className="animate-spin" />
-                      ) : (
-                        <Copy size={16} />
+                      <button
+                        onClick={handleDuplicate}
+                        disabled={isDuplicating}
+                        className="w-full px-4 py-3 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2 disabled:opacity-50"
+                      >
+                        {isDuplicating ? (
+                          <Spinner size={16} className="animate-spin" />
+                        ) : (
+                          <Copy size={16} />
+                        )}
+                        Duplicate Form
+                      </button>
+                      {canDelete && (
+                        <button
+                          onClick={() => { setShowMoreMenu(false); setShowDeleteModal(true); }}
+                          disabled={isDeleting}
+                          className="w-full px-4 py-3 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2 disabled:opacity-50"
+                        >
+                          {isDeleting ? (
+                            <Spinner size={16} className="animate-spin" />
+                          ) : (
+                            <Trash size={16} />
+                          )}
+                          Delete Form
+                        </button>
                       )}
-                      Duplicate Form
-                    </button>
-                    <button
-                      onClick={() => { setShowMoreMenu(false); setShowDeleteModal(true); }}
-                      disabled={isDeleting}
-                      className="w-full px-4 py-3 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2 disabled:opacity-50"
-                    >
-                      {isDeleting ? (
-                        <Spinner size={16} className="animate-spin" />
-                      ) : (
-                        <Trash size={16} />
-                      )}
-                      Delete Form
-                    </button>
-                  </motion.div>
-                </>
-              )}
-            </AnimatePresence>
-          </div>
+                    </motion.div>
+                  </>
+                )}
+              </AnimatePresence>
+            </div>
+          )}
         </div>
       </div>
 
@@ -782,9 +803,9 @@ export default function FormDetailPage() {
             ...(form.fields?.some((f: { type: string }) => f.type === 'booking')
               ? [{ id: 'bookings', label: 'Bookings', icon: CalendarCheck, count: undefined }]
               : []),
-            { id: 'automations', label: 'Automations', icon: Lightning },
+            ...(canEdit ? [{ id: 'automations', label: 'Automations', icon: Lightning }] : []),
             { id: 'analytics', label: 'Analytics', icon: ChartLineUp },
-            { id: 'settings', label: 'Settings', icon: Gear },
+            ...(canEdit ? [{ id: 'settings', label: 'Settings', icon: Gear }] : []),
           ].map((tab) => (
             <button
               key={tab.id}
