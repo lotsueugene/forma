@@ -463,7 +463,7 @@ export default function TeamPage() {
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: index * 0.05 }}
-                  className="p-3 sm:p-4 grid grid-cols-[auto_1fr_auto] sm:grid-cols-[auto_1fr_auto_auto] lg:grid-cols-[auto_1fr_auto_9rem_auto] items-center gap-3 hover:bg-gray-50 transition-colors"
+                  className="p-3 sm:p-4 grid grid-cols-[auto_1fr_auto] sm:grid-cols-[auto_1fr_7rem_auto] lg:grid-cols-[auto_1fr_7rem_9rem_auto] items-center gap-3 hover:bg-gray-50 transition-colors"
                 >
                   {/* Avatar */}
                   <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-linear-to-br from-accent-100 to-accent-200 flex items-center justify-center text-gray-900 font-semibold text-sm">
