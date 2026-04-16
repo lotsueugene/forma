@@ -198,9 +198,7 @@ export default function BookingPageClient({ formId }: { formId: string }) {
 
   return (
     <div className="forma-page min-h-screen py-8 pb-12 px-4" style={{ backgroundColor: bgColor }}>
-      {form?.settings?.customCss && (
-        <style dangerouslySetInnerHTML={{ __html: form.settings.customCss }} />
-      )}
+      {/* Custom CSS feature disabled for security */}
       <div className="max-w-lg mx-auto space-y-6">
         {/* Header */}
         <div className="text-center space-y-2">

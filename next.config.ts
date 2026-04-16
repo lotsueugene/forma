@@ -9,6 +9,20 @@ const nextConfig: NextConfig = {
     ],
   },
   async headers() {
+    const csp = [
+      "default-src 'self'",
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com https://www.google.com https://www.gstatic.com",
+      "style-src 'self' 'unsafe-inline'",
+      "img-src 'self' data: blob: https://*.amazonaws.com https://lh3.googleusercontent.com https://avatars.githubusercontent.com",
+      "font-src 'self' data:",
+      "connect-src 'self' https://api.stripe.com https://vitals.vercel-insights.com",
+      "frame-src https://js.stripe.com https://www.google.com",
+      "object-src 'none'",
+      "base-uri 'self'",
+      "form-action 'self'",
+      "frame-ancestors 'none'",
+    ].join('; ');
+
     const securityHeaders = [
       { key: 'X-Content-Type-Options', value: 'nosniff' },
       { key: 'X-Frame-Options', value: 'DENY' },
@@ -16,6 +30,9 @@ const nextConfig: NextConfig = {
       { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
       { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
       { key: 'Strict-Transport-Security', value: 'max-age=63072000; includeSubDomains; preload' },
+      { key: 'Content-Security-Policy', value: csp },
+      { key: 'Cross-Origin-Opener-Policy', value: 'same-origin' },
+      { key: 'Cross-Origin-Embedder-Policy', value: 'credentialless' },
     ];
 
     return [
@@ -42,6 +59,19 @@ const nextConfig: NextConfig = {
           { key: 'X-Content-Type-Options', value: 'nosniff' },
           { key: 'X-Frame-Options', value: 'ALLOWALL' },
           { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+          { key: 'Content-Security-Policy', value: csp.replace("frame-ancestors 'none'", "frame-ancestors *") },
+          { key: 'Cross-Origin-Embedder-Policy', value: 'unsafe-none' },
+        ],
+      },
+      {
+        // Booking pages also embeddable
+        source: '/book/:path*',
+        headers: [
+          { key: 'X-Content-Type-Options', value: 'nosniff' },
+          { key: 'X-Frame-Options', value: 'ALLOWALL' },
+          { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+          { key: 'Content-Security-Policy', value: csp.replace("frame-ancestors 'none'", "frame-ancestors *") },
+          { key: 'Cross-Origin-Embedder-Policy', value: 'unsafe-none' },
         ],
       },
     ];

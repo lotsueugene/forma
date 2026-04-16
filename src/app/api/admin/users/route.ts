@@ -53,14 +53,11 @@ export async function GET(request: NextRequest) {
       prisma.user.count({ where }),
     ]);
 
-    // Fetch subscriptions for these users via raw query (userId may not be in generated client)
+    // Fetch subscriptions for these users via parameterized raw query
     const userIds = users.map((u) => u.id);
-    const subscriptions = await prisma.$queryRawUnsafe<
+    const subscriptions = await prisma.$queryRaw<
       Array<{ userId: string; plan: string; status: string; trialEndsAt: Date | null; stripeCurrentPeriodEnd: Date | null }>
-    >(
-      `SELECT "userId", plan, status, "trialEndsAt", "stripeCurrentPeriodEnd" FROM "Subscription" WHERE "userId" = ANY($1::text[])`,
-      userIds
-    );
+    >`SELECT "userId", plan, status, "trialEndsAt", "stripeCurrentPeriodEnd" FROM "Subscription" WHERE "userId" = ANY(${userIds}::text[])`;
     const subByUser = new Map(subscriptions.map((s) => [s.userId, s]));
 
     return NextResponse.json({

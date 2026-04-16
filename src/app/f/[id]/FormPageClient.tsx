@@ -606,9 +606,7 @@ export default function FormPageClient({ formId }: FormPageClientProps) {
               .forma-title { color: var(--forma-text); }
               .forma-description { color: var(--forma-text-muted); }
             `}</style>
-            {form?.settings?.customCss && (
-              <style dangerouslySetInnerHTML={{ __html: form.settings.customCss }} />
-            )}
+            {/* Custom CSS feature disabled for security — XSS risk via dangerouslySetInnerHTML */}
             <div
               className="forma-page min-h-screen py-10 px-4 sm:py-16"
               style={{

@@ -326,7 +326,6 @@ export default function ConversationalForm({
         .forma-description {
           color: var(--forma-text-muted);
         }
-        ${form.settings?.customCss || ''}
       ` }} />
       {/* Progress bar */}
       <div className="fixed top-0 left-0 right-0 z-50 h-1" style={{ backgroundColor: `${textColor}10` }}>

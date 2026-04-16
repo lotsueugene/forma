@@ -71,13 +71,36 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'File content does not match declared type' }, { status: 400 });
       }
     }
+    // Sanitize SVG files — strip scripts, event handlers, and dangerous elements
+    let uploadBuffer = buffer;
+    if (file.type === 'image/svg+xml') {
+      let svgContent = buffer.toString('utf-8');
+      // Must start with < (be XML)
+      if (!svgContent.trimStart().startsWith('<')) {
+        return NextResponse.json({ error: 'Invalid SVG file' }, { status: 400 });
+      }
+      // Remove script tags, event handlers, and dangerous elements
+      svgContent = svgContent
+        .replace(/<script[\s\S]*?<\/script>/gi, '')
+        .replace(/<script[\s\S]*?\/>/gi, '')
+        .replace(/\bon\w+\s*=\s*"[^"]*"/gi, '')
+        .replace(/\bon\w+\s*=\s*'[^']*'/gi, '')
+        .replace(/javascript\s*:/gi, 'blocked:')
+        .replace(/data\s*:\s*text\/html/gi, 'blocked:text/html')
+        .replace(/<iframe[\s\S]*?(<\/iframe>|\/?>)/gi, '')
+        .replace(/<embed[\s\S]*?(<\/embed>|\/?>)/gi, '')
+        .replace(/<object[\s\S]*?(<\/object>|\/?>)/gi, '')
+        .replace(/<foreignObject[\s\S]*?(<\/foreignObject>|\/?>)/gi, '');
+      uploadBuffer = Buffer.from(svgContent, 'utf-8');
+    }
+
     const ext = file.name.split('.').pop() || 'bin';
     const key = `${folder}/${crypto.randomUUID()}.${ext}`;
 
     await s3.send(new PutObjectCommand({
       Bucket: BUCKET,
       Key: key,
-      Body: buffer,
+      Body: uploadBuffer,
       ContentType: file.type,
     }));
 
