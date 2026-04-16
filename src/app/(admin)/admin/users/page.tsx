@@ -22,6 +22,12 @@ interface User {
   role: string;
   createdAt: string;
   workspaceCount: number;
+  subscription: {
+    plan: string;
+    status: string;
+    trialEndsAt: string | null;
+    renewsAt: string | null;
+  } | null;
 }
 
 interface Pagination {
@@ -166,6 +172,7 @@ export default function AdminUsersPage() {
               <tr>
                 <th className="text-left text-xs font-medium text-gray-500 px-4 py-3">User</th>
                 <th className="text-left text-xs font-medium text-gray-500 px-4 py-3">Role</th>
+                <th className="text-left text-xs font-medium text-gray-500 px-4 py-3">Plan</th>
                 <th className="text-left text-xs font-medium text-gray-500 px-4 py-3">Workspaces</th>
                 <th className="text-left text-xs font-medium text-gray-500 px-4 py-3">Joined</th>
                 <th className="text-right text-xs font-medium text-gray-500 px-4 py-3">Actions</th>
@@ -174,13 +181,13 @@ export default function AdminUsersPage() {
             <tbody className="divide-y divide-gray-100">
               {loading ? (
                 <tr>
-                  <td colSpan={5} className="px-4 py-8 text-center">
+                  <td colSpan={6} className="px-4 py-8 text-center">
                     <Spinner size={24} className="animate-spin text-gray-400 mx-auto" />
                   </td>
                 </tr>
               ) : users.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-4 py-8 text-center text-gray-500">
+                  <td colSpan={6} className="px-4 py-8 text-center text-gray-500">
                     No users found
                   </td>
                 </tr>
@@ -201,6 +208,25 @@ export default function AdminUsersPage() {
                         {user.role === 'admin' ? <Shield size={12} /> : <UserIcon size={12} />}
                         {user.role}
                       </span>
+                    </td>
+                    <td className="px-4 py-3">
+                      {user.subscription ? (
+                        <span className={cn(
+                          'inline-block px-2 py-0.5 rounded text-xs font-medium capitalize',
+                          user.subscription.plan === 'pro' ? 'bg-emerald-100 text-emerald-700' :
+                          user.subscription.plan === 'trial' ? 'bg-blue-100 text-blue-700' :
+                          'bg-gray-100 text-gray-600'
+                        )}>
+                          {user.subscription.plan}
+                          {user.subscription.plan === 'trial' && user.subscription.trialEndsAt && (
+                            <span className="ml-1 opacity-70">
+                              ({Math.max(0, Math.ceil((new Date(user.subscription.trialEndsAt).getTime() - Date.now()) / 86400000))}d left)
+                            </span>
+                          )}
+                        </span>
+                      ) : (
+                        <span className="text-xs text-gray-400">Free</span>
+                      )}
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-600">
                       {user.workspaceCount}

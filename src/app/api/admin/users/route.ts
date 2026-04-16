@@ -34,7 +34,7 @@ export async function GET(request: NextRequest) {
         skip,
         take: limit,
         orderBy: [
-          { role: 'asc' }, // 'admin' comes before 'user' alphabetically
+          { role: 'asc' },
           { createdAt: 'desc' },
         ],
         select: {
@@ -53,12 +53,36 @@ export async function GET(request: NextRequest) {
       prisma.user.count({ where }),
     ]);
 
+    // Fetch subscriptions for these users via raw query (userId may not be in generated client)
+    const userIds = users.map((u) => u.id);
+    const subscriptions = await prisma.$queryRawUnsafe<
+      Array<{ userId: string; plan: string; status: string; trialEndsAt: Date | null; stripeCurrentPeriodEnd: Date | null }>
+    >(
+      `SELECT "userId", plan, status, "trialEndsAt", "stripeCurrentPeriodEnd" FROM "Subscription" WHERE "userId" = ANY($1::text[])`,
+      userIds
+    );
+    const subByUser = new Map(subscriptions.map((s) => [s.userId, s]));
+
     return NextResponse.json({
-      users: users.map(u => ({
-        ...u,
-        workspaceCount: u._count.workspaceMembers,
-        _count: undefined,
-      })),
+      users: users.map(u => {
+        const sub = subByUser.get(u.id);
+        return {
+          id: u.id,
+          name: u.name,
+          email: u.email,
+          role: u.role,
+          createdAt: u.createdAt,
+          workspaceCount: u._count.workspaceMembers,
+          subscription: sub
+            ? {
+                plan: sub.plan,
+                status: sub.status,
+                trialEndsAt: sub.trialEndsAt,
+                renewsAt: sub.stripeCurrentPeriodEnd,
+              }
+            : null,
+        };
+      }),
       pagination: {
         page,
         limit,
