@@ -32,6 +32,7 @@ interface Form {
 
 interface DashboardStats {
   totalForms: number;
+  activeForms: number;
   totalSubmissions: number;
   totalViews: number;
 }
@@ -42,6 +43,7 @@ export default function DashboardPage() {
   const [forms, setForms] = useState<Form[]>([]);
   const [stats, setStats] = useState<DashboardStats>({
     totalForms: 0,
+    activeForms: 0,
     totalSubmissions: 0,
     totalViews: 0,
   });
@@ -51,35 +53,25 @@ export default function DashboardPage() {
     if (!currentWorkspace) return;
 
     try {
-      // Fetch recent forms (limit 5 for dashboard) and stats separately
+      // Fetch recent forms and stats in parallel
       const [formsRes, statsRes] = await Promise.all([
         fetch(`/api/forms?workspaceId=${currentWorkspace.id}&limit=5&page=1`),
-        fetch(`/api/analytics?workspaceId=${currentWorkspace.id}`),
+        fetch(`/api/forms/stats?workspaceId=${currentWorkspace.id}`),
       ]);
 
       if (formsRes.ok) {
         const data = await formsRes.json();
         setForms(data.forms || []);
+      }
 
-        // Use pagination total for form count, fetch stats from analytics if available
-        const totalForms = data.pagination?.total || data.forms?.length || 0;
-
-        if (statsRes.ok) {
-          const statsData = await statsRes.json();
-          setStats({
-            totalForms,
-            totalSubmissions: statsData.totalSubmissions ?? 0,
-            totalViews: statsData.totalViews ?? 0,
-          });
-        } else {
-          // Fallback: calculate from visible forms only
-          const formsList = data.forms || [];
-          setStats({
-            totalForms,
-            totalSubmissions: formsList.reduce((acc: number, f: Form) => acc + f.submissions, 0),
-            totalViews: formsList.reduce((acc: number, f: Form) => acc + f.views, 0),
-          });
-        }
+      if (statsRes.ok) {
+        const statsData = await statsRes.json();
+        setStats({
+          totalForms: statsData.totalForms ?? 0,
+          activeForms: statsData.activeForms ?? 0,
+          totalSubmissions: statsData.totalSubmissions ?? 0,
+          totalViews: statsData.totalViews ?? 0,
+        });
       }
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
@@ -94,7 +86,6 @@ export default function DashboardPage() {
 
   const userName = session?.user?.name?.split(' ')[0] || 'there';
   const recentForms = forms.slice(0, 4);
-  const activeForms = forms.filter((f) => f.status === 'active').length;
 
   if (isLoading) {
     return (
@@ -166,7 +157,7 @@ export default function DashboardPage() {
             </div>
           </div>
           <div className="text-2xl font-semibold text-gray-900 mb-1">
-            {activeForms}
+            {stats.activeForms}
           </div>
           <div className="text-sm text-gray-600">Active Forms</div>
         </motion.div>
