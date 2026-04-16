@@ -36,7 +36,7 @@ const navigation = [
   { name: 'Forms', href: '/dashboard/forms', icon: Files, minRole: 'viewer' },
   { name: 'Analytics', href: '/dashboard/analytics', icon: ChartLineUp, minRole: 'viewer' },
   { name: 'Integrations', href: '/dashboard/integrations', icon: Lightning, minRole: 'manager' },
-  { name: 'Team', href: '/dashboard/team', icon: Users, minRole: 'manager' },
+  { name: 'Team', href: '/dashboard/team', icon: Users, minRole: 'viewer' },
   { name: 'Broadcasts', href: '/dashboard/broadcasts', icon: Megaphone, minRole: 'manager' },
   { name: 'Notifications', href: '/dashboard/notifications', icon: Bell, minRole: 'viewer' },
   { name: 'Settings', href: '/dashboard/settings', icon: Gear, minRole: 'viewer' },
