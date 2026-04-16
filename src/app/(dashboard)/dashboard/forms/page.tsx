@@ -358,7 +358,7 @@ export default function FormsPage() {
                             initial={{ opacity: 0, scale: 0.95 }}
                             animate={{ opacity: 1, scale: 1 }}
                             exit={{ opacity: 0, scale: 0.95 }}
-                            className="absolute right-0 mt-1 w-40 bg-white border border-gray-300 rounded-lg shadow-lg overflow-hidden z-50"
+                            className="absolute right-0 bottom-full mb-1 w-40 bg-white border border-gray-300 rounded-lg shadow-lg overflow-hidden z-50"
                           >
                             <Link
                               href={`/dashboard/forms/${form.id}`}
@@ -421,7 +421,8 @@ export default function FormsPage() {
           ))}
         </div>
       ) : (
-        <div className="card overflow-x-auto">
+        <div className="card overflow-visible">
+          <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
               <tr className="border-b border-gray-200 text-left text-sm text-gray-500">
@@ -512,7 +513,7 @@ export default function FormsPage() {
                               initial={{ opacity: 0, scale: 0.95 }}
                               animate={{ opacity: 1, scale: 1 }}
                               exit={{ opacity: 0, scale: 0.95 }}
-                              className="absolute right-0 mt-1 w-40 bg-white border border-gray-300 rounded-lg shadow-lg overflow-hidden z-50"
+                              className="absolute right-0 bottom-full mb-1 w-40 bg-white border border-gray-300 rounded-lg shadow-lg overflow-hidden z-50"
                             >
                               <Link
                                 href={`/dashboard/forms/${form.id}`}
@@ -554,6 +555,7 @@ export default function FormsPage() {
               ))}
             </tbody>
           </table>
+          </div>
         </div>
       )}
 
