@@ -245,7 +245,10 @@ export async function POST(
     };
 
     // Check for booking field overlap
-    const formFields = JSON.parse(form.fields) as Array<{ id?: string; type: string; amount?: number; currency?: string; label?: string }>;
+    const formFields = JSON.parse(form.fields) as Array<{
+      id?: string; type: string; amount?: number; currency?: string; label?: string;
+      condition?: { fieldId: string; operator: string; value: string };
+    }>;
     const bookingFields = formFields.filter((f) => f.type === 'booking');
 
     for (const bookingField of bookingFields) {
@@ -312,8 +315,23 @@ export async function POST(
       }
     }
 
-    // Check if form has a payment field — if so, redirect to Stripe before saving
-    const paymentField = formFields.find((f) => f.type === 'payment' && f.amount && f.amount > 0);
+    // Check if form has a visible payment field — evaluate conditions against submitted data
+    const evaluateFieldCondition = (condition: { fieldId: string; operator: string; value: string } | undefined) => {
+      if (!condition) return true;
+      const fieldValue = String((data as Record<string, unknown>)[condition.fieldId] || '');
+      switch (condition.operator) {
+        case 'equals': return fieldValue === condition.value;
+        case 'not_equals': return fieldValue !== condition.value;
+        case 'contains': return fieldValue.toLowerCase().includes((condition.value || '').toLowerCase());
+        case 'not_empty': return fieldValue.trim() !== '';
+        case 'empty': return fieldValue.trim() === '';
+        default: return true;
+      }
+    };
+
+    const paymentField = formFields.find(
+      (f) => f.type === 'payment' && f.amount && f.amount > 0 && evaluateFieldCondition(f.condition)
+    );
 
     if (paymentField && stripe) {
       // Verify workspace has Pro plan for payments

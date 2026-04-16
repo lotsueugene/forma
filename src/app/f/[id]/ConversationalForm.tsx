@@ -185,13 +185,28 @@ export default function ConversationalForm({
   };
 
   // Auto-advance for select/radio after selection
+  // Use a ref to track the current field ID so we can find it after visibleFields recomputes
+  const currentFieldIdRef = useRef<string | null>(null);
+  if (currentField) currentFieldIdRef.current = currentField.id;
+
   const handleAutoAdvance = (fieldId: string, value: string) => {
     handleChange(fieldId, value);
     setTimeout(() => {
       setDirection(1);
-      if (currentIndex < totalQuestions - 1) {
-        setCurrentIndex((i) => i + 1);
-      }
+      // After the state update, visibleFields may have changed (conditional fields).
+      // We need to advance from the current field's new position, not the old index.
+      setCurrentIndex((prevIndex) => {
+        // Recompute visible fields with the new value
+        const updatedData = { ...formData, [fieldId]: value };
+        const updatedVisible = form.fields.filter(
+          (f) => f.type !== 'page_break' && f.type !== 'hidden' && evaluateCondition(f.condition, updatedData)
+        );
+        // Find where the current field is now in the updated list
+        const currentFieldId = currentFieldIdRef.current;
+        const newPos = updatedVisible.findIndex((f) => f.id === currentFieldId);
+        const baseIndex = newPos >= 0 ? newPos : prevIndex;
+        return baseIndex < updatedVisible.length - 1 ? baseIndex + 1 : prevIndex;
+      });
     }, 400);
   };
 
