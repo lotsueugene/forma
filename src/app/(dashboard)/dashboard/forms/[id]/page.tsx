@@ -299,10 +299,10 @@ export default function FormDetailPage() {
         window.location.href = `/dashboard/forms/${data.form.id}`;
       } else {
         const data = await response.json();
-        alert(data.error || 'Failed to duplicate form');
+        setError(data.error || 'Failed to duplicate form');
       }
     } catch {
-      alert('Failed to duplicate form');
+      setError('Failed to duplicate form');
     } finally {
       setIsDuplicating(false);
     }
@@ -321,11 +321,11 @@ export default function FormDetailPage() {
       } else {
         const data = await response.json();
         setShowDeleteModal(false);
-        alert(data.error || 'Failed to delete form');
+        setError(data.error || 'Failed to delete form');
       }
     } catch (err) {
       setShowDeleteModal(false);
-      alert('Failed to delete form');
+      setError('Failed to delete form');
     } finally {
       setIsDeleting(false);
     }
@@ -417,6 +417,14 @@ export default function FormDetailPage() {
 
   return (
     <div className="space-y-6">
+      {/* Error Banner */}
+      {error && (
+        <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-600 flex items-center justify-between">
+          <span>{error}</span>
+          <button onClick={() => setError('')} className="text-red-400 hover:text-red-600 ml-4 font-bold">&#10005;</button>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
         <div className="flex items-start gap-4">

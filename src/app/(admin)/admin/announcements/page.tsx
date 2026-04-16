@@ -12,6 +12,7 @@ import {
   Star,
 } from '@phosphor-icons/react';
 import { cn } from '@/lib/utils';
+import ConfirmModal from '@/components/ui/ConfirmModal';
 
 interface Announcement {
   id: string;
@@ -48,6 +49,10 @@ export default function AdminAnnouncementsPage() {
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [confirmAction, setConfirmAction] = useState<{
+    title: string; message: string; confirmText: string;
+    variant: 'danger' | 'warning' | 'default'; onConfirm: () => Promise<void>;
+  } | null>(null);
 
   const [formData, setFormData] = useState({
     title: '',
@@ -117,29 +122,26 @@ export default function AdminAnnouncementsPage() {
     }
   };
 
-  const deleteAnnouncement = async (id: string, title: string) => {
-    const confirmation = prompt(
-      `Are you sure you want to delete "${title}"?\n\nType DELETE to confirm:`
-    );
+  const deleteAnnouncement = (id: string, title: string) => {
+    setConfirmAction({
+      title: 'Delete Announcement',
+      message: `Are you sure you want to delete "${title}"? This cannot be undone.`,
+      confirmText: 'Delete',
+      variant: 'danger',
+      onConfirm: async () => {
+        try {
+          const res = await fetch(`/api/admin/announcements/${id}`, {
+            method: 'DELETE',
+          });
 
-    if (confirmation !== 'DELETE') {
-      if (confirmation !== null) {
-        alert('Deletion cancelled. You must type DELETE to confirm.');
-      }
-      return;
-    }
-
-    try {
-      const res = await fetch(`/api/admin/announcements/${id}`, {
-        method: 'DELETE',
-      });
-
-      if (res.ok) {
-        setAnnouncements(announcements.filter(a => a.id !== id));
-      }
-    } catch (error) {
-      console.error('Failed to delete announcement:', error);
-    }
+          if (res.ok) {
+            setAnnouncements(announcements.filter(a => a.id !== id));
+          }
+        } catch (error) {
+          console.error('Failed to delete announcement:', error);
+        }
+      },
+    });
   };
 
   return (
@@ -344,6 +346,16 @@ export default function AdminAnnouncementsPage() {
           })
         )}
       </div>
+
+      <ConfirmModal
+        open={!!confirmAction}
+        title={confirmAction?.title || ''}
+        message={confirmAction?.message || ''}
+        confirmText={confirmAction?.confirmText || 'Confirm'}
+        variant={confirmAction?.variant || 'default'}
+        onConfirm={async () => { await confirmAction?.onConfirm(); setConfirmAction(null); }}
+        onClose={() => setConfirmAction(null)}
+      />
     </div>
   );
 }

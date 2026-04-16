@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import ConfirmModal from '@/components/ui/ConfirmModal';
 import {
   Plus,
   PencilSimple,
@@ -43,6 +44,14 @@ export default function AdminBlogPage() {
   const [editingPost, setEditingPost] = useState<BlogPost | null>(null);
   const [isCreating, setIsCreating] = useState(false);
   const [menuOpenId, setMenuOpenId] = useState<string | null>(null);
+  const [confirmAction, setConfirmAction] = useState<{
+    title: string;
+    message: string;
+    confirmText: string;
+    variant: 'danger' | 'warning' | 'default';
+    onConfirm: () => Promise<void>;
+  } | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -128,7 +137,7 @@ export default function AdminBlogPage() {
         });
         if (!res.ok) {
           const data = await res.json();
-          alert(data.error || 'Failed to create post');
+          setErrorMessage(data.error || 'Failed to create post');
           return;
         }
       } else if (editingPost) {
@@ -139,7 +148,7 @@ export default function AdminBlogPage() {
         });
         if (!res.ok) {
           const data = await res.json();
-          alert(data.error || 'Failed to update post');
+          setErrorMessage(data.error || 'Failed to update post');
           return;
         }
       }
@@ -147,20 +156,27 @@ export default function AdminBlogPage() {
       handleCancel();
     } catch (error) {
       console.error('Error saving post:', error);
-      alert('Failed to save post');
+      setErrorMessage('Failed to save post');
     } finally {
       setSaving(false);
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this post?')) return;
-    try {
-      await fetch(`/api/admin/blog/${id}`, { method: 'DELETE' });
-      await fetchPosts();
-    } catch (error) {
-      console.error('Error deleting post:', error);
-    }
+  const handleDelete = (id: string) => {
+    setConfirmAction({
+      title: 'Delete Post',
+      message: 'Are you sure you want to delete this post?',
+      confirmText: 'Delete',
+      variant: 'danger',
+      onConfirm: async () => {
+        try {
+          await fetch(`/api/admin/blog/${id}`, { method: 'DELETE' });
+          await fetchPosts();
+        } catch (error) {
+          console.error('Error deleting post:', error);
+        }
+      },
+    });
   };
 
   const togglePublish = async (post: BlogPost) => {
@@ -626,6 +642,22 @@ export default function AdminBlogPage() {
           ))
         )}
       </div>
+
+      <ConfirmModal
+        open={!!confirmAction}
+        title={confirmAction?.title || ''}
+        message={confirmAction?.message || ''}
+        confirmText={confirmAction?.confirmText || 'Confirm'}
+        variant={confirmAction?.variant || 'default'}
+        onConfirm={async () => { await confirmAction?.onConfirm(); setConfirmAction(null); }}
+        onClose={() => setConfirmAction(null)}
+      />
+      {errorMessage && (
+        <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-600 flex items-center justify-between">
+          <span>{errorMessage}</span>
+          <button onClick={() => setErrorMessage(null)} className="text-red-400 hover:text-red-600">&#x2715;</button>
+        </div>
+      )}
     </div>
   );
 }

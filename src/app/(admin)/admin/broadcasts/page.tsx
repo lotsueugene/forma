@@ -17,6 +17,7 @@ import {
 } from '@phosphor-icons/react';
 import { cn } from '@/lib/utils';
 import RichTextEditor from '@/components/ui/RichTextEditor';
+import ConfirmModal from '@/components/ui/ConfirmModal';
 
 interface Broadcast {
   id: string;
@@ -83,6 +84,14 @@ export default function AdminBroadcastsPage() {
   const [deleteConfirmation, setDeleteConfirmation] = useState('');
   const [deleting, setDeleting] = useState(false);
 
+  const [confirmAction, setConfirmAction] = useState<{
+    title: string;
+    message: string;
+    confirmText: string;
+    variant: 'danger' | 'warning' | 'default';
+    onConfirm: () => Promise<void>;
+  } | null>(null);
+
   const [formData, setFormData] = useState({
     subject: '',
     content: '',
@@ -123,16 +132,7 @@ export default function AdminBroadcastsPage() {
     }
   };
 
-  const createBroadcast = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (formData.sendNow) {
-      const confirmed = confirm(
-        'Are you sure you want to send this email broadcast immediately? This cannot be undone.'
-      );
-      if (!confirmed) return;
-    }
-
+  const submitBroadcast = async () => {
     setSaving(true);
 
     try {
@@ -161,6 +161,23 @@ export default function AdminBroadcastsPage() {
     } finally {
       setSaving(false);
     }
+  };
+
+  const createBroadcast = (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (formData.sendNow) {
+      setConfirmAction({
+        title: 'Send Broadcast Now',
+        message: 'Are you sure you want to send this email broadcast immediately? This cannot be undone.',
+        confirmText: 'Send Now',
+        variant: 'danger',
+        onConfirm: submitBroadcast,
+      });
+      return;
+    }
+
+    submitBroadcast();
   };
 
   const openDeleteModal = (id: string, subject: string) => {
@@ -239,23 +256,29 @@ export default function AdminBroadcastsPage() {
     }
   };
 
-  const deleteReply = async (id: string) => {
-    if (!confirm('Delete this reply?')) return;
+  const deleteReply = (id: string) => {
+    setConfirmAction({
+      title: 'Delete Reply',
+      message: 'Delete this reply?',
+      confirmText: 'Delete',
+      variant: 'danger',
+      onConfirm: async () => {
+        try {
+          const res = await fetch(`/api/admin/broadcasts/replies/${id}`, {
+            method: 'DELETE',
+          });
 
-    try {
-      const res = await fetch(`/api/admin/broadcasts/replies/${id}`, {
-        method: 'DELETE',
-      });
-
-      if (res.ok) {
-        setReplies(replies.filter(r => r.id !== id));
-        if (selectedReply?.id === id) {
-          setSelectedReply(null);
+          if (res.ok) {
+            setReplies(replies.filter(r => r.id !== id));
+            if (selectedReply?.id === id) {
+              setSelectedReply(null);
+            }
+          }
+        } catch (error) {
+          console.error('Failed to delete reply:', error);
         }
-      }
-    } catch (error) {
-      console.error('Failed to delete reply:', error);
-    }
+      },
+    });
   };
 
   return (
@@ -593,6 +616,16 @@ export default function AdminBroadcastsPage() {
           </div>
         </div>
       )}
+
+      <ConfirmModal
+        open={!!confirmAction}
+        title={confirmAction?.title || ''}
+        message={confirmAction?.message || ''}
+        confirmText={confirmAction?.confirmText || 'Confirm'}
+        variant={confirmAction?.variant || 'default'}
+        onConfirm={async () => { await confirmAction?.onConfirm(); setConfirmAction(null); }}
+        onClose={() => setConfirmAction(null)}
+      />
 
       {/* Reply Detail Modal */}
       {selectedReply && (

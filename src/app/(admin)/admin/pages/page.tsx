@@ -13,6 +13,7 @@ import {
   MagnifyingGlass,
   ArrowLeft,
 } from '@phosphor-icons/react';
+import ConfirmModal from '@/components/ui/ConfirmModal';
 
 interface Page {
   id: string;
@@ -44,6 +45,14 @@ export default function AdminPagesPage() {
     published: false,
   });
   const [saving, setSaving] = useState(false);
+  const [confirmAction, setConfirmAction] = useState<{
+    title: string;
+    message: string;
+    confirmText: string;
+    variant: 'danger' | 'warning' | 'default';
+    onConfirm: () => Promise<void>;
+  } | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
     fetchPages();
@@ -103,7 +112,7 @@ export default function AdminPagesPage() {
         });
         if (!res.ok) {
           const data = await res.json();
-          alert(data.error || 'Failed to create page');
+          setErrorMessage(data.error || 'Failed to create page');
           return;
         }
       } else if (editingPage) {
@@ -114,7 +123,7 @@ export default function AdminPagesPage() {
         });
         if (!res.ok) {
           const data = await res.json();
-          alert(data.error || 'Failed to update page');
+          setErrorMessage(data.error || 'Failed to update page');
           return;
         }
       }
@@ -122,20 +131,27 @@ export default function AdminPagesPage() {
       handleCancel();
     } catch (error) {
       console.error('Error saving page:', error);
-      alert('Failed to save page');
+      setErrorMessage('Failed to save page');
     } finally {
       setSaving(false);
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this page?')) return;
-    try {
-      await fetch(`/api/admin/pages/${id}`, { method: 'DELETE' });
-      await fetchPages();
-    } catch (error) {
-      console.error('Error deleting page:', error);
-    }
+  const handleDelete = (id: string) => {
+    setConfirmAction({
+      title: 'Delete Page',
+      message: 'Are you sure you want to delete this page?',
+      confirmText: 'Delete',
+      variant: 'danger',
+      onConfirm: async () => {
+        try {
+          await fetch(`/api/admin/pages/${id}`, { method: 'DELETE' });
+          await fetchPages();
+        } catch (error) {
+          console.error('Error deleting page:', error);
+        }
+      },
+    });
   };
 
   const togglePublish = async (page: Page) => {
@@ -287,6 +303,23 @@ export default function AdminPagesPage() {
             </div>
           </div>
         </div>
+
+        {errorMessage && (
+          <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-600 flex items-center justify-between">
+            <span>{errorMessage}</span>
+            <button onClick={() => setErrorMessage(null)} className="text-red-400 hover:text-red-600">&#x2715;</button>
+          </div>
+        )}
+
+        <ConfirmModal
+          open={!!confirmAction}
+          title={confirmAction?.title || ''}
+          message={confirmAction?.message || ''}
+          confirmText={confirmAction?.confirmText || 'Confirm'}
+          variant={confirmAction?.variant || 'default'}
+          onConfirm={async () => { await confirmAction?.onConfirm(); setConfirmAction(null); }}
+          onClose={() => setConfirmAction(null)}
+        />
       </div>
     );
   }
@@ -391,6 +424,23 @@ export default function AdminPagesPage() {
           </div>
         )}
       </div>
+
+      {errorMessage && (
+        <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-600 flex items-center justify-between">
+          <span>{errorMessage}</span>
+          <button onClick={() => setErrorMessage(null)} className="text-red-400 hover:text-red-600">&#x2715;</button>
+        </div>
+      )}
+
+      <ConfirmModal
+        open={!!confirmAction}
+        title={confirmAction?.title || ''}
+        message={confirmAction?.message || ''}
+        confirmText={confirmAction?.confirmText || 'Confirm'}
+        variant={confirmAction?.variant || 'default'}
+        onConfirm={async () => { await confirmAction?.onConfirm(); setConfirmAction(null); }}
+        onClose={() => setConfirmAction(null)}
+      />
     </div>
   );
 }

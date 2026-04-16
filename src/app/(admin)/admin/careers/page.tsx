@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import ConfirmModal from '@/components/ui/ConfirmModal';
 import {
   Plus,
   PencilSimple,
@@ -53,6 +54,14 @@ export default function AdminCareersPage() {
   const [search, setSearch] = useState('');
   const [editingJob, setEditingJob] = useState<JobPosting | null>(null);
   const [isCreating, setIsCreating] = useState(false);
+  const [confirmAction, setConfirmAction] = useState<{
+    title: string;
+    message: string;
+    confirmText: string;
+    variant: 'danger' | 'warning' | 'default';
+    onConfirm: () => Promise<void>;
+  } | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -158,7 +167,7 @@ export default function AdminCareersPage() {
         });
         if (!res.ok) {
           const data = await res.json();
-          alert(data.error || 'Failed to create job');
+          setErrorMessage(data.error || 'Failed to create job');
           return;
         }
       } else if (editingJob) {
@@ -169,7 +178,7 @@ export default function AdminCareersPage() {
         });
         if (!res.ok) {
           const data = await res.json();
-          alert(data.error || 'Failed to update job');
+          setErrorMessage(data.error || 'Failed to update job');
           return;
         }
       }
@@ -177,20 +186,27 @@ export default function AdminCareersPage() {
       handleCancel();
     } catch (error) {
       console.error('Error saving job:', error);
-      alert('Failed to save job');
+      setErrorMessage('Failed to save job');
     } finally {
       setSaving(false);
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this job posting?')) return;
-    try {
-      await fetch(`/api/admin/careers/${id}`, { method: 'DELETE' });
-      await fetchJobs();
-    } catch (error) {
-      console.error('Error deleting job:', error);
-    }
+  const handleDelete = (id: string) => {
+    setConfirmAction({
+      title: 'Delete Job Posting',
+      message: 'Are you sure you want to delete this job posting?',
+      confirmText: 'Delete',
+      variant: 'danger',
+      onConfirm: async () => {
+        try {
+          await fetch(`/api/admin/careers/${id}`, { method: 'DELETE' });
+          await fetchJobs();
+        } catch (error) {
+          console.error('Error deleting job:', error);
+        }
+      },
+    });
   };
 
   const togglePublish = async (job: JobPosting) => {
@@ -580,6 +596,22 @@ export default function AdminCareersPage() {
           </div>
         )}
       </div>
+
+      <ConfirmModal
+        open={!!confirmAction}
+        title={confirmAction?.title || ''}
+        message={confirmAction?.message || ''}
+        confirmText={confirmAction?.confirmText || 'Confirm'}
+        variant={confirmAction?.variant || 'default'}
+        onConfirm={async () => { await confirmAction?.onConfirm(); setConfirmAction(null); }}
+        onClose={() => setConfirmAction(null)}
+      />
+      {errorMessage && (
+        <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-600 flex items-center justify-between">
+          <span>{errorMessage}</span>
+          <button onClick={() => setErrorMessage(null)} className="text-red-400 hover:text-red-600">&#x2715;</button>
+        </div>
+      )}
     </div>
   );
 }

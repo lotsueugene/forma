@@ -158,8 +158,8 @@ function validateConfig(type: string, config: IntegrationConfig): string | null 
       if (!config.webhookUrl) {
         return 'Slack webhook URL is required';
       }
-      if (!config.webhookUrl.startsWith('https://hooks.slack.com/')) {
-        return 'Invalid Slack webhook URL';
+      if (!/^https:\/\/hooks\.slack\.com\/services\/T[A-Z0-9]+\/B[A-Z0-9]+\/[A-Za-z0-9]+$/.test(config.webhookUrl)) {
+        return 'Invalid Slack webhook URL. Expected format: https://hooks.slack.com/services/T.../B.../...';
       }
       break;
 

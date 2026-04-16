@@ -11,6 +11,7 @@ import {
   ArrowSquareOut,
 } from '@phosphor-icons/react';
 import { cn } from '@/lib/utils';
+import ConfirmModal from '@/components/ui/ConfirmModal';
 
 interface FooterLink {
   id: string;
@@ -37,6 +38,14 @@ export default function AdminFooterPage() {
   const [showForm, setShowForm] = useState(false);
   const [editingLink, setEditingLink] = useState<FooterLink | null>(null);
   const [saving, setSaving] = useState(false);
+  const [confirmAction, setConfirmAction] = useState<{
+    title: string;
+    message: string;
+    confirmText: string;
+    variant: 'danger' | 'warning' | 'default';
+    onConfirm: () => Promise<void>;
+  } | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const emptyFormData = {
     section: 'product',
@@ -108,7 +117,7 @@ export default function AdminFooterPage() {
         loadLinks();
       } else {
         const error = await res.json();
-        alert(error.error || 'Failed to save link');
+        setErrorMessage(error.error || 'Failed to save link');
       }
     } catch (error) {
       console.error('Failed to save link:', error);
@@ -117,20 +126,26 @@ export default function AdminFooterPage() {
     }
   };
 
-  const deleteLink = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this link?')) return;
+  const deleteLink = (id: string) => {
+    setConfirmAction({
+      title: 'Delete Link',
+      message: 'Are you sure you want to delete this link?',
+      confirmText: 'Delete',
+      variant: 'danger',
+      onConfirm: async () => {
+        try {
+          const res = await fetch(`/api/admin/footer/${id}`, {
+            method: 'DELETE',
+          });
 
-    try {
-      const res = await fetch(`/api/admin/footer/${id}`, {
-        method: 'DELETE',
-      });
-
-      if (res.ok) {
-        setLinks(links.filter(l => l.id !== id));
-      }
-    } catch (error) {
-      console.error('Failed to delete link:', error);
-    }
+          if (res.ok) {
+            setLinks(links.filter(l => l.id !== id));
+          }
+        } catch (error) {
+          console.error('Failed to delete link:', error);
+        }
+      },
+    });
   };
 
   const toggleActive = async (link: FooterLink) => {
@@ -359,6 +374,23 @@ export default function AdminFooterPage() {
           <li><strong>Legal:</strong> Privacy Policy, Terms of Service, Security, Cookie Policy</li>
         </ul>
       </div>
+
+      {errorMessage && (
+        <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-600 flex items-center justify-between">
+          <span>{errorMessage}</span>
+          <button onClick={() => setErrorMessage(null)} className="text-red-400 hover:text-red-600">&#x2715;</button>
+        </div>
+      )}
+
+      <ConfirmModal
+        open={!!confirmAction}
+        title={confirmAction?.title || ''}
+        message={confirmAction?.message || ''}
+        confirmText={confirmAction?.confirmText || 'Confirm'}
+        variant={confirmAction?.variant || 'default'}
+        onConfirm={async () => { await confirmAction?.onConfirm(); setConfirmAction(null); }}
+        onClose={() => setConfirmAction(null)}
+      />
     </div>
   );
 }

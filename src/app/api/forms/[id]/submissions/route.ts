@@ -61,8 +61,8 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Verify user has access to this form through workspace
-    const access = await verifyFormAccess(session.user.id, id);
+    // Verify user has editor+ access to view submission content
+    const access = await verifyFormAccess(session.user.id, id, 'editor');
     if (!access.allowed) {
       return NextResponse.json({ error: access.error }, { status: access.error === 'Form not found' ? 404 : 403 });
     }

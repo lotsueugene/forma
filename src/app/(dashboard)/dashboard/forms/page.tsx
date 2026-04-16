@@ -128,13 +128,13 @@ export default function FormsPage() {
 
       if (!response.ok) {
         const data = await response.json();
-        alert(data.error || 'Failed to delete form');
+        setError(data.error || 'Failed to delete form');
         return;
       }
 
       setForms(forms.filter((f) => f.id !== id));
     } catch (err) {
-      alert('Failed to delete form');
+      setError('Failed to delete form');
     } finally {
       setDeletingId(null);
       setMenuOpenId(null);
@@ -214,8 +214,9 @@ export default function FormsPage() {
 
       {/* Error Message */}
       {error && (
-        <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-600">
-          {error}
+        <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-600 flex items-center justify-between">
+          <span>{error}</span>
+          <button onClick={() => setError('')} className="text-red-400 hover:text-red-600 ml-4 font-bold">&#10005;</button>
         </div>
       )}
 

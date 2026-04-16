@@ -17,7 +17,7 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const access = await verifyFormAccess(session.user.id, id);
+    const access = await verifyFormAccess(session.user.id, id, 'editor');
     if (!access.allowed) {
       return NextResponse.json({ error: access.error }, { status: 403 });
     }
@@ -85,6 +85,20 @@ export async function DELETE(
     }
 
     const { emailId } = await request.json();
+
+    if (!emailId || typeof emailId !== 'string') {
+      return NextResponse.json({ error: 'Email ID required' }, { status: 400 });
+    }
+
+    // Verify the email belongs to an automation on this form
+    const email = await prisma.scheduledEmail.findUnique({
+      where: { id: emailId },
+      select: { id: true, automation: { select: { formId: true } } },
+    });
+
+    if (!email || email.automation.formId !== id) {
+      return NextResponse.json({ error: 'Email not found' }, { status: 404 });
+    }
 
     await prisma.scheduledEmail.delete({
       where: { id: emailId },

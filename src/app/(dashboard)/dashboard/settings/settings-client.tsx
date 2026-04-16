@@ -260,6 +260,7 @@ export default function SettingsPage() {
   const [isChangingPassword, setIsChangingPassword] = useState(false);
   const [passwordMessage, setPasswordMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [isDeletingAccount, setIsDeletingAccount] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [showDeleteAccountModal, setShowDeleteAccountModal] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState('');
   const [confirmAction, setConfirmAction] = useState<{
@@ -667,10 +668,10 @@ export default function SettingsPage() {
         signOut({ callbackUrl: '/' });
       } else {
         const data = await response.json();
-        alert(data.error || 'Failed to delete account');
+        setErrorMessage(data.error || 'Failed to delete account');
       }
     } catch (error) {
-      alert('Failed to delete account');
+      setErrorMessage('Failed to delete account');
     } finally {
       setIsDeletingAccount(false);
       setShowDeleteAccountModal(false);
@@ -747,6 +748,14 @@ export default function SettingsPage() {
         <h1 className="text-2xl font-semibold text-gray-900">Settings</h1>
         <p className="text-gray-600">Manage your account and preferences</p>
       </div>
+
+      {/* Error Banner */}
+      {errorMessage && (
+        <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-600 flex items-center justify-between">
+          <span>{errorMessage}</span>
+          <button onClick={() => setErrorMessage(null)} className="text-red-400 hover:text-red-600 ml-4 font-bold">&#10005;</button>
+        </div>
+      )}
 
       <div className="flex flex-col lg:flex-row gap-6">
         {/* Mobile Dropdown */}

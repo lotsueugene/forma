@@ -16,6 +16,7 @@ import {
   ArrowDown,
 } from '@phosphor-icons/react';
 import { cn } from '@/lib/utils';
+import ConfirmModal from '@/components/ui/ConfirmModal';
 
 interface Feature {
   text: string;
@@ -60,6 +61,14 @@ export default function AdminPricingPage() {
   const [showForm, setShowForm] = useState(false);
   const [editingPlan, setEditingPlan] = useState<PricingPlan | null>(null);
   const [saving, setSaving] = useState(false);
+  const [confirmAction, setConfirmAction] = useState<{
+    title: string;
+    message: string;
+    confirmText: string;
+    variant: 'danger' | 'warning' | 'default';
+    onConfirm: () => Promise<void>;
+  } | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const emptyFormData = {
     name: '',
@@ -171,7 +180,7 @@ export default function AdminPricingPage() {
         loadPlans();
       } else {
         const error = await res.json();
-        alert(error.error || 'Failed to save plan');
+        setErrorMessage(error.error || 'Failed to save plan');
       }
     } catch (error) {
       console.error('Failed to save plan:', error);
@@ -180,20 +189,26 @@ export default function AdminPricingPage() {
     }
   };
 
-  const deletePlan = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this pricing plan?')) return;
+  const deletePlan = (id: string) => {
+    setConfirmAction({
+      title: 'Delete Plan',
+      message: 'Are you sure you want to delete this pricing plan?',
+      confirmText: 'Delete',
+      variant: 'danger',
+      onConfirm: async () => {
+        try {
+          const res = await fetch(`/api/admin/pricing/${id}`, {
+            method: 'DELETE',
+          });
 
-    try {
-      const res = await fetch(`/api/admin/pricing/${id}`, {
-        method: 'DELETE',
-      });
-
-      if (res.ok) {
-        setPlans(plans.filter(p => p.id !== id));
-      }
-    } catch (error) {
-      console.error('Failed to delete plan:', error);
-    }
+          if (res.ok) {
+            setPlans(plans.filter(p => p.id !== id));
+          }
+        } catch (error) {
+          console.error('Failed to delete plan:', error);
+        }
+      },
+    });
   };
 
   const addFeature = () => {
@@ -594,6 +609,23 @@ export default function AdminPricingPage() {
           </div>
         )}
       </div>
+
+      {errorMessage && (
+        <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-600 flex items-center justify-between">
+          <span>{errorMessage}</span>
+          <button onClick={() => setErrorMessage(null)} className="text-red-400 hover:text-red-600">&#x2715;</button>
+        </div>
+      )}
+
+      <ConfirmModal
+        open={!!confirmAction}
+        title={confirmAction?.title || ''}
+        message={confirmAction?.message || ''}
+        confirmText={confirmAction?.confirmText || 'Confirm'}
+        variant={confirmAction?.variant || 'default'}
+        onConfirm={async () => { await confirmAction?.onConfirm(); setConfirmAction(null); }}
+        onClose={() => setConfirmAction(null)}
+      />
     </div>
   );
 }

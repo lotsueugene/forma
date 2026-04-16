@@ -14,6 +14,7 @@ import {
 } from '@phosphor-icons/react';
 import { cn } from '@/lib/utils';
 import { AnimatePresence, motion } from 'framer-motion';
+import ConfirmModal from '@/components/ui/ConfirmModal';
 
 interface User {
   id: string;
@@ -51,6 +52,13 @@ export default function AdminUsersPage() {
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState('');
   const [menuOpenId, setMenuOpenId] = useState<string | null>(null);
+  const [confirmAction, setConfirmAction] = useState<{
+    title: string;
+    message: string;
+    confirmText: string;
+    variant: 'danger' | 'warning' | 'default';
+    onConfirm: () => Promise<void>;
+  } | null>(null);
 
   const loadUsers = useCallback(async () => {
     setLoading(true);
@@ -84,49 +92,55 @@ export default function AdminUsersPage() {
     loadUsers();
   };
 
-  const toggleRole = async (userId: string, currentRole: string) => {
+  const toggleRole = (userId: string, currentRole: string) => {
     const newRole = currentRole === 'admin' ? 'user' : 'admin';
-    const confirmed = confirm(
-      `Are you sure you want to ${newRole === 'admin' ? 'promote' : 'demote'} this user?`
-    );
-    if (!confirmed) return;
+    setConfirmAction({
+      title: newRole === 'admin' ? 'Promote User' : 'Demote User',
+      message: `Are you sure you want to ${newRole === 'admin' ? 'promote' : 'demote'} this user?`,
+      confirmText: newRole === 'admin' ? 'Promote' : 'Demote',
+      variant: 'warning',
+      onConfirm: async () => {
+        try {
+          const res = await fetch(`/api/admin/users/${userId}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ role: newRole }),
+          });
 
-    try {
-      const res = await fetch(`/api/admin/users/${userId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ role: newRole }),
-      });
-
-      if (res.ok) {
-        setUsers(users.map(u =>
-          u.id === userId ? { ...u, role: newRole } : u
-        ));
-      }
-    } catch (error) {
-      console.error('Failed to update user:', error);
-    }
-    setMenuOpenId(null);
+          if (res.ok) {
+            setUsers(users.map(u =>
+              u.id === userId ? { ...u, role: newRole } : u
+            ));
+          }
+        } catch (error) {
+          console.error('Failed to update user:', error);
+        }
+        setMenuOpenId(null);
+      },
+    });
   };
 
-  const deleteUser = async (userId: string, email: string | null) => {
-    const confirmed = confirm(
-      `Are you sure you want to delete ${email || 'this user'}? This action cannot be undone.`
-    );
-    if (!confirmed) return;
+  const deleteUser = (userId: string, email: string | null) => {
+    setConfirmAction({
+      title: 'Delete User',
+      message: `Are you sure you want to delete ${email || 'this user'}? This action cannot be undone.`,
+      confirmText: 'Delete',
+      variant: 'danger',
+      onConfirm: async () => {
+        try {
+          const res = await fetch(`/api/admin/users/${userId}`, {
+            method: 'DELETE',
+          });
 
-    try {
-      const res = await fetch(`/api/admin/users/${userId}`, {
-        method: 'DELETE',
-      });
-
-      if (res.ok) {
-        setUsers(users.filter(u => u.id !== userId));
-      }
-    } catch (error) {
-      console.error('Failed to delete user:', error);
-    }
-    setMenuOpenId(null);
+          if (res.ok) {
+            setUsers(users.filter(u => u.id !== userId));
+          }
+        } catch (error) {
+          console.error('Failed to delete user:', error);
+        }
+        setMenuOpenId(null);
+      },
+    });
   };
 
   return (
@@ -422,6 +436,16 @@ export default function AdminUsersPage() {
           </div>
         )}
       </div>
+
+      <ConfirmModal
+        open={!!confirmAction}
+        title={confirmAction?.title || ''}
+        message={confirmAction?.message || ''}
+        confirmText={confirmAction?.confirmText || 'Confirm'}
+        variant={confirmAction?.variant || 'default'}
+        onConfirm={async () => { await confirmAction?.onConfirm(); setConfirmAction(null); }}
+        onClose={() => setConfirmAction(null)}
+      />
     </div>
   );
 }
