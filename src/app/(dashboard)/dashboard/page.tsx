@@ -51,21 +51,35 @@ export default function DashboardPage() {
     if (!currentWorkspace) return;
 
     try {
-      const response = await fetch(`/api/forms?workspaceId=${currentWorkspace.id}`);
-      if (response.ok) {
-        const data = await response.json();
-        const formsList = data.forms || [];
-        setForms(formsList);
+      // Fetch recent forms (limit 5 for dashboard) and stats separately
+      const [formsRes, statsRes] = await Promise.all([
+        fetch(`/api/forms?workspaceId=${currentWorkspace.id}&limit=5&page=1`),
+        fetch(`/api/analytics?workspaceId=${currentWorkspace.id}`),
+      ]);
 
-        // Calculate stats
-        const totalSubmissions = formsList.reduce((acc: number, f: Form) => acc + f.submissions, 0);
-        const totalViews = formsList.reduce((acc: number, f: Form) => acc + f.views, 0);
+      if (formsRes.ok) {
+        const data = await formsRes.json();
+        setForms(data.forms || []);
 
-        setStats({
-          totalForms: formsList.length,
-          totalSubmissions,
-          totalViews,
-        });
+        // Use pagination total for form count, fetch stats from analytics if available
+        const totalForms = data.pagination?.total || data.forms?.length || 0;
+
+        if (statsRes.ok) {
+          const statsData = await statsRes.json();
+          setStats({
+            totalForms,
+            totalSubmissions: statsData.totalSubmissions ?? 0,
+            totalViews: statsData.totalViews ?? 0,
+          });
+        } else {
+          // Fallback: calculate from visible forms only
+          const formsList = data.forms || [];
+          setStats({
+            totalForms,
+            totalSubmissions: formsList.reduce((acc: number, f: Form) => acc + f.submissions, 0),
+            totalViews: formsList.reduce((acc: number, f: Form) => acc + f.views, 0),
+          });
+        }
       }
     } catch (error) {
       console.error('Error fetching dashboard data:', error);

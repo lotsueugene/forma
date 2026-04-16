@@ -19,6 +19,7 @@ import {
 } from '@phosphor-icons/react';
 import { cn } from '@/lib/utils';
 import { useWorkspace } from '@/contexts/workspace-context';
+import Pagination from '@/components/ui/Pagination';
 
 interface Form {
   id: string;
@@ -44,9 +45,13 @@ export default function FormsPage() {
   const canCreate = roleLevel[userRole] >= roleLevel['editor'];
   const canDelete = roleLevel[userRole] >= roleLevel['manager'];
   const [forms, setForms] = useState<Form[]>([]);
+  const [totalForms, setTotalForms] = useState(0);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
   const [search, setSearch] = useState('');
+  const [searchInput, setSearchInput] = useState('');
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const [sortBy, setSortBy] = useState<SortOption>('newest');
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'paused' | 'draft'>('all');
@@ -62,14 +67,23 @@ export default function FormsPage() {
     if (currentWorkspace?.id) {
       fetchForms();
     }
-  }, [currentWorkspace?.id]);
+  }, [currentWorkspace?.id, page, search, sortBy, statusFilter]);
 
   const fetchForms = async () => {
     if (!currentWorkspace?.id) return;
 
     setIsLoading(true);
     try {
-      const response = await fetch(`/api/forms?workspaceId=${currentWorkspace.id}`);
+      const params = new URLSearchParams({
+        workspaceId: currentWorkspace.id,
+        page: String(page),
+        limit: '20',
+        sort: sortBy,
+      });
+      if (search) params.set('search', search);
+      if (statusFilter !== 'all') params.set('status', statusFilter);
+
+      const response = await fetch(`/api/forms?${params}`);
       const data = await response.json();
 
       if (!response.ok) {
@@ -78,6 +92,8 @@ export default function FormsPage() {
       }
 
       setForms(data.forms);
+      setTotalForms(data.pagination?.total || data.forms.length);
+      setTotalPages(data.pagination?.totalPages || 1);
       setError('');
     } catch (err) {
       setError('Failed to load forms');
@@ -141,29 +157,8 @@ export default function FormsPage() {
     }
   };
 
-  const filteredForms = forms
-    .filter((form) => {
-      const searchLower = search.toLowerCase().trim();
-      const matchesSearch = searchLower === '' ||
-        form.name.toLowerCase().includes(searchLower) ||
-        (form.description && form.description.toLowerCase().includes(searchLower));
-      const matchesStatus = statusFilter === 'all' || form.status === statusFilter;
-      return matchesSearch && matchesStatus;
-    })
-    .sort((a, b) => {
-      switch (sortBy) {
-        case 'newest':
-          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-        case 'oldest':
-          return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
-        case 'most-submissions':
-          return b.submissions - a.submissions;
-        case 'alphabetical':
-          return a.name.localeCompare(b.name);
-        default:
-          return 0;
-      }
-    });
+  // Forms are now filtered, sorted, and paginated server-side
+  const filteredForms = forms;
 
   const getTimeAgo = (date: string) => {
     const now = new Date();
@@ -193,7 +188,7 @@ export default function FormsPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold text-gray-900">Forms</h1>
-          <p className="text-gray-500">{forms.length} forms total</p>
+          <p className="text-gray-500">{totalForms} form{totalForms !== 1 ? 's' : ''} total</p>
         </div>
         {canCreate && (
           <div className="flex gap-2">
@@ -230,8 +225,10 @@ export default function FormsPage() {
           />
           <input
             type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter') { setSearch(searchInput); setPage(1); } }}
+            onBlur={() => { if (searchInput !== search) { setSearch(searchInput); setPage(1); } }}
             placeholder="Search forms..."
             className="w-full h-10 pl-10 pr-4 text-sm bg-white border border-gray-300 rounded-lg outline-none focus:border-safety-orange focus:ring-1 focus:ring-safety-orange"
           />
@@ -240,7 +237,7 @@ export default function FormsPage() {
         {/* Status Filter */}
         <select
           value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value as typeof statusFilter)}
+          onChange={(e) => { setStatusFilter(e.target.value as typeof statusFilter); setPage(1); }}
           className="h-10 px-3 text-sm bg-white border border-gray-300 rounded-lg outline-none focus:border-safety-orange min-w-[120px]"
         >
           <option value="all">All Status</option>
@@ -252,7 +249,7 @@ export default function FormsPage() {
         {/* Sort */}
         <select
           value={sortBy}
-          onChange={(e) => setSortBy(e.target.value as SortOption)}
+          onChange={(e) => { setSortBy(e.target.value as SortOption); setPage(1); }}
           className="h-10 px-3 text-sm bg-white border border-gray-300 rounded-lg outline-none focus:border-safety-orange min-w-[150px]"
         >
           <option value="newest">Newest First</option>
@@ -557,6 +554,13 @@ export default function FormsPage() {
               ))}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex justify-center">
+          <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
         </div>
       )}
 

@@ -27,18 +27,49 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: access.error }, { status: 403 });
     }
 
-    const forms = await prisma.form.findMany({
-      where: { workspaceId },
-      include: {
-        _count: {
-          select: { submissions: true },
-        },
-      },
-      orderBy: { createdAt: 'desc' },
-    });
+    // Pagination & filtering
+    const params = request.nextUrl.searchParams;
+    const page = Math.max(1, parseInt(params.get('page') || '1'));
+    const limit = Math.min(50, Math.max(1, parseInt(params.get('limit') || '20')));
+    const search = params.get('search') || '';
+    const status = params.get('status') || '';
+    const sort = params.get('sort') || 'newest';
 
-    // Transform to include submission count
-    const formsWithStats = forms.map((form) => ({
+    const where: Record<string, unknown> = { workspaceId };
+    if (search) {
+      where.OR = [
+        { name: { contains: search, mode: 'insensitive' } },
+        { description: { contains: search, mode: 'insensitive' } },
+      ];
+    }
+    if (status && status !== 'all') {
+      where.status = status;
+    }
+
+    // Sort mapping
+    const orderBy: Record<string, unknown> =
+      sort === 'oldest' ? { createdAt: 'asc' } :
+      sort === 'alphabetical' ? { name: 'asc' } :
+      { createdAt: 'desc' }; // newest (default)
+
+    const [forms, total] = await Promise.all([
+      prisma.form.findMany({
+        where,
+        include: {
+          _count: {
+            select: { submissions: true },
+          },
+        },
+        orderBy,
+        skip: (page - 1) * limit,
+        take: limit,
+      }),
+      prisma.form.count({ where }),
+    ]);
+
+    // For "most-submissions" sort, we need to sort after fetching
+    // since Prisma can't sort by _count directly in this context
+    let formsWithStats = forms.map((form) => ({
       id: form.id,
       name: form.name,
       description: form.description,
@@ -52,7 +83,19 @@ export async function GET(request: NextRequest) {
       updatedAt: form.updatedAt,
     }));
 
-    return NextResponse.json({ forms: formsWithStats });
+    if (sort === 'most-submissions') {
+      formsWithStats = formsWithStats.sort((a, b) => b.submissions - a.submissions);
+    }
+
+    return NextResponse.json({
+      forms: formsWithStats,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+    });
   } catch (error) {
     console.error('Error fetching forms:', error);
     return NextResponse.json(
