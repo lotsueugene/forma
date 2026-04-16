@@ -33,7 +33,7 @@ export default function PrivacyPage() {
       <main className="max-w-4xl mx-auto px-4 lg:px-8 py-12">
         <div className="mb-8">
           <h1 className="text-3xl font-semibold text-gray-900 mb-2">Privacy Policy</h1>
-          <p className="text-gray-500 text-sm">Last updated: March 31, 2026</p>
+          <p className="text-gray-500 text-sm">Last updated: April 16, 2026</p>
         </div>
 
         <div className="prose prose-gray max-w-none">
@@ -54,36 +54,62 @@ export default function PrivacyPage() {
             <h2 className="text-xl font-semibold text-gray-900 mb-4">2. Information We Collect</h2>
 
             <h3 className="text-lg font-medium text-gray-900 mt-6 mb-3">2.1 Account Information</h3>
-            <p className="text-gray-600 mb-4">When you create an account, we collect:</p>
+            <p className="text-gray-600 mb-4">When you create an account, we store the following in our database:</p>
             <ul className="list-disc list-inside text-gray-600 mb-4 space-y-2">
               <li>Name and email address</li>
-              <li>Password (stored securely using bcrypt hashing)</li>
-              <li>Workspace and organization information</li>
-              <li>Billing information (processed by Stripe; we do not store full card numbers)</li>
+              <li>Password (stored as a one-way bcrypt hash — we cannot read your password)</li>
+              <li>Workspace names and membership roles</li>
+              <li>Notification preferences</li>
             </ul>
+            <p className="text-gray-600 mb-4">
+              If you sign in with Google or GitHub, we receive your name, email, and profile image from
+              the provider. We do not receive or store your social account password.
+            </p>
 
             <h3 className="text-lg font-medium text-gray-900 mt-6 mb-3">2.2 Form Submission Data</h3>
             <p className="text-gray-600 mb-4">
-              When end users submit forms you create, we collect and store the submission data on your
-              behalf. This may include any information the form collects (names, emails, messages, etc.).
-              You are the data controller for this information; we act as a data processor.
+              When end users submit forms you create, we store the submission data in our database on your
+              behalf. This may include any information the form collects, such as:
+            </p>
+            <ul className="list-disc list-inside text-gray-600 mb-4 space-y-2">
+              <li>Names, email addresses, phone numbers, and free-text responses</li>
+              <li>File uploads (stored on Amazon S3)</li>
+              <li>Booking date and time selections</li>
+              <li>IP address and approximate geolocation (country, city) of the person who submitted the form</li>
+            </ul>
+            <p className="text-gray-600 mb-4">
+              You, as the form creator, are the data controller for submission data. We act as a data
+              processor and store this data so you can access it through your dashboard.
             </p>
 
-            <h3 className="text-lg font-medium text-gray-900 mt-6 mb-3">2.3 Usage Data</h3>
+            <h3 className="text-lg font-medium text-gray-900 mt-6 mb-3">2.3 Payment Information</h3>
+            <p className="text-gray-600 mb-4">
+              All payment processing is handled by <strong>Stripe</strong>. We do not store, process, or
+              have access to credit card numbers, CVVs, or full payment credentials. What we store:
+            </p>
+            <ul className="list-disc list-inside text-gray-600 mb-4 space-y-2">
+              <li>Stripe customer ID and subscription ID (opaque identifiers, not card data)</li>
+              <li>Subscription plan type and billing period</li>
+              <li>Whether a payment was completed (status only — not card details)</li>
+            </ul>
+            <p className="text-gray-600 mb-4">
+              Stripe is PCI DSS Level 1 certified. For details on how Stripe handles payment data,
+              see <a href="https://stripe.com/privacy" target="_blank" rel="noopener noreferrer" className="text-safety-orange hover:underline">Stripe&apos;s Privacy Policy</a>.
+            </p>
+
+            <h3 className="text-lg font-medium text-gray-900 mt-6 mb-3">2.4 Usage and Analytics Data</h3>
             <p className="text-gray-600 mb-4">We automatically collect:</p>
             <ul className="list-disc list-inside text-gray-600 mb-4 space-y-2">
-              <li>IP addresses and approximate location</li>
-              <li>Browser type and version</li>
-              <li>Device information</li>
-              <li>Pages visited and features used</li>
-              <li>Time spent on pages and click patterns</li>
+              <li>IP addresses and approximate geolocation (for form submission analytics)</li>
+              <li>Form view counts and submission counts</li>
+              <li>Field interaction and drop-off tracking (which form fields users interact with)</li>
             </ul>
 
-            <h3 className="text-lg font-medium text-gray-900 mt-6 mb-3">2.4 Cookies and Tracking</h3>
+            <h3 className="text-lg font-medium text-gray-900 mt-6 mb-3">2.5 Cookies and Sessions</h3>
             <p className="text-gray-600 mb-4">
-              We use essential cookies for authentication and session management. We may use analytics
-              cookies to understand how the Service is used. You can control cookie preferences through
-              your browser settings.
+              We use essential cookies for authentication and session management only. We use a secure,
+              HTTP-only session token (JWT) that expires after 30 days. We do not use third-party
+              advertising or tracking cookies.
             </p>
           </section>
 
@@ -103,47 +129,64 @@ export default function PrivacyPage() {
 
           <section className="mb-8">
             <h2 className="text-xl font-semibold text-gray-900 mb-4">4. Information Sharing</h2>
-            <p className="text-gray-600 mb-4">We may share your information with:</p>
+            <p className="text-gray-600 mb-4">We share data only with the services needed to operate Forma:</p>
             <ul className="list-disc list-inside text-gray-600 mb-4 space-y-2">
-              <li><strong>Service Providers:</strong> Third parties that help us operate the Service (hosting, payment processing, email delivery)</li>
-              <li><strong>Integrations:</strong> Third-party services you choose to connect (Slack, Google Sheets, etc.)</li>
-              <li><strong>Legal Requirements:</strong> When required by law or to protect our rights</li>
-              <li><strong>Business Transfers:</strong> In connection with a merger, acquisition, or sale of assets</li>
+              <li><strong>Stripe</strong> — payment processing. Receives your email and billing details when you subscribe or accept form payments.</li>
+              <li><strong>Resend</strong> — transactional email delivery. Receives recipient email addresses for automation emails, broadcasts, and notifications.</li>
+              <li><strong>Amazon Web Services (S3)</strong> — file storage. Stores files uploaded through forms.</li>
+              <li><strong>Amazon Bedrock</strong> — AI form generation. Receives form descriptions you provide (no submission data is sent).</li>
+              <li><strong>User-configured integrations:</strong> If you connect Slack, Google Sheets, webhooks, or other services, submission data is sent to those services as you configure.</li>
             </ul>
             <p className="text-gray-600 mb-4">
-              We do not sell your personal information to third parties.
+              We do not sell, rent, or trade your personal information to third parties. We do not use
+              your submission data for advertising or profiling.
+            </p>
+            <p className="text-gray-600 mb-4">
+              We may disclose information when required by law, court order, or to protect the safety
+              of our users or the public.
             </p>
           </section>
 
           <section className="mb-8">
             <h2 className="text-xl font-semibold text-gray-900 mb-4">5. Data Security</h2>
             <p className="text-gray-600 mb-4">
-              We implement appropriate technical and organizational measures to protect your data:
+              We implement the following measures to protect your data:
             </p>
             <ul className="list-disc list-inside text-gray-600 mb-4 space-y-2">
-              <li>Encryption in transit (TLS/HTTPS) and at rest</li>
-              <li>Secure password hashing (bcrypt)</li>
-              <li>Regular security assessments</li>
-              <li>Access controls and authentication</li>
-              <li>Database backups and disaster recovery</li>
+              <li>All data in transit is encrypted via TLS/HTTPS (HTTP/2 with HSTS preload)</li>
+              <li>Passwords are hashed using bcrypt (one-way — we cannot read them)</li>
+              <li>API keys are hashed before storage (only a masked prefix is visible)</li>
+              <li>Role-based access control limits who can view or modify data within workspaces</li>
+              <li>Rate limiting on all API endpoints to prevent abuse</li>
+              <li>Input validation and SSRF protection on webhook and integration URLs</li>
+              <li>The application runs as a non-root system user with limited privileges</li>
+              <li>Database is not accessible from the public internet (localhost only)</li>
+              <li>Automated daily database backups with 14-day retention</li>
+              <li>Firewall restricts access to only necessary ports (HTTPS, SSH)</li>
             </ul>
             <p className="text-gray-600 mb-4">
-              However, no method of transmission over the Internet is 100% secure. We cannot guarantee
-              absolute security.
+              Credit card information is never transmitted to or stored on our servers — all payment
+              processing occurs on Stripe&apos;s PCI-compliant infrastructure.
+            </p>
+            <p className="text-gray-600 mb-4">
+              No system is 100% secure. If you discover a security vulnerability, please report it
+              to us at{' '}
+              <Link href="/contact" className="text-safety-orange hover:underline">our contact page</Link>.
             </p>
           </section>
 
           <section className="mb-8">
             <h2 className="text-xl font-semibold text-gray-900 mb-4">6. Data Retention</h2>
             <p className="text-gray-600 mb-4">
-              We retain your account information for as long as your account is active or as needed to
-              provide the Service. Form submission data is retained according to your workspace settings
-              or until you delete it.
+              We retain your data as follows:
             </p>
-            <p className="text-gray-600 mb-4">
-              After account deletion, we may retain certain information for up to 30 days for backup
-              purposes, and may retain anonymized or aggregated data indefinitely.
-            </p>
+            <ul className="list-disc list-inside text-gray-600 mb-4 space-y-2">
+              <li><strong>Account data:</strong> Retained for as long as your account is active. You can delete your account from Settings, which removes your profile and personal data.</li>
+              <li><strong>Form submission data:</strong> Retained until you delete it or delete the form. You control this data and can delete individual submissions or entire forms at any time.</li>
+              <li><strong>Uploaded files:</strong> Retained on Amazon S3 until the associated form or submission is deleted.</li>
+              <li><strong>Database backups:</strong> Retained for 14 days and then automatically deleted.</li>
+              <li><strong>Workspace data:</strong> When a workspace is deleted, all associated forms, submissions, integrations, and files are permanently removed.</li>
+            </ul>
           </section>
 
           <section className="mb-8">
