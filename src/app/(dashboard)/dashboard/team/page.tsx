@@ -366,11 +366,13 @@ export default function TeamPage() {
     }
   };
 
-  const filteredMembers = members.filter(
-    (member) =>
-      (member.name?.toLowerCase().includes(search.toLowerCase()) ||
-        member.email?.toLowerCase().includes(search.toLowerCase()))
-  );
+  const filteredMembers = members
+    .filter(
+      (member) =>
+        (member.name?.toLowerCase().includes(search.toLowerCase()) ||
+          member.email?.toLowerCase().includes(search.toLowerCase()))
+    )
+    .sort((a, b) => (roleLevel[b.role] || 0) - (roleLevel[a.role] || 0));
 
   const canManageTeam =
     currentWorkspace?.role === 'owner' || currentWorkspace?.role === 'manager';
