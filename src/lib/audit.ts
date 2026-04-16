@@ -1,7 +1,9 @@
 /**
  * Audit logging for sensitive operations.
- * Logs to console in structured JSON format for log aggregator ingestion.
+ * Writes to both database (persistent, queryable) and console (immediate).
  */
+
+import { prisma } from './prisma';
 
 type AuditAction =
   | 'auth.login_success'
@@ -15,6 +17,7 @@ type AuditAction =
   | 'workspace.member_invite'
   | 'workspace.member_remove'
   | 'workspace.member_role_change'
+  | 'workspace.leave'
   | 'form.create'
   | 'form.delete'
   | 'form.status_change'
@@ -28,7 +31,8 @@ type AuditAction =
   | 'api_key.delete'
   | 'security.rate_limit_hit'
   | 'security.invalid_signature'
-  | string; // Allow custom actions
+  | 'security.webhook_replay'
+  | string;
 
 export function auditLog(event: {
   action: AuditAction;
@@ -44,8 +48,22 @@ export function auditLog(event: {
     ...event,
   };
 
-  // Structured JSON log — can be ingested by log aggregators
+  // Console log for immediate visibility
   console.log(JSON.stringify(entry));
+
+  // Write to database (fire and forget — don't block the request)
+  prisma.auditLog.create({
+    data: {
+      action: event.action,
+      userId: event.userId,
+      ip: event.ip,
+      resourceType: event.resourceType,
+      resourceId: event.resourceId,
+      details: event.details ? JSON.stringify(event.details) : null,
+    },
+  }).catch((err) => {
+    console.error('Failed to write audit log to database:', err);
+  });
 }
 
 /**
@@ -64,4 +82,16 @@ export function securityLog(event: {
   };
 
   console.warn(JSON.stringify(entry));
+
+  // Also persist security events to the audit log
+  prisma.auditLog.create({
+    data: {
+      action: event.action,
+      userId: event.userId,
+      ip: event.ip,
+      details: event.details ? JSON.stringify(event.details) : null,
+    },
+  }).catch((err) => {
+    console.error('Failed to write security log to database:', err);
+  });
 }

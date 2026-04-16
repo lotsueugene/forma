@@ -667,3 +667,19 @@ model ScheduledEmail {
   @@index([status, scheduledFor])
   @@index([automationId])
 }
+
+// Security audit log — persistent record of sensitive operations
+model AuditLog {
+  id           String   @id @default(cuid())
+  action       String   // e.g. auth.login_success, workspace.delete, admin.promote_user
+  userId       String?  // Who performed the action (null for system/anonymous)
+  ip           String?  // IP address if available
+  resourceType String?  // e.g. workspace, form, user
+  resourceId   String?  // ID of the affected resource
+  details      String?  // JSON string with extra context
+  createdAt    DateTime @default(now())
+
+  @@index([action])
+  @@index([userId])
+  @@index([createdAt])
+}

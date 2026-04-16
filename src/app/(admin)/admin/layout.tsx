@@ -21,6 +21,7 @@ import {
   List,
   X,
   Gear,
+  Shield,
 } from '@phosphor-icons/react';
 import { cn } from '@/lib/utils';
 
@@ -36,6 +37,7 @@ const navItems = [
   { href: '/admin/footer', label: 'Footer Links', icon: LinkIcon },
   { href: '/admin/announcements', label: 'Announcements', icon: Megaphone },
   { href: '/admin/broadcasts', label: 'Email Broadcasts', icon: EnvelopeSimple },
+  { href: '/admin/audit-log', label: 'Audit Log', icon: Shield },
   { href: '/admin/settings', label: 'Platform Settings', icon: Gear },
 ];
 
