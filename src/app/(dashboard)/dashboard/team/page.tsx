@@ -504,14 +504,14 @@ export default function TeamPage() {
                             <>
                               {/* Backdrop to close menu when clicking outside */}
                               <div
-                                className="fixed inset-0 z-10"
+                                className="fixed inset-0 z-40"
                                 onClick={() => setMenuOpenId(null)}
                               />
                               <motion.div
                                 initial={{ opacity: 0, scale: 0.95 }}
                                 animate={{ opacity: 1, scale: 1 }}
                                 exit={{ opacity: 0, scale: 0.95 }}
-                                className="absolute right-0 mt-1 w-48 bg-white border border-gray-300 rounded-lg shadow-lg overflow-hidden z-20"
+                                className="absolute right-0 mt-1 w-48 bg-white border border-gray-300 rounded-lg shadow-lg overflow-hidden z-50"
                               >
                                 <button
                                   onClick={() => setShowRoleModal(member.id)}

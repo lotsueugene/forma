@@ -473,12 +473,12 @@ export default function FormDetailPage() {
                 <AnimatePresence>
                   {showStatusMenu && (
                     <>
-                      <div className="fixed inset-0 z-10" onClick={() => setShowStatusMenu(false)} />
+                      <div className="fixed inset-0 z-40" onClick={() => setShowStatusMenu(false)} />
                       <motion.div
                         initial={{ opacity: 0, y: 8 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: 8 }}
-                        className="absolute left-0 mt-2 w-48 max-w-[calc(100vw-2rem)] bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden z-20"
+                        className="absolute left-0 mt-2 w-48 max-w-[calc(100vw-2rem)] bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden z-50"
                       >
                         {form.status !== 'active' && (
                           <button
@@ -572,12 +572,12 @@ export default function FormDetailPage() {
               <AnimatePresence>
                 {showMoreMenu && (
                   <>
-                    <div className="fixed inset-0 z-10" onClick={() => setShowMoreMenu(false)} />
+                    <div className="fixed inset-0 z-40" onClick={() => setShowMoreMenu(false)} />
                     <motion.div
                       initial={{ opacity: 0, y: 8 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: 8 }}
-                      className="absolute right-0 mt-2 w-48 max-w-[calc(100vw-2rem)] bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden z-20"
+                      className="absolute right-0 mt-2 w-48 max-w-[calc(100vw-2rem)] bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden z-50"
                     >
                       <button
                         onClick={handleDuplicate}
@@ -898,12 +898,12 @@ export default function FormDetailPage() {
                     <AnimatePresence>
                       {showExportMenu && (
                         <>
-                          <div className="fixed inset-0 z-10" onClick={() => setShowExportMenu(false)} />
+                          <div className="fixed inset-0 z-40" onClick={() => setShowExportMenu(false)} />
                           <motion.div
                             initial={{ opacity: 0, y: 8 }}
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: 8 }}
-                            className="absolute right-0 mt-2 w-48 max-w-[calc(100vw-2rem)] bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden z-20"
+                            className="absolute right-0 mt-2 w-48 max-w-[calc(100vw-2rem)] bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden z-50"
                           >
                             <button
                               onClick={exportToCSV}

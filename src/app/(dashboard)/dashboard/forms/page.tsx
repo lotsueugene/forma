@@ -305,7 +305,7 @@ export default function FormsPage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.05 }}
-              className="card group hover:border-gray-300 transition-colors"
+              className="card group hover:border-gray-300 transition-colors overflow-visible"
             >
               <div className="p-5">
                 <div className="flex items-start justify-between mb-3">
@@ -353,12 +353,12 @@ export default function FormsPage() {
                     <AnimatePresence>
                       {menuOpenId === form.id && (
                         <>
-                          <div className="fixed inset-0 z-10" onClick={() => setMenuOpenId(null)} />
+                          <div className="fixed inset-0 z-40" onClick={() => setMenuOpenId(null)} />
                           <motion.div
                             initial={{ opacity: 0, scale: 0.95 }}
                             animate={{ opacity: 1, scale: 1 }}
                             exit={{ opacity: 0, scale: 0.95 }}
-                            className="absolute right-0 mt-1 w-40 bg-white border border-gray-300 rounded-lg shadow-lg overflow-hidden z-20"
+                            className="absolute right-0 mt-1 w-40 bg-white border border-gray-300 rounded-lg shadow-lg overflow-hidden z-50"
                           >
                             <Link
                               href={`/dashboard/forms/${form.id}`}
@@ -421,7 +421,7 @@ export default function FormsPage() {
           ))}
         </div>
       ) : (
-        <div className="card overflow-hidden">
+        <div className="card overflow-x-auto">
           <table className="w-full">
             <thead>
               <tr className="border-b border-gray-200 text-left text-sm text-gray-500">
@@ -507,12 +507,12 @@ export default function FormsPage() {
                       <AnimatePresence>
                         {menuOpenId === form.id && (
                           <>
-                            <div className="fixed inset-0 z-10" onClick={() => setMenuOpenId(null)} />
+                            <div className="fixed inset-0 z-40" onClick={() => setMenuOpenId(null)} />
                             <motion.div
                               initial={{ opacity: 0, scale: 0.95 }}
                               animate={{ opacity: 1, scale: 1 }}
                               exit={{ opacity: 0, scale: 0.95 }}
-                              className="absolute right-0 mt-1 w-40 bg-white border border-gray-300 rounded-lg shadow-lg overflow-hidden z-20"
+                              className="absolute right-0 mt-1 w-40 bg-white border border-gray-300 rounded-lg shadow-lg overflow-hidden z-50"
                             >
                               <Link
                                 href={`/dashboard/forms/${form.id}`}
