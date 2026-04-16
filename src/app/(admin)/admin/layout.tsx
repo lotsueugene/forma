@@ -24,6 +24,7 @@ import {
   Shield,
 } from '@phosphor-icons/react';
 import { cn } from '@/lib/utils';
+import { CaretDown } from '@phosphor-icons/react';
 
 const navSections = [
   {
@@ -76,6 +77,34 @@ export default function AdminLayout({
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [openSections, setOpenSections] = useState<Set<string>>(() => {
+    // Auto-open section containing the current page
+    const initial = new Set<string>();
+    for (const section of navSections) {
+      if (section.label && section.items.some((item) => pathname === item.href || pathname.startsWith(item.href + '/'))) {
+        initial.add(section.label);
+      }
+    }
+    return initial;
+  });
+
+  // Keep section open when navigating within it
+  useEffect(() => {
+    for (const section of navSections) {
+      if (section.label && section.items.some((item) => pathname === item.href || pathname.startsWith(item.href + '/'))) {
+        setOpenSections((prev) => new Set(prev).add(section.label!));
+      }
+    }
+  }, [pathname]);
+
+  const toggleSection = (label: string) => {
+    setOpenSections((prev) => {
+      const next = new Set(prev);
+      if (next.has(label)) next.delete(label);
+      else next.add(label);
+      return next;
+    });
+  };
 
   useEffect(() => {
     // Check if user is admin
@@ -150,36 +179,77 @@ export default function AdminLayout({
           <h1 className="text-lg font-semibold text-gray-900 mt-3">Admin Panel</h1>
         </div>
 
-        <nav className="flex-1 p-4 space-y-4 overflow-y-auto">
-          {navSections.map((section, sIndex) => (
-            <div key={sIndex}>
-              {section.label && (
-                <div className="px-3 mb-1 text-[10px] font-semibold uppercase tracking-wider text-gray-400">
-                  {section.label}
-                </div>
-              )}
-              <div className="space-y-0.5">
-                {section.items.map((item) => {
-                  const isActive = pathname === item.href || (item.href !== '/admin' && pathname.startsWith(item.href));
-                  return (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      className={cn(
-                        'flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors',
-                        isActive
-                          ? 'bg-safety-orange/10 text-safety-orange'
-                          : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
-                      )}
-                    >
-                      <item.icon size={16} />
-                      {item.label}
-                    </Link>
-                  );
-                })}
+        <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
+          {navSections.map((section, sIndex) => {
+            // Top-level items (no label) render directly
+            if (!section.label) {
+              return section.items.map((item) => {
+                const isActive = pathname === item.href;
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={cn(
+                      'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors',
+                      isActive
+                        ? 'bg-safety-orange/10 text-safety-orange'
+                        : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                    )}
+                  >
+                    <item.icon size={18} />
+                    {item.label}
+                  </Link>
+                );
+              });
+            }
+
+            const isOpen = openSections.has(section.label);
+            const hasActive = section.items.some(
+              (item) => pathname === item.href || pathname.startsWith(item.href + '/')
+            );
+
+            return (
+              <div key={sIndex}>
+                <button
+                  onClick={() => toggleSection(section.label!)}
+                  className={cn(
+                    'w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm transition-colors',
+                    hasActive
+                      ? 'text-safety-orange'
+                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                  )}
+                >
+                  <span className="font-medium">{section.label}</span>
+                  <CaretDown
+                    size={14}
+                    className={cn('transition-transform', isOpen && 'rotate-180')}
+                  />
+                </button>
+                {isOpen && (
+                  <div className="ml-3 pl-3 border-l border-gray-200 space-y-0.5 mt-0.5 mb-2">
+                    {section.items.map((item) => {
+                      const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
+                      return (
+                        <Link
+                          key={item.href}
+                          href={item.href}
+                          className={cn(
+                            'flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors',
+                            isActive
+                              ? 'bg-safety-orange/10 text-safety-orange'
+                              : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100'
+                          )}
+                        >
+                          <item.icon size={15} />
+                          {item.label}
+                        </Link>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
-            </div>
-          ))}
+            );
+          })}
         </nav>
 
         <div className="p-4 border-t border-gray-200">
