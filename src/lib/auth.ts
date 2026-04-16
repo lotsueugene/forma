@@ -6,6 +6,7 @@ import GitHubProvider from 'next-auth/providers/github';
 import bcrypt from 'bcryptjs';
 import { prisma } from './prisma';
 import { getDefaultWorkspace, createPersonalWorkspace } from './workspace-auth';
+import { auditLog, securityLog } from './audit';
 
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma) as NextAuthOptions['adapter'],
@@ -45,14 +46,18 @@ export const authOptions: NextAuthOptions = {
         });
 
         if (!user || !user.password) {
+          securityLog({ action: 'auth.login_failed', details: { email: credentials.email, reason: 'user_not_found' } });
           throw new Error('Invalid credentials');
         }
 
         const isValid = await bcrypt.compare(credentials.password, user.password);
 
         if (!isValid) {
+          securityLog({ action: 'auth.login_failed', userId: user.id, details: { reason: 'wrong_password' } });
           throw new Error('Invalid credentials');
         }
+
+        auditLog({ action: 'auth.login_success', userId: user.id });
 
         return {
           id: user.id,
@@ -64,7 +69,7 @@ export const authOptions: NextAuthOptions = {
   ],
   session: {
     strategy: 'jwt',
-    maxAge: 30 * 24 * 60 * 60, // 30 days
+    maxAge: 7 * 24 * 60 * 60, // 7 days
   },
   pages: {
     signIn: '/login',

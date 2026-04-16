@@ -5,6 +5,7 @@
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { checkApiRateLimit } from '@/lib/api-rate-limiter';
 
 export interface AdminSession {
   user: {
@@ -38,6 +39,11 @@ export async function verifyAdmin(): Promise<AdminSession | null> {
   });
 
   if (!user || user.role !== 'admin') {
+    return null;
+  }
+
+  // Rate limit admin requests (60 per minute per admin user)
+  if (!checkApiRateLimit(`admin:${user.id}`, 60)) {
     return null;
   }
 

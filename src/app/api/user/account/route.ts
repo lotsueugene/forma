@@ -99,6 +99,9 @@ export async function DELETE(request: NextRequest) {
       });
     });
 
+    const { auditLog } = await import('@/lib/audit');
+    auditLog({ action: 'auth.account_delete', userId, details: { email: session.user.email } });
+
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Delete account error:', error);

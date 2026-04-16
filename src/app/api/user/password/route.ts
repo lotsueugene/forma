@@ -92,6 +92,9 @@ export async function PUT(request: NextRequest) {
       data: { password: hashedPassword },
     });
 
+    const { auditLog } = await import('@/lib/audit');
+    auditLog({ action: 'auth.password_change', userId: session.user.id });
+
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Error changing password:', error);

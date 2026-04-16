@@ -56,15 +56,42 @@ function parseEmailAddress(address: string): { email: string; name: string | nul
 
 export async function POST(request: NextRequest) {
   try {
-    // Verify webhook secret if configured
+    // Verify webhook signature if configured
     const webhookSecret = process.env.RESEND_WEBHOOK_SECRET;
     if (webhookSecret) {
-      const signature = request.headers.get('resend-signature');
-      // For production, verify the signature
-      // See: https://resend.com/docs/dashboard/webhooks/secure-your-webhook-endpoint
-      if (!signature) {
-        console.warn('[Resend Inbound] Missing webhook signature');
-        // Continue anyway for now, but log warning
+      const svixId = request.headers.get('svix-id');
+      const svixTimestamp = request.headers.get('svix-timestamp');
+      const svixSignature = request.headers.get('svix-signature');
+
+      if (!svixId || !svixTimestamp || !svixSignature) {
+        console.warn('[Resend Inbound] Missing webhook signature headers');
+        return NextResponse.json({ error: 'Missing signature' }, { status: 401 });
+      }
+
+      // Reject events older than 5 minutes (replay protection)
+      const timestampSeconds = parseInt(svixTimestamp, 10);
+      const now = Math.floor(Date.now() / 1000);
+      if (Math.abs(now - timestampSeconds) > 300) {
+        console.warn('[Resend Inbound] Webhook timestamp too old, possible replay');
+        return NextResponse.json({ error: 'Timestamp expired' }, { status: 401 });
+      }
+
+      // Verify HMAC signature
+      const { createHmac } = await import('crypto');
+      const body = await request.clone().text();
+      const signedContent = `${svixId}.${svixTimestamp}.${body}`;
+      // Resend webhook secrets are prefixed with "whsec_"
+      const secret = webhookSecret.startsWith('whsec_')
+        ? Buffer.from(webhookSecret.slice(6), 'base64')
+        : Buffer.from(webhookSecret);
+      const expectedSignature = createHmac('sha256', secret)
+        .update(signedContent)
+        .digest('base64');
+
+      const signatures = svixSignature.split(' ').map((s) => s.split(',')[1] || s);
+      if (!signatures.some((sig) => sig === expectedSignature)) {
+        console.warn('[Resend Inbound] Invalid webhook signature');
+        return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
       }
     }
 
