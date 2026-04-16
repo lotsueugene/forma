@@ -241,12 +241,22 @@ export default function ConversationalForm({
             {thankYou?.message || 'Your response has been submitted successfully.'}
           </p>
           {thankYou?.showBranding !== false && (
-            <div className="mt-10 flex items-center justify-center gap-2 text-sm" style={{ color: 'var(--forma-text-faint)' }}>
-              <span>Powered by</span>
-              <Link href="/" className="flex items-center gap-1 font-medium" style={{ color: "var(--forma-accent)" }}>
-                <Stack size={16} weight="fill" />
-                Forma
+            <div className="mt-10 space-y-3">
+              <Link
+                href="https://withforma.io/signup"
+                target="_blank"
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-medium transition-opacity hover:opacity-90"
+                style={{ backgroundColor: 'var(--forma-accent)', color: 'var(--forma-bg)' }}
+              >
+                Create your own form
               </Link>
+              <div className="flex items-center justify-center gap-2 text-sm" style={{ color: 'var(--forma-text-faint)' }}>
+                <span>Powered by</span>
+                <Link href="https://withforma.io" className="flex items-center gap-1 font-medium" style={{ color: "var(--forma-accent)" }} target="_blank">
+                  <Stack size={16} weight="fill" />
+                  Forma
+                </Link>
+              </div>
             </div>
           )}
         </motion.div>

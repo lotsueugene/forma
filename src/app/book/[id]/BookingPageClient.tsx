@@ -173,12 +173,22 @@ export default function BookingPageClient({ formId }: { formId: string }) {
             {thankYou?.message || 'Your booking has been submitted successfully. You will receive a confirmation shortly.'}
           </p>
           {thankYou?.showBranding !== false && (
-            <div className="flex items-center justify-center gap-1.5 text-xs pt-4" style={{ color: `${textColor}77` }}>
-              <span>Powered by</span>
-              <Link href="https://withforma.io" className="flex items-center gap-1 font-medium hover:opacity-80" style={{ color: accent }} target="_blank">
-                <Stack size={14} weight="fill" />
-                Forma
+            <div className="pt-6 space-y-3">
+              <Link
+                href="https://withforma.io/signup"
+                target="_blank"
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-medium transition-opacity hover:opacity-90"
+                style={{ backgroundColor: accent, color: bgColor }}
+              >
+                Create your own form
               </Link>
+              <div className="flex items-center justify-center gap-1.5 text-xs" style={{ color: `${textColor}77` }}>
+                <span>Powered by</span>
+                <Link href="https://withforma.io" className="flex items-center gap-1 font-medium hover:opacity-80" style={{ color: accent }} target="_blank">
+                  <Stack size={14} weight="fill" />
+                  Forma
+                </Link>
+              </div>
             </div>
           )}
         </div>

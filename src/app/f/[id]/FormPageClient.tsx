@@ -482,12 +482,22 @@ export default function FormPageClient({ formId }: FormPageClientProps) {
             {thankYou?.message || 'Your response has been submitted successfully.'}
           </p>
           {thankYou?.showBranding !== false && (
-            <div className="flex items-center justify-center gap-2 text-sm text-gray-500">
-              <span>Powered by</span>
-              <Link href="/" className="flex items-center gap-1 text-safety-orange hover:text-safety-orange/80">
-                <Stack size={16} weight="fill" />
-                Forma
+            <div className="space-y-3">
+              <Link
+                href="https://withforma.io/signup"
+                target="_blank"
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-medium text-white transition-opacity hover:opacity-90"
+                style={{ backgroundColor: branding?.accentColor || '#ef6f2e' }}
+              >
+                Create your own form
               </Link>
+              <div className="flex items-center justify-center gap-2 text-sm text-gray-500">
+                <span>Powered by</span>
+                <Link href="https://withforma.io" className="flex items-center gap-1 text-safety-orange hover:text-safety-orange/80" target="_blank">
+                  <Stack size={16} weight="fill" />
+                  Forma
+                </Link>
+              </div>
             </div>
           )}
         </motion.div>
