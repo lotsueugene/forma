@@ -217,7 +217,7 @@ export default function AdminAuditLogPage() {
                       <div className="mt-1 text-xs text-gray-400 font-mono truncate max-w-[500px]">
                         {Object.entries(log.details)
                           .filter(([, v]) => v !== null && v !== undefined)
-                          .map(([k, v]) => `${k}=${v}`)
+                          .map(([k, v]) => `${k}=${String(v)}`)
                           .join(' · ')}
                       </div>
                     )}
