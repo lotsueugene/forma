@@ -213,14 +213,16 @@ export default function AdminAuditLogPage() {
                         </span>
                       )}
                     </div>
-                    {log.details && Object.keys(log.details).length > 0 && (
-                      <div className="mt-1 text-xs text-gray-400 font-mono truncate max-w-[500px]">
-                        {Object.entries(log.details)
-                          .filter(([, v]) => v !== null && v !== undefined)
-                          .map(([k, v]) => `${k}=${String(v)}`)
-                          .join(' · ')}
-                      </div>
-                    )}
+                    {log.details && (() => {
+                      const shown = new Set(['email', 'name', 'provider']);
+                      const extra = Object.entries(log.details)
+                        .filter(([k, v]) => v !== null && v !== undefined && !shown.has(k));
+                      return extra.length > 0 ? (
+                        <div className="mt-1 text-xs text-gray-400 font-mono truncate max-w-[500px]">
+                          {extra.map(([k, v]) => `${k}=${String(v)}`).join(' · ')}
+                        </div>
+                      ) : null;
+                    })()}
                   </div>
                   <div className="text-xs text-gray-400 whitespace-nowrap flex-shrink-0" title={new Date(log.createdAt).toLocaleString()}>
                     {formatTimeAgo(log.createdAt)}
