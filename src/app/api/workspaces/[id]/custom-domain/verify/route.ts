@@ -7,7 +7,7 @@ import { verifyWorkspaceAccess } from '@/lib/workspace-auth';
 
 // The server's IP address that custom domains should point to
 const SERVER_IP = process.env.SERVER_IP || '';
-const MAIN_DOMAIN = 'withforma.io';
+const MAIN_DOMAIN = process.env.NEXT_PUBLIC_APP_DOMAIN || 'withforma.io';
 
 // Use Google's DNS for reliable lookups
 const resolver = new Resolver();

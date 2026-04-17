@@ -15,6 +15,6 @@ export default function robots(): MetadataRoute.Robots {
         ],
       },
     ],
-    sitemap: 'https://withforma.io/sitemap.xml',
+    sitemap: `${process.env.NEXTAUTH_URL || 'https://withforma.io'}/sitemap.xml`,
   };
 }

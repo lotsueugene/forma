@@ -23,7 +23,8 @@ import BookingField from '@/components/forms/BookingField';
 const RECAPTCHA_SITE_KEY = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY;
 
 // Main domains where reCAPTCHA should be loaded (custom domains won't have reCAPTCHA)
-const MAIN_DOMAINS = ['withforma.io', 'www.withforma.io', 'localhost', '127.0.0.1'];
+const APP_DOMAIN = process.env.NEXT_PUBLIC_APP_DOMAIN || 'withforma.io';
+const MAIN_DOMAINS = [APP_DOMAIN, `www.${APP_DOMAIN}`, 'localhost', '127.0.0.1'];
 
 // Extend window for grecaptcha
 declare global {

@@ -2,12 +2,13 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 // Main domains that should not be treated as custom domains
+const APP_DOMAIN = process.env.NEXT_PUBLIC_APP_DOMAIN || 'withforma.io';
 const MAIN_DOMAINS = [
   'localhost',
   '127.0.0.1',
-  'withforma.io',
-  'www.withforma.io',
-  'forma.withforma.io',
+  APP_DOMAIN,
+  `www.${APP_DOMAIN}`,
+  `forma.${APP_DOMAIN}`,
   // VPS IP (from env)
   process.env.SERVER_IP || '',
 ];

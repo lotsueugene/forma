@@ -3,7 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { FORM_TEMPLATES } from '@/lib/form-templates';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = 'https://withforma.io';
+  const baseUrl = process.env.NEXTAUTH_URL || 'https://withforma.io';
 
   // Static pages
   const staticPages = [

@@ -1,36 +1,118 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Forma
+
+Open-source form builder with payments, bookings, automations, and analytics.
+
+**Live at [withforma.io](https://withforma.io)**
+
+## Features
+
+- **Drag-and-drop form builder** with 18+ field types including payments, bookings, file uploads, ratings, and terms & conditions
+- **Conversational mode** - Typeform-style one-question-at-a-time experience
+- **API endpoints** - POST any JSON data, no predefined fields required
+- **Payments via Stripe Connect** - Accept payments directly in forms
+- **Booking system** - Calendar with availability rules, time-off, and shareable booking links
+- **Email automations** - Auto-reply and follow-up sequences triggered on submission
+- **Broadcast emails** - Send marketing emails to form respondents
+- **AI form generation** - Describe what you need, get a complete form (powered by Claude via Amazon Bedrock)
+- **Analytics dashboard** - Submission trends, conversion rates, drop-off analysis, peak hours
+- **Team workspaces** - Role-based access control (owner, manager, editor, viewer)
+- **Custom domains** - Point your domain to Forma and serve forms from it
+- **Webhook integrations** - Slack, Google Sheets, custom webhooks
+- **Embeddable** - Embed forms on any website via iframe
+- **Custom branding** - Colors, logos, thank-you pages
+
+## Tech Stack
+
+- **Framework:** Next.js 16 (App Router, React 19, TypeScript)
+- **Database:** PostgreSQL with Prisma ORM
+- **Auth:** NextAuth.js (credentials, Google, GitHub)
+- **Payments:** Stripe (subscriptions + Connect for form payments)
+- **Email:** Resend
+- **File storage:** Amazon S3
+- **AI:** Amazon Bedrock (Claude Haiku 4.5)
+- **Styling:** Tailwind CSS v4
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
+
+- Node.js 20+
+- PostgreSQL 15+
+
+### Setup
 
 ```bash
+# Clone the repo
+git clone https://github.com/lotsueugene/forma.git
+cd forma
+
+# Install dependencies
+npm install
+
+# Copy environment variables
+cp .env.example .env
+# Fill in your values (see .env.example for descriptions)
+
+# Set up the database
+npx prisma db push
+npx prisma generate
+
+# Run the dev server
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Required Environment Variables
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Only `DATABASE_URL`, `NEXTAUTH_URL`, and `NEXTAUTH_SECRET` are required to run the app. Everything else enables optional features:
 
-## Learn More
+| Variable | Required | Enables |
+|----------|----------|---------|
+| `DATABASE_URL` | Yes | PostgreSQL connection |
+| `NEXTAUTH_URL` | Yes | Auth base URL |
+| `NEXTAUTH_SECRET` | Yes | Session encryption |
+| `GOOGLE_CLIENT_*` | No | Google OAuth login |
+| `GITHUB_CLIENT_*` | No | GitHub OAuth login |
+| `STRIPE_*` | No | Subscriptions & payments |
+| `RESEND_API_KEY` | No | Email automations & broadcasts |
+| `AWS_S3_*` | No | File uploads |
+| `RECAPTCHA_*` | No | Signup spam protection |
 
-To learn more about Next.js, take a look at the following resources:
+## Project Structure
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```
+src/
+  app/
+    (admin)/admin/    # Platform admin panel
+    (auth)/           # Login, signup pages
+    (dashboard)/      # User dashboard
+    api/              # API routes
+    f/[id]/           # Public form renderer
+    book/[id]/        # Public booking page
+  components/
+    dashboard/        # Dashboard components
+    forms/            # Form field components
+    ui/               # Reusable UI (ConfirmModal, Pagination, etc.)
+  lib/                # Server utilities (auth, stripe, email, etc.)
+  contexts/           # React contexts (workspace)
+  types/              # TypeScript types
+prisma/
+  schema.prisma       # Database schema
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Deployment
 
-## Deploy on Vercel
+```bash
+# Build for production
+npm run build
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+# Start production server
+npm start
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+See `.env.example` for all configuration options.
+
+## License
+
+[MIT](LICENSE)

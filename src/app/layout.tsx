@@ -13,24 +13,26 @@ const geistMono = Geist_Mono({
   subsets: ['latin'],
 });
 
+const appUrl = process.env.NEXTAUTH_URL || 'https://withforma.io';
+
 export const metadata: Metadata = {
-  metadataBase: new URL('https://withforma.io'),
+  metadataBase: new URL(appUrl),
   title: {
     default: 'Forma - The Modern Form Builder',
     template: '%s | Forma',
   },
   description: 'Build powerful forms, collect submissions, accept payments, and integrate with your favorite tools. Drag-and-drop builder with analytics, custom branding, and enterprise-grade security.',
   keywords: ['form builder', 'forms', 'online forms', 'surveys', 'integrations', 'saas', 'typeform alternative', 'payment forms', 'form analytics', 'custom forms'],
-  authors: [{ name: 'Forma', url: 'https://withforma.io' }],
+  authors: [{ name: 'Forma', url: appUrl }],
   creator: 'Forma',
   publisher: 'Forma',
   alternates: {
-    canonical: 'https://withforma.io',
+    canonical: appUrl,
   },
   openGraph: {
     type: 'website',
     locale: 'en_US',
-    url: 'https://withforma.io',
+    url: appUrl,
     title: 'Forma - The Modern Form Builder',
     description: 'Build powerful forms, collect submissions, accept payments, and integrate with your favorite tools.',
     siteName: 'Forma',
@@ -74,7 +76,7 @@ export default function RootLayout({
               '@context': 'https://schema.org',
               '@type': 'SoftwareApplication',
               name: 'Forma',
-              url: 'https://withforma.io',
+              url: appUrl,
               applicationCategory: 'BusinessApplication',
               operatingSystem: 'Web',
               description: 'Build powerful forms, collect submissions, accept payments, and integrate with your favorite tools.',
