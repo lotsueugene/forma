@@ -58,6 +58,7 @@ interface FormField {
   slotDuration?: number;
   weeklySchedule?: Record<number, Array<{ start: string; end: string }>>;
   availabilityEnabled?: boolean;
+  termsText?: string;
 }
 
 // Evaluate if a field's condition is met
@@ -1001,6 +1002,42 @@ function renderField(
           availabilityEnabled={field.availabilityEnabled}
         />
       );
+    case 'terms': {
+      const renderTermsText = (text: string) => {
+        // Convert [link text](url) to clickable links
+        const parts = text.split(/(\[[^\]]+\]\([^)]+\))/g);
+        return parts.map((part, i) => {
+          const linkMatch = part.match(/\[([^\]]+)\]\(([^)]+)\)/);
+          if (linkMatch) {
+            return (
+              <a key={i} href={linkMatch[2]} target="_blank" rel="noopener noreferrer" className="text-safety-orange underline hover:opacity-80">
+                {linkMatch[1]}
+              </a>
+            );
+          }
+          return <span key={i}>{part}</span>;
+        });
+      };
+
+      const isChecked = formData[field.id] === 'agreed';
+      return (
+        <div className="space-y-3">
+          <div className="max-h-40 overflow-y-auto p-4 rounded-lg text-sm leading-relaxed" style={{ backgroundColor: 'rgba(0,0,0,0.03)', border: '1px solid rgba(0,0,0,0.08)' }}>
+            {field.termsText ? renderTermsText(field.termsText) : 'No terms provided.'}
+          </div>
+          <label className="flex items-start gap-3 cursor-pointer group">
+            <input
+              type="checkbox"
+              className="mt-0.5 w-4.5 h-4.5 rounded border-2 border-current/20 accent-current"
+              checked={isChecked}
+              onChange={(e) => onChange(field.id, e.target.checked ? 'agreed' : '')}
+              required={field.required}
+            />
+            <span className="text-sm">I agree to the Terms and Conditions</span>
+          </label>
+        </div>
+      );
+    }
     default:
       return null;
   }

@@ -39,6 +39,7 @@ interface FormField {
   slotDuration?: number;
   weeklySchedule?: Record<number, Array<{ start: string; end: string }>>;
   availabilityEnabled?: boolean;
+  termsText?: string;
 }
 
 interface FormSettings {
@@ -866,6 +867,42 @@ function renderConversationalField(
           availabilityEnabled={field.availabilityEnabled}
         />
       );
+    case 'terms': {
+      const renderTermsText = (text: string) => {
+        const parts = text.split(/(\[[^\]]+\]\([^)]+\))/g);
+        return parts.map((part, i) => {
+          const linkMatch = part.match(/\[([^\]]+)\]\(([^)]+)\)/);
+          if (linkMatch) {
+            return (
+              <a key={i} href={linkMatch[2]} target="_blank" rel="noopener noreferrer" style={{ color: accent }} className="underline hover:opacity-80">
+                {linkMatch[1]}
+              </a>
+            );
+          }
+          return <span key={i}>{part}</span>;
+        });
+      };
+
+      const isChecked = formData[field.id] === 'agreed';
+      return (
+        <div className="space-y-4">
+          <div className="max-h-48 overflow-y-auto p-4 rounded-xl text-sm leading-relaxed" style={{ backgroundColor: isLightBg ? 'rgba(0,0,0,0.04)' : 'rgba(255,255,255,0.06)', border: `1px solid ${isLightBg ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.1)'}` }}>
+            {field.termsText ? renderTermsText(field.termsText) : 'No terms provided.'}
+          </div>
+          <label className="flex items-start gap-3 cursor-pointer">
+            <input
+              type="checkbox"
+              className="mt-1 w-5 h-5 rounded accent-current"
+              style={{ accentColor: accent }}
+              checked={isChecked}
+              onChange={(e) => onChange(field.id, e.target.checked ? 'agreed' : '')}
+              required={field.required}
+            />
+            <span className="text-base" style={{ color: 'var(--forma-text)' }}>I agree to the Terms and Conditions</span>
+          </label>
+        </div>
+      );
+    }
     default:
       return null;
   }

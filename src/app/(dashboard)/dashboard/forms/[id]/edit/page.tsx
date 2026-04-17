@@ -76,7 +76,8 @@ type FieldType =
   | 'image'
   | 'video'
   | 'payment'
-  | 'booking';
+  | 'booking'
+  | 'terms';
 
 type ConditionOperator = 'equals' | 'not_equals' | 'contains' | 'not_empty' | 'is_empty';
 
@@ -104,6 +105,7 @@ interface FormField {
   slotDuration?: number; // minutes (15, 30, 45, 60, etc.)
   weeklySchedule?: Record<number, Array<{ start: string; end: string }>>;
   availabilityEnabled?: boolean;
+  termsText?: string;
 }
 
 const fieldTypes: { type: FieldType; label: string; icon: typeof TextT }[] = [
@@ -125,6 +127,7 @@ const fieldTypes: { type: FieldType; label: string; icon: typeof TextT }[] = [
   { type: 'video', label: 'Video', icon: VideoCamera },
   { type: 'payment', label: 'Payment', icon: CreditCard },
   { type: 'booking', label: 'Booking', icon: CalendarBlank },
+  { type: 'terms', label: 'Terms & Conditions', icon: CheckSquare },
 ];
 
 const getDefaultLabel = (type: FieldType) => {
@@ -147,6 +150,7 @@ const getDefaultLabel = (type: FieldType) => {
     video: 'Video',
     payment: 'Payment',
     booking: 'Book a Time',
+    terms: 'Terms and Conditions',
   };
   return labels[type];
 };
@@ -942,8 +946,26 @@ export default function EditFormPage({ params }: { params: Promise<{ id: string 
                   </div>
                 )}
 
+                {/* Terms settings */}
+                {selectedField.type === 'terms' && (
+                  <div className="form-field">
+                    <label className="form-label">Terms Content</label>
+                    <textarea
+                      value={selectedField.termsText || ''}
+                      onChange={(e) =>
+                        updateField(selectedField.id, { termsText: e.target.value })
+                      }
+                      className="input min-h-[120px]"
+                      placeholder="Enter your terms and conditions text..."
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      Use [link text](url) to add links
+                    </p>
+                  </div>
+                )}
+
                 {/* Placeholder */}
-                {!['checkbox', 'radio', 'file', 'rating', 'hidden', 'image', 'video', 'payment'].includes(selectedField.type) && (
+                {!['checkbox', 'radio', 'file', 'rating', 'hidden', 'image', 'video', 'payment', 'terms'].includes(selectedField.type) && (
                   <div className="form-field">
                     <label className="form-label">Placeholder</label>
                     <input
@@ -1760,6 +1782,18 @@ function FieldPreview({ field }: { field: FormField }) {
             <CalendarBlank size={14} className="mr-2" /> Select date & time slots
           </div>
           <div className="h-6 bg-gray-100 rounded-lg" />
+        </div>
+      );
+    case 'terms':
+      return (
+        <div className="space-y-3">
+          <div className="max-h-32 overflow-y-auto p-3 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-600">
+            {field.termsText || 'Terms and conditions text will appear here...'}
+          </div>
+          <label className="flex items-start gap-3 cursor-pointer">
+            <input type="checkbox" className="mt-0.5 rounded border-gray-300" disabled />
+            <span className="text-sm text-gray-700">I agree to the Terms and Conditions</span>
+          </label>
         </div>
       );
     case 'page_break':

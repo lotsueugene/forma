@@ -16,7 +16,8 @@ export type FieldType =
   | 'image'
   | 'video'
   | 'payment'
-  | 'booking';
+  | 'booking'
+  | 'terms';
 
 export type ConditionOperator = 'equals' | 'not_equals' | 'contains' | 'not_empty' | 'is_empty';
 
@@ -44,6 +45,7 @@ export interface FormField {
   slotDuration?: number;
   weeklySchedule?: Record<number, Array<{ start: string; end: string }>>;
   availabilityEnabled?: boolean;
+  termsText?: string; // Rich text content for terms field, supports [link text](url) syntax
 }
 
 export interface FormSettings {
