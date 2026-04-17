@@ -202,11 +202,11 @@ export default function AdminAuditLogPage() {
                           user: {log.userId.slice(0, 12)}...
                         </span>
                       ) : null}
-                      {log.details?.provider && (
+                      {log.details?.provider ? (
                         <span className="px-1.5 py-0.5 bg-gray-100 rounded text-[10px] uppercase tracking-wider">
                           {String(log.details.provider)}
                         </span>
-                      )}
+                      ) : null}
                       {log.resourceType && (
                         <span>
                           {log.resourceType}: {log.resourceId?.slice(0, 12)}...
