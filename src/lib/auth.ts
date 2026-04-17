@@ -57,7 +57,7 @@ export const authOptions: NextAuthOptions = {
           throw new Error('Invalid credentials');
         }
 
-        auditLog({ action: 'auth.login_success', userId: user.id });
+        // auth.login_success is logged via the signIn event (covers all providers)
 
         return {
           id: user.id,
@@ -75,10 +75,28 @@ export const authOptions: NextAuthOptions = {
     signIn: '/login',
   },
   events: {
+    // Log all sign-ins (OAuth + credentials)
+    async signIn({ user, account }) {
+      if (user.id) {
+        auditLog({
+          action: 'auth.login_success',
+          userId: user.id,
+          details: {
+            provider: account?.provider || 'credentials',
+            email: user.email || undefined,
+          },
+        });
+      }
+    },
     // Create workspace for OAuth users (credentials users get it in /api/auth/register)
     async createUser({ user }) {
       if (user.id && user.email) {
         await createPersonalWorkspace(user.id, user.name || undefined, user.email);
+        auditLog({
+          action: 'auth.register',
+          userId: user.id,
+          details: { email: user.email, method: 'oauth' },
+        });
       }
     },
   },
