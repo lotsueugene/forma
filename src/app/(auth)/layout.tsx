@@ -23,38 +23,11 @@ export default function AuthLayout({
           </span>
         </Link>
 
-        {/* Testimonial / Feature highlight */}
+        {/* Tagline */}
         <div className="relative z-10">
-          <blockquote className="text-xl lg:text-2xl text-gray-900 font-medium leading-relaxed mb-6">
-            "Forma transformed how we collect data. The API is incredibly well-designed and the dashboard gives us insights we never had before."
-          </blockquote>
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-safety-orange to-[#d15010] flex items-center justify-center text-white font-semibold">
-              AK
-            </div>
-            <div>
-              <div className="font-medium text-gray-900">Alicia Kowalski</div>
-              <div className="text-sm text-gray-500 font-mono uppercase tracking-wider">
-                Engineering Lead at TechCorp
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Stats */}
-        <div className="relative z-10 flex items-center gap-12">
-          <div>
-            <div className="text-3xl font-bold text-gray-900">10M+</div>
-            <div className="text-sm text-gray-500 font-mono uppercase tracking-wider">Forms created</div>
-          </div>
-          <div>
-            <div className="text-3xl font-bold text-gray-900">500K+</div>
-            <div className="text-sm text-gray-500 font-mono uppercase tracking-wider">Developers</div>
-          </div>
-          <div>
-            <div className="text-3xl font-bold text-gray-900">99.9%</div>
-            <div className="text-sm text-gray-500 font-mono uppercase tracking-wider">Uptime</div>
-          </div>
+          <p className="text-xl lg:text-2xl text-gray-900 font-medium leading-relaxed">
+            Build forms, collect data, automate workflows.
+          </p>
         </div>
       </div>
 
