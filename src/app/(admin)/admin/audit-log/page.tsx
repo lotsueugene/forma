@@ -195,7 +195,7 @@ export default function AdminAuditLogPage() {
                     <div className="flex items-center gap-3 mt-0.5 text-xs text-gray-500">
                       {log.details?.email ? (
                         <span className="truncate max-w-[200px]" title={log.userId || ''}>
-                          {log.details.name ? `${log.details.name} · ` : ''}{log.details.email as string}
+                          {log.details.name ? `${String(log.details.name)} · ` : ''}{String(log.details.email)}
                         </span>
                       ) : log.userId ? (
                         <span className="font-mono truncate max-w-[200px]" title={log.userId}>
@@ -204,7 +204,7 @@ export default function AdminAuditLogPage() {
                       ) : null}
                       {log.details?.provider && (
                         <span className="px-1.5 py-0.5 bg-gray-100 rounded text-[10px] uppercase tracking-wider">
-                          {log.details.provider as string}
+                          {String(log.details.provider)}
                         </span>
                       )}
                       {log.resourceType && (
