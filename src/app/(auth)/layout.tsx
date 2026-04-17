@@ -10,10 +10,17 @@ export default function AuthLayout({
     <div className="min-h-screen flex bg-white">
       {/* Left Panel - Branding */}
       <div className="hidden lg:flex lg:w-1/2 bg-gray-50 flex-col justify-between p-12 relative overflow-hidden">
-        {/* Background decoration - removed grid overlay to prevent see-through */}
-        {/* Subtle glow effects */}
-        <div className="absolute top-0 right-0 w-96 h-96 bg-safety-orange/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute bottom-0 left-0 w-64 h-64 bg-safety-orange/10 rounded-full blur-3xl pointer-events-none" />
+        {/* Animated brand gradient blobs */}
+        <div className="absolute top-[-10%] right-[-10%] w-[500px] h-[500px] bg-safety-orange/15 rounded-full blur-3xl pointer-events-none animate-[float_8s_ease-in-out_infinite]" />
+        <div className="absolute bottom-[-5%] left-[-5%] w-[400px] h-[400px] bg-safety-orange/10 rounded-full blur-3xl pointer-events-none animate-[float_10s_ease-in-out_infinite_reverse]" />
+        <div className="absolute top-1/2 left-1/3 w-[300px] h-[300px] bg-safety-orange/8 rounded-full blur-3xl pointer-events-none animate-[float_12s_ease-in-out_infinite_2s]" />
+        <style>{`
+          @keyframes float {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            33% { transform: translate(30px, -20px) scale(1.05); }
+            66% { transform: translate(-20px, 15px) scale(0.95); }
+          }
+        `}</style>
 
         {/* Logo */}
         <Link href="/" className="relative z-10 flex items-center gap-2">
