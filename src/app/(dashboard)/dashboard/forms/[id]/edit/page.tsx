@@ -1777,11 +1777,8 @@ function FieldPreview({ field }: { field: FormField }) {
       );
     case 'booking':
       return (
-        <div className="space-y-2">
-          <div className="h-8 bg-gray-50 border border-gray-200 rounded-lg px-3 flex items-center text-xs text-gray-400">
-            <CalendarBlank size={14} className="mr-2" /> Select date & time slots
-          </div>
-          <div className="h-6 bg-gray-100 rounded-lg" />
+        <div className="h-8 bg-gray-50 border border-gray-200 rounded-lg px-3 flex items-center text-xs text-gray-400">
+          <CalendarBlank size={14} className="mr-2" /> Select date & time slots
         </div>
       );
     case 'terms': {
