@@ -79,6 +79,22 @@ const SETTINGS_TAB_IDS: SettingsTab[] = [
   'security',
 ];
 
+function PlatformFeeText() {
+  const [fee, setFee] = useState<number | null>(null);
+  useEffect(() => {
+    fetch('/api/platform/fee')
+      .then((res) => res.json())
+      .then((data) => setFee(data.fee))
+      .catch(() => setFee(5));
+  }, []);
+  return (
+    <p className="text-sm text-gray-500 mb-4">
+      Connect your Stripe account to receive payments from forms with payment fields.
+      {fee !== null ? ` Forma takes a ${fee}% platform fee.` : ''}
+    </p>
+  );
+}
+
 function StripeConnectSection({ workspaceId }: { workspaceId: string }) {
   const [loading, setLoading] = useState(true);
   const [connecting, setConnecting] = useState(false);
@@ -1637,9 +1653,7 @@ export default function SettingsPage() {
                   {/* Stripe Connect - Payment Account */}
                   <div className="border-t border-gray-200 pt-6 mt-6">
                     <h3 className="text-lg font-semibold text-gray-900 mb-2">Payment Account</h3>
-                    <p className="text-sm text-gray-500 mb-4">
-                      Connect your Stripe account to receive payments from forms with payment fields. Forma takes a 5% platform fee.
-                    </p>
+                    <PlatformFeeText />
                     <StripeConnectSection workspaceId={currentWorkspace?.id || ''} />
                   </div>
                 </>
