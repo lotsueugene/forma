@@ -1784,11 +1784,19 @@ function FieldPreview({ field }: { field: FormField }) {
           <div className="h-6 bg-gray-100 rounded-lg" />
         </div>
       );
-    case 'terms':
+    case 'terms': {
+      const renderLinks = (text: string) => {
+        const parts = text.split(/(\[[^\]]+\]\([^)]+\))/g);
+        return parts.map((part, i) => {
+          const m = part.match(/\[([^\]]+)\]\(([^)]+)\)/);
+          if (m) return <a key={i} href={m[2]} target="_blank" rel="noopener noreferrer" className="text-safety-orange underline hover:opacity-80">{m[1]}</a>;
+          return <span key={i}>{part}</span>;
+        });
+      };
       return (
         <div className="space-y-3">
-          <div className="max-h-32 overflow-y-auto p-3 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-600">
-            {field.termsText || 'Terms and conditions text will appear here...'}
+          <div className="max-h-32 overflow-y-auto p-3 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-600 whitespace-pre-wrap">
+            {field.termsText ? renderLinks(field.termsText) : 'Terms and conditions text will appear here...'}
           </div>
           <label className="flex items-start gap-3 cursor-pointer">
             <input type="checkbox" className="mt-0.5 rounded border-gray-300" disabled />
@@ -1796,6 +1804,7 @@ function FieldPreview({ field }: { field: FormField }) {
           </label>
         </div>
       );
+    }
     case 'page_break':
       return null; // Rendered differently in the parent
     default:

@@ -1022,7 +1022,7 @@ function renderField(
       const isChecked = formData[field.id] === 'agreed';
       return (
         <div className="space-y-3">
-          <div className="max-h-40 overflow-y-auto p-4 rounded-lg text-sm leading-relaxed" style={{ backgroundColor: 'rgba(0,0,0,0.03)', border: '1px solid rgba(0,0,0,0.08)' }}>
+          <div className="max-h-40 overflow-y-auto p-4 rounded-lg text-sm leading-relaxed whitespace-pre-wrap" style={{ backgroundColor: 'rgba(0,0,0,0.03)', border: '1px solid rgba(0,0,0,0.08)' }}>
             {field.termsText ? renderTermsText(field.termsText) : 'No terms provided.'}
           </div>
           <label className="flex items-start gap-3 cursor-pointer group">

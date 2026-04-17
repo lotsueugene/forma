@@ -886,7 +886,7 @@ function renderConversationalField(
       const isChecked = formData[field.id] === 'agreed';
       return (
         <div className="space-y-4">
-          <div className="max-h-48 overflow-y-auto p-4 rounded-xl text-sm leading-relaxed" style={{ backgroundColor: isLightBg ? 'rgba(0,0,0,0.04)' : 'rgba(255,255,255,0.06)', border: `1px solid ${isLightBg ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.1)'}` }}>
+          <div className="max-h-48 overflow-y-auto p-4 rounded-xl text-sm leading-relaxed whitespace-pre-wrap" style={{ backgroundColor: isLightBg ? 'rgba(0,0,0,0.04)' : 'rgba(255,255,255,0.06)', border: `1px solid ${isLightBg ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.1)'}` }}>
             {field.termsText ? renderTermsText(field.termsText) : 'No terms provided.'}
           </div>
           <label className="flex items-start gap-3 cursor-pointer">
