@@ -84,6 +84,7 @@ export const authOptions: NextAuthOptions = {
           details: {
             provider: account?.provider || 'credentials',
             email: user.email || undefined,
+            name: user.name || undefined,
           },
         });
       }

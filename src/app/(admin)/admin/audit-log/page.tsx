@@ -195,7 +195,7 @@ export default function AdminAuditLogPage() {
                     <div className="flex items-center gap-3 mt-0.5 text-xs text-gray-500">
                       {log.details?.email ? (
                         <span className="truncate max-w-[200px]" title={log.userId || ''}>
-                          {log.details.email as string}
+                          {log.details.name ? `${log.details.name} · ` : ''}{log.details.email as string}
                         </span>
                       ) : log.userId ? (
                         <span className="font-mono truncate max-w-[200px]" title={log.userId}>
