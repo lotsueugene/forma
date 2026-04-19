@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Check, X, ArrowRight, Lightning, Crown, Buildings, Star, Spinner } from '@phosphor-icons/react';
+import { Check, X, Lightning, Crown, Buildings, ArrowRight, Star, Spinner } from '@phosphor-icons/react';
 import Magnetic from '@/components/animations/Magnetic';
 import { cn } from '@/lib/utils';
 import type { Icon } from '@phosphor-icons/react';
@@ -28,6 +28,7 @@ interface PricingPlan {
   active: boolean;
 }
 
+// Default plans as fallback (should match database seed)
 const defaultPlans: PricingPlan[] = [
   {
     id: 'starter',
@@ -131,6 +132,7 @@ export default function PricingSection() {
       .finally(() => setLoading(false));
   }, []);
 
+  // Calculate discount percentage from plans that have both monthly and yearly prices
   const discountPercent = (() => {
     const planWithPrices = plans.find(
       p => p.monthlyPrice && p.yearlyPrice && p.monthlyPrice > 0 && p.yearlyPrice > 0
@@ -142,7 +144,7 @@ export default function PricingSection() {
   })();
 
   return (
-    <section id="pricing" className="relative py-16 sm:py-24 lg:py-32 bg-[#0a0a0a]">
+    <section id="pricing" className="relative py-16 sm:py-24 lg:py-32 bg-white">
       <div className="relative mx-auto w-full max-w-[1400px] px-4 lg:px-9">
         {/* Section Header */}
         <motion.div
@@ -152,30 +154,33 @@ export default function PricingSection() {
           transition={{ duration: 0.5 }}
           className="text-center mb-10 sm:mb-12 lg:mb-16"
         >
-          <div className="inline-flex items-center gap-3 uppercase mb-6 sm:mb-8 justify-center">
-            <div className="w-2.5 h-2.5 rounded-full bg-safety-orange shadow-[0_0_8px_rgba(239,111,46,0.6)]" />
-            <span className="font-mono text-[11px] sm:text-[13px] tracking-[-0.015rem] uppercase text-white/50">
+          {/* Status Badge */}
+          <div className="text-pretty font-mono text-[15px] leading-[100%] tracking-[-0.0175rem] inline-flex items-center gap-3 uppercase mb-6 sm:mb-8 justify-center">
+            <div className="size-2.5 transform-gpu rounded-full border bg-safety-orange border-transparent shadow-[0_0_8px_rgba(255,77,0,0.6)]" />
+            <p className="whitespace-nowrap text-gray-700 text-pretty font-mono text-[11px] sm:text-[13px] leading-[100%] tracking-[-0.015rem] uppercase">
               Pricing
-            </span>
+            </p>
           </div>
 
-          <h2 className="font-normal text-[28px] sm:text-[36px] lg:text-[52px] leading-[1.1] tracking-[-0.03em] mb-4 sm:mb-6 text-white">
+          <h2
+            className="font-normal text-[26px] sm:text-[32px] leading-[110%] tracking-[-0.06rem] lg:text-[48px] lg:tracking-[-0.12rem] mb-4 sm:mb-6 text-gray-900"
+          >
             Simple, transparent pricing<span className="text-safety-orange">.</span>
           </h2>
 
-          <p className="font-mono text-[14px] sm:text-[15px] text-white/40 max-w-2xl mx-auto mb-8">
+          <p className="font-mono text-[14px] sm:text-[16px] leading-[140%] tracking-[-0.02rem] lg:text-[18px] text-gray-700 max-w-2xl mx-auto mb-6 sm:mb-8">
             Start free, scale as you grow. No hidden fees, no surprises.
           </p>
 
           {/* Billing Toggle */}
-          <div className="inline-flex items-center gap-1 p-1 rounded-lg bg-white/5 border border-white/10">
+          <div className="inline-flex items-center gap-1 p-1 rounded-lg bg-gray-100 border border-gray-200 flex-nowrap">
             <button
               onClick={() => setIsYearly(false)}
               className={cn(
-                'px-4 py-2 font-mono text-[12px] sm:text-[13px] uppercase tracking-[-0.015rem] rounded-md transition-all duration-150 whitespace-nowrap',
+                'px-4 py-2 font-mono text-[13px] uppercase tracking-[-0.015rem] rounded-md transition-all duration-150 whitespace-nowrap',
                 !isYearly
-                  ? 'bg-white/10 text-white'
-                  : 'text-white/40 hover:text-white/60'
+                  ? 'bg-white text-gray-900 shadow-sm'
+                  : 'text-gray-700 hover:text-gray-900'
               )}
             >
               Monthly
@@ -183,16 +188,23 @@ export default function PricingSection() {
             <button
               onClick={() => setIsYearly(true)}
               className={cn(
-                'px-4 py-2 font-mono text-[12px] sm:text-[13px] uppercase tracking-[-0.015rem] rounded-md transition-all duration-150 inline-flex items-center gap-2 whitespace-nowrap',
+                'px-4 py-2 font-mono text-[13px] uppercase tracking-[-0.015rem] rounded-md transition-all duration-150 inline-flex items-center gap-2 whitespace-nowrap',
                 isYearly
-                  ? 'bg-white/10 text-white'
-                  : 'text-white/40 hover:text-white/60'
+                  ? 'bg-white text-gray-900 shadow-sm'
+                  : 'text-gray-700 hover:text-gray-900'
               )}
             >
               Yearly
               {discountPercent > 0 && (
-                <span className="text-[10px] px-2 py-0.5 rounded-sm bg-safety-orange text-white whitespace-nowrap">
-                  save -{discountPercent}%
+                <span
+                  className={cn(
+                    'text-[11px] px-2 py-0.5 rounded-sm whitespace-nowrap',
+                    isYearly
+                      ? 'bg-safety-orange text-white'
+                      : 'bg-safety-orange/20 text-safety-orange'
+                  )}
+                >
+                  -{discountPercent}%
                 </span>
               )}
             </button>
@@ -202,10 +214,10 @@ export default function PricingSection() {
         {/* Pricing Cards */}
         {loading ? (
           <div className="flex items-center justify-center py-12">
-            <Spinner size={32} className="animate-spin text-white/30" />
+            <Spinner size={32} className="animate-spin text-gray-500" />
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-5">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-6">
             {plans.map((plan, index) => {
               const IconComponent = getIcon(plan.icon);
 
@@ -221,69 +233,59 @@ export default function PricingSection() {
                     damping: 20,
                     delay: index * 0.1,
                   }}
-                  className="relative"
+                  className={cn('relative', plan.popular && 'lg:-mt-4 lg:mb-4')}
                 >
                   {/* Popular badge */}
                   {plan.popular && (
                     <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-10">
-                      <div className="px-3 py-1 rounded-full bg-safety-orange text-white font-mono text-[10px] uppercase tracking-wider shadow-[0_0_16px_rgba(239,111,46,0.4)]">
-                        Most popular
+                      <div className="px-3 py-1 rounded-sm bg-safety-orange text-white font-mono text-[11px] uppercase tracking-wider shadow-[0_0_8px_rgba(255,77,0,0.5)]">
+                        Most Popular
                       </div>
                     </div>
                   )}
 
                   <div
                     className={cn(
-                      'h-full flex flex-col p-6 lg:p-8 rounded-2xl border transition-all duration-300 relative overflow-hidden',
+                      'h-full flex flex-col p-6 lg:p-8 rounded-xl border transition-all duration-300',
                       plan.popular
-                        ? 'border-safety-orange/30 bg-white/[0.04]'
-                        : 'border-white/10 bg-white/[0.02] hover:border-white/20'
+                        ? 'bg-white border-safety-orange/30 shadow-[0_0_40px_rgba(239,111,46,0.1)]'
+                        : 'bg-white border-gray-200 hover:border-gray-300 hover:shadow-lg'
                     )}
                   >
-                    {/* Orange gradient top for popular */}
-                    {plan.popular && (
-                      <div
-                        className="absolute top-0 left-0 right-0 h-px"
-                        style={{
-                          background: 'linear-gradient(90deg, transparent, #ef6f2e, transparent)',
-                        }}
-                      />
-                    )}
-
                     {/* Header */}
                     <div className="mb-6">
                       <div
                         className={cn(
                           'w-10 h-10 rounded-lg flex items-center justify-center mb-4',
-                          plan.popular ? 'bg-safety-orange/20' : 'bg-white/5'
+                          plan.popular ? 'bg-safety-orange/20' : 'bg-gray-100'
                         )}
                       >
                         <IconComponent
                           size={22}
                           weight="duotone"
-                          className={plan.popular ? 'text-safety-orange' : 'text-white/50'}
+                          className={plan.popular ? 'text-safety-orange' : 'text-gray-700'}
                         />
                       </div>
-                      <h3 className="text-xl font-semibold text-white mb-1">
+                      <h3 className="text-xl font-semibold text-gray-900 mb-1">
                         {plan.name}
                       </h3>
-                      <p className="text-sm text-white/40 font-mono">{plan.description}</p>
+                      <p className="text-sm text-gray-700 font-mono">{plan.description}</p>
                     </div>
 
                     {/* Price */}
                     <div className="mb-6">
                       {plan.monthlyPrice !== null ? (
                         <div className="flex items-baseline gap-1">
-                          <span className="text-4xl font-bold text-white">
+                          <span className="text-4xl font-bold text-gray-900">
                             ${isYearly ? plan.yearlyPrice : plan.monthlyPrice}
                           </span>
-                          <span className="text-white/30 font-mono text-sm">/month</span>
+                          <span className="text-gray-500 font-mono text-sm">/month</span>
                         </div>
                       ) : (
-                        <div className="text-3xl font-bold text-white">Custom</div>
+                        <div className="text-3xl font-bold text-gray-900">Custom</div>
                       )}
                       {plan.yearlyPrice !== null && plan.yearlyPrice > 0 && isYearly && (
-                        <p className="text-sm text-white/30 font-mono mt-1">
+                        <p className="text-sm text-gray-500 font-mono mt-1">
                           Billed annually (${plan.yearlyPrice * 12}/year)
                         </p>
                       )}
@@ -295,21 +297,21 @@ export default function PricingSection() {
                         <li key={i} className="flex items-start gap-3">
                           {feature.included ? (
                             <Check
-                              size={16}
+                              size={18}
                               weight="bold"
                               className="text-safety-orange mt-0.5 flex-shrink-0"
                             />
                           ) : (
                             <X
-                              size={16}
+                              size={18}
                               weight="bold"
-                              className="text-white/15 mt-0.5 flex-shrink-0"
+                              className="text-gray-300 mt-0.5 flex-shrink-0"
                             />
                           )}
                           <span
                             className={cn(
                               'text-sm font-mono',
-                              feature.included ? 'text-white/70' : 'text-white/25'
+                              feature.included ? 'text-gray-700' : 'text-gray-500'
                             )}
                           >
                             {feature.text}
@@ -322,15 +324,10 @@ export default function PricingSection() {
                     <Magnetic pull={0.1}>
                       <a
                         href={plan.ctaLink || '/signup'}
-                        className={cn(
-                          'w-full py-3 px-4 rounded-lg font-mono text-[13px] uppercase tracking-[-0.015rem] transition-all duration-200 flex items-center justify-center gap-2',
-                          plan.popular
-                            ? 'bg-safety-orange text-white hover:bg-[#ee6018]'
-                            : 'bg-white/5 text-white border border-white/10 hover:bg-white/10 hover:border-white/20'
-                        )}
+                        className="w-full py-3 px-4 rounded-sm font-mono text-[13px] uppercase tracking-[-0.015rem] transition-all duration-150 flex items-center justify-center gap-2 bg-safety-orange text-white hover:bg-accent-200 border border-transparent"
                       >
                         {plan.ctaText}
-                        <ArrowRight size={14} weight="bold" />
+                        <ArrowRight size={16} weight="bold" />
                       </a>
                     </Magnetic>
                   </div>
@@ -339,6 +336,8 @@ export default function PricingSection() {
             })}
           </div>
         )}
+
+        {/* Enterprise callout */}
       </div>
     </section>
   );

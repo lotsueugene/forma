@@ -1,10 +1,10 @@
 'use client';
 
 import Link from 'next/link';
-import { useState, useEffect, useCallback } from 'react';
+import { useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Stack, X, List } from '@phosphor-icons/react';
+import { Stack, X } from '@phosphor-icons/react';
 import Magnetic from '@/components/animations/Magnetic';
 
 const navLinks = [
@@ -16,60 +16,21 @@ const navLinks = [
 
 export default function Navigation() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [isDark, setIsDark] = useState(false);
   const { data: session, status } = useSession();
   const isAuthenticated = status === 'authenticated' && session?.user;
 
-  const checkDarkSections = useCallback(() => {
-    const darkIds = ['pricing', 'final-cta'];
-    const navHeight = 72;
-    const navCenter = navHeight / 2;
-
-    for (const id of darkIds) {
-      const el = document.getElementById(id);
-      if (el) {
-        const rect = el.getBoundingClientRect();
-        if (rect.top <= navCenter && rect.bottom >= navCenter) {
-          setIsDark(true);
-          return;
-        }
-      }
-    }
-    setIsDark(false);
-  }, []);
-
-  useEffect(() => {
-    window.addEventListener('scroll', checkDarkSections, { passive: true });
-    checkDarkSections();
-    return () => window.removeEventListener('scroll', checkDarkSections);
-  }, [checkDarkSections]);
-
   return (
-    <header
-      className="fixed inset-x-0 top-0 z-50 transition-colors duration-300"
-      style={{
-        backgroundColor: isDark ? 'rgba(10,10,10,0.72)' : 'rgba(255,255,255,0.72)',
-        backdropFilter: 'blur(24px)',
-        WebkitBackdropFilter: 'blur(24px)',
-        borderBottom: isDark ? '1px solid rgba(255,255,255,0.08)' : '1px solid rgba(0,0,0,0.06)',
-      }}
-    >
-      <div className="mx-auto flex items-center justify-between py-4 px-4 lg:px-9 max-w-[1400px] relative">
-        {/* Logo */}
-        <Link href="/" className="z-50 flex items-center gap-2">
-          <Stack
-            size={24}
-            weight="fill"
-            className={`transition-colors duration-300 ${isDark ? 'text-white' : 'text-gray-900'}`}
-          />
-          <span
-            className={`font-sans text-xl font-medium tracking-[-0.04em] transition-colors duration-300 ${isDark ? 'text-white' : 'text-gray-900'}`}
-          >
+    <header className="fixed inset-x-0 top-0 z-50 px-4 lg:px-9 bg-white/80 backdrop-blur-md border-b border-gray-200/60">
+      <div className="mx-auto flex items-center justify-between py-5 max-w-[1400px] relative">
+        {/* Logo - Left */}
+        <a href="/" className="z-50 flex items-center gap-2">
+          <Stack size={24} weight="fill" className="text-gray-900" />
+          <span className="font-sans text-xl font-medium tracking-[-0.04em] text-gray-900">
             Forma
           </span>
-        </Link>
+        </a>
 
-        {/* Center Navigation */}
+        {/* Center Navigation - Features, Pricing, Docs, Blog */}
         <nav className="hidden lg:flex items-center justify-center absolute left-1/2 -translate-x-1/2">
           <ul className="group/menu flex items-center space-x-8">
             {navLinks.map((link) => (
@@ -80,7 +41,7 @@ export default function Navigation() {
                 <Magnetic pull={0.1}>
                   <Link
                     href={link.href}
-                    className={`text-pretty font-mono text-[12px] leading-[100%] tracking-[-0.015rem] uppercase relative flex w-fit items-center transition-colors duration-200 hover:text-safety-orange after:absolute after:-bottom-px after:left-0 after:h-px after:w-0 after:bg-current after:transition-all after:duration-300 after:ease-in-out hover:after:w-full ${isDark ? 'text-white/70' : 'text-gray-700'}`}
+                    className="text-pretty font-mono text-[12px] leading-[100%] tracking-[-0.015rem] uppercase relative flex w-fit items-center transition-colors duration-200 hover:text-safety-orange group after:absolute after:-bottom-px after:left-0 after:h-px after:w-0 after:bg-current after:transition-all after:duration-300 after:ease-in-out hover:after:w-full text-gray-700"
                   >
                     {link.label}
                   </Link>
@@ -90,16 +51,18 @@ export default function Navigation() {
           </ul>
         </nav>
 
-        {/* Right CTAs */}
+        {/* Right - Auth Buttons */}
         <div className="hidden lg:flex items-center gap-3">
           {isAuthenticated ? (
             <Magnetic pull={0.1}>
               <Link
                 href="/dashboard"
-                className="group relative cursor-pointer items-center justify-center border transition-colors duration-150 bg-safety-orange hover:bg-[#ee6018] text-white overflow-clip rounded-md border-transparent h-[36px] px-5 flex"
+                className="group relative w-max cursor-pointer items-center justify-center border transition-colors duration-150 will-change-transform bg-[#ef6f2e] hover:bg-[#ee6018] text-white overflow-clip rounded-sm border-transparent h-[32px] px-4 flex"
               >
-                <span className="text-pretty font-mono text-[12px] leading-[100%] tracking-[-0.015rem] uppercase">
-                  Dashboard
+                <span className="relative z-10 flex items-center uppercase">
+                  <p className="text-pretty font-mono text-[12px] leading-[100%] tracking-[-0.015rem] uppercase">
+                    Dashboard
+                  </p>
                 </span>
               </Link>
             </Magnetic>
@@ -108,17 +71,25 @@ export default function Navigation() {
               <Magnetic pull={0.1}>
                 <Link
                   href="/login"
-                  className={`group relative cursor-pointer items-center justify-center transition-colors duration-150 overflow-clip rounded-md h-[36px] px-4 flex font-mono text-[12px] uppercase tracking-[-0.015rem] ${isDark ? 'text-white/80 hover:text-white' : 'text-gray-700 hover:text-gray-900'}`}
+                  className="group relative w-max cursor-pointer items-center justify-center border transition-colors duration-150 will-change-transform bg-transparent hover:bg-gray-100 text-gray-700 overflow-clip rounded-sm border-gray-300 h-[32px] px-4 flex"
                 >
-                  Sign in
+                  <span className="relative z-10 flex items-center uppercase">
+                    <p className="text-pretty font-mono text-[12px] leading-[100%] tracking-[-0.015rem] uppercase">
+                      Sign In
+                    </p>
+                  </span>
                 </Link>
               </Magnetic>
               <Magnetic pull={0.1}>
                 <Link
                   href="/signup"
-                  className="group relative cursor-pointer items-center justify-center border transition-colors duration-150 bg-safety-orange hover:bg-[#ee6018] text-white overflow-clip rounded-md border-transparent h-[36px] px-5 flex font-mono text-[12px] uppercase tracking-[-0.015rem]"
+                  className="group relative w-max cursor-pointer items-center justify-center border transition-colors duration-150 will-change-transform bg-[#ef6f2e] hover:bg-[#ee6018] text-white overflow-clip rounded-sm border-transparent h-[32px] px-4 flex"
                 >
-                  Get started
+                  <span className="relative z-10 flex items-center uppercase">
+                    <p className="text-pretty font-mono text-[12px] leading-[100%] tracking-[-0.015rem] uppercase">
+                      Get Started
+                    </p>
+                  </span>
                 </Link>
               </Magnetic>
             </>
@@ -128,13 +99,23 @@ export default function Navigation() {
         {/* Mobile Menu Button */}
         <button
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          className={`relative -m-1 flex cursor-pointer items-center justify-center p-1 lg:hidden transition-colors duration-300 ${isDark ? 'text-white' : 'text-gray-700 hover:text-gray-900'}`}
+          className="relative -m-1 flex cursor-pointer items-center justify-center p-1 text-gray-700 hover:text-gray-900 lg:hidden"
           aria-label="Toggle menu"
         >
           {mobileMenuOpen ? (
             <X size={24} weight="bold" />
           ) : (
-            <List size={24} weight="bold" />
+            <svg
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path d="M3 6H21V8H3V6Z" fill="currentColor" />
+              <path d="M3 11H21V13H3V11Z" fill="currentColor" />
+              <path d="M3 16H21V18H3V16Z" fill="currentColor" />
+            </svg>
           )}
         </button>
       </div>
@@ -147,7 +128,7 @@ export default function Navigation() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
             transition={{ duration: 0.2 }}
-            className={`fixed inset-x-0 top-[65px] z-40 lg:hidden ${isDark ? 'bg-[#0a0a0a] border-b border-white/10' : 'bg-white border-b border-gray-200'}`}
+            className="fixed inset-x-0 top-[65px] z-40 bg-white border-b border-gray-200 lg:hidden"
           >
             <nav className="flex flex-col p-6">
               {navLinks.map((link, index) => (
@@ -160,7 +141,7 @@ export default function Navigation() {
                   <Link
                     href={link.href}
                     onClick={() => setMobileMenuOpen(false)}
-                    className={`block py-3 font-mono text-[13px] uppercase tracking-[-0.015rem] border-b transition-colors hover:text-safety-orange ${isDark ? 'text-white/70 border-white/10' : 'text-gray-700 border-gray-200'}`}
+                    className="block py-3 font-mono text-[13px] uppercase tracking-[-0.015rem] text-gray-700 border-b border-gray-200 transition-colors hover:text-safety-orange"
                   >
                     {link.label}
                   </Link>
@@ -176,7 +157,7 @@ export default function Navigation() {
                   <Link
                     href="/dashboard"
                     onClick={() => setMobileMenuOpen(false)}
-                    className="block w-full py-3 text-center font-mono text-[13px] uppercase tracking-[-0.015rem] bg-safety-orange text-white rounded-md"
+                    className="block w-full py-3 text-center font-mono text-[13px] uppercase tracking-[-0.015rem] bg-[#ef6f2e] text-white rounded-sm"
                   >
                     Dashboard
                   </Link>
@@ -185,14 +166,14 @@ export default function Navigation() {
                     <Link
                       href="/login"
                       onClick={() => setMobileMenuOpen(false)}
-                      className={`block w-full py-3 text-center font-mono text-[13px] uppercase tracking-[-0.015rem] ${isDark ? 'text-white/70 hover:text-white' : 'text-gray-700 hover:text-gray-900'}`}
+                      className="block w-full py-3 text-center font-mono text-[13px] uppercase tracking-[-0.015rem] text-gray-700 hover:text-gray-900"
                     >
                       Sign In
                     </Link>
                     <Link
                       href="/signup"
                       onClick={() => setMobileMenuOpen(false)}
-                      className="block w-full py-3 text-center font-mono text-[13px] uppercase tracking-[-0.015rem] bg-safety-orange text-white rounded-md"
+                      className="block w-full py-3 text-center font-mono text-[13px] uppercase tracking-[-0.015rem] bg-[#ef6f2e] text-white rounded-sm"
                     >
                       Get Started
                     </Link>

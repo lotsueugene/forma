@@ -1,67 +1,99 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import Link from 'next/link';
 import {
   PencilSimple,
-  CreditCard,
-  ChartLineUp,
-  GlobeHemisphereWest,
+  Code,
   WebhooksLogo,
+  ChartLineUp,
+  ShieldCheck,
+  CreditCard,
+  Database,
+  Plugs,
+  Users,
+  GlobeHemisphereWest,
+  UploadSimple,
   Robot,
-  ArrowRight,
 } from '@phosphor-icons/react';
-import type { Icon } from '@phosphor-icons/react';
 
-interface FeatureCard {
-  number: string;
-  icon: Icon;
-  title: string;
-  description: string;
-}
-
-const features: FeatureCard[] = [
+const features = [
   {
-    number: '01',
     icon: PencilSimple,
     title: 'Drag & Drop Builder',
-    description: 'Visual editor with conditional logic, multi-step flows, and 17+ field types.',
+    description:
+      'Create forms visually with conditional logic, multi-step flows, branching, and 17+ field types.',
   },
   {
-    number: '02',
     icon: CreditCard,
     title: 'Payment Collection',
-    description: 'Accept payments via Stripe directly in your forms. Money goes straight to your account.',
+    description:
+      'Accept one-time payments via Stripe directly in your forms. Money goes straight to your bank account.',
   },
   {
-    number: '03',
     icon: ChartLineUp,
     title: 'Analytics Dashboard',
-    description: 'Track conversions, funnel drop-offs, geo data, and revenue per form in real time.',
+    description:
+      'Track conversion rates, funnel drop-offs, geo data, submission trends, and revenue per form.',
   },
   {
-    number: '04',
     icon: GlobeHemisphereWest,
     title: 'Custom Domains',
-    description: 'Serve forms on your own domain with automatic SSL and full white-label branding.',
+    description:
+      'Serve forms on your own domain with automatic SSL. Full white-label with branding removal.',
   },
   {
-    number: '05',
+    icon: UploadSimple,
+    title: 'File Uploads',
+    description:
+      'Collect files, documents, and images directly through your forms with secure cloud storage.',
+  },
+  {
     icon: WebhooksLogo,
     title: 'Webhooks & Events',
-    description: 'Real-time webhooks with retry logic, HMAC signatures, and delivery logs.',
+    description:
+      'Real-time webhooks with retry logic, HMAC signatures, and delivery to Slack, Notion, and more.',
   },
   {
-    number: '06',
+    icon: Code,
+    title: 'Developer API',
+    description:
+      'RESTful API with API keys, programmatic form creation, and submission management.',
+  },
+  {
+    icon: Plugs,
+    title: '10+ Integrations',
+    description:
+      'Connect to Slack, Notion, Airtable, HubSpot, Zapier, Make, and more out of the box.',
+  },
+  {
+    icon: Users,
+    title: 'Team Collaboration',
+    description:
+      'Role-based access with owner, admin, editor, and viewer roles. Invite up to 10 team members.',
+  },
+  {
+    icon: ShieldCheck,
+    title: 'Security & Spam Protection',
+    description:
+      'reCAPTCHA, honeypot fields, rate limiting, and data encryption. GDPR-friendly.',
+  },
+  {
+    icon: Database,
+    title: 'Unlimited Submissions',
+    description:
+      'No submission limits on any plan. Full-text search, filtering, CSV/JSON export.',
+  },
+  {
     icon: Robot,
-    title: 'AI-Powered Forms',
-    description: 'Generate entire forms from text descriptions. Smart field suggestions and spam detection.',
+    title: 'AI-Powered',
+    description:
+      'Auto-generate entire forms from a text description. Smart field suggestions and spam detection.',
   },
 ];
 
 export default function FeaturesSection() {
   return (
-    <section id="features" className="relative py-16 sm:py-24 lg:py-32">
+    <section id="features" className="relative py-16 sm:py-24 lg:py-32 bg-gray-50">
       <div className="mx-auto w-full max-w-[1400px] px-4 lg:px-9">
         {/* Section Header */}
         <motion.div
@@ -69,106 +101,67 @@ export default function FeaturesSection() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.5 }}
-          className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6 mb-12 sm:mb-16"
+          className="mb-12 sm:mb-16 lg:mb-20"
         >
-          <div>
-            {/* Eyebrow */}
-            <div className="inline-flex items-center gap-3 uppercase mb-6">
-              <div className="w-2.5 h-2.5 rounded-full bg-safety-orange shadow-[0_0_8px_rgba(239,111,46,0.6)]" />
-              <span className="font-mono text-[11px] sm:text-[13px] tracking-[-0.015rem] uppercase text-gray-500">
-                Features
-              </span>
-            </div>
-
-            <h2 className="font-normal text-[28px] sm:text-[36px] lg:text-[52px] leading-[1.1] tracking-[-0.03em] text-gray-900">
-              Everything you need
-              <br />
-              to capture data<span className="text-safety-orange">.</span>
-            </h2>
+          {/* Status Badge */}
+          <div className="text-pretty font-mono text-[15px] leading-[100%] tracking-[-0.0175rem] inline-flex items-center gap-3 uppercase mb-6 sm:mb-8">
+            <div className="size-2.5 transform-gpu rounded-full border bg-safety-orange border-transparent shadow-[0_0_8px_rgba(255,77,0,0.6)]" />
+            <p className="whitespace-nowrap text-gray-700 text-pretty font-mono text-[11px] sm:text-[13px] leading-[100%] tracking-[-0.015rem] uppercase">
+              Features
+            </p>
           </div>
 
-          <p className="font-mono text-[14px] sm:text-[15px] text-gray-500 max-w-md leading-relaxed lg:text-right">
-            From simple contact forms to complex multi-step workflows.
-            Build, deploy, and scale with confidence.
+          <h2
+            className="font-normal text-[26px] sm:text-[32px] leading-[110%] tracking-[-0.06rem] lg:text-[48px] lg:tracking-[-0.12rem] mb-4 sm:mb-6 text-gray-900"
+          >
+            Everything you need to
+            <br />
+            capture data<span className="text-safety-orange">.</span>
+          </h2>
+
+          <p className="font-mono text-[14px] sm:text-[16px] leading-[140%] tracking-[-0.02rem] lg:text-[18px] text-gray-700 max-w-2xl">
+            From simple contact forms to complex multi-step workflows. Build,
+            deploy, and scale with confidence.
           </p>
         </motion.div>
 
-        {/* Editorial Grid */}
-        <div
-          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-px bg-gray-200 border border-gray-200 rounded-2xl overflow-hidden"
-        >
-          {/* Feature cards - each spans 2 cols */}
+        {/* Features Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {features.map((feature, index) => (
             <motion.div
-              key={feature.number}
+              key={feature.title}
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: '-50px' }}
-              transition={{ delay: index * 0.06 }}
-              className={`group bg-white p-6 sm:p-8 col-span-1 sm:col-span-1 lg:col-span-2 transition-colors duration-300 hover:bg-gray-50 ${
-                index === 0 ? 'lg:col-span-2 lg:row-span-1' : ''
-              }`}
+              transition={{
+                type: 'spring',
+                stiffness: 100,
+                damping: 20,
+                delay: index * 0.05,
+              }}
+              className="group relative"
             >
-              <div className="flex items-start justify-between mb-6">
-                <span className="font-mono text-[11px] text-gray-300 uppercase">{feature.number}</span>
-                <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center group-hover:bg-safety-orange/10 transition-colors">
+              <div className="h-full border-gray-200 bg-white rounded-xl border p-6 transition-all duration-300 hover:border-gray-300 hover:shadow-lg">
+                {/* Icon */}
+                <div className="w-10 h-10 rounded-lg bg-safety-orange/10 flex items-center justify-center mb-4">
                   <feature.icon
                     size={22}
+                    className="text-safety-orange"
                     weight="duotone"
-                    className="text-gray-400 group-hover:text-safety-orange transition-colors"
                   />
                 </div>
+
+                {/* Content */}
+                <h3 className="text-lg font-medium text-gray-900 mb-2">
+                  {feature.title}
+                </h3>
+                <p className="text-sm text-gray-700 leading-relaxed font-mono">
+                  {feature.description}
+                </p>
+
               </div>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">{feature.title}</h3>
-              <p className="text-sm text-gray-500 leading-relaxed font-mono">{feature.description}</p>
             </motion.div>
           ))}
-
-          {/* Dark highlight card - $0 unlimited submissions */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.3 }}
-            className="bg-[#0a0a0a] p-6 sm:p-8 col-span-1 sm:col-span-2 lg:col-span-3 flex flex-col justify-between min-h-[200px]"
-          >
-            <div className="flex items-start justify-between mb-auto">
-              <span className="font-mono text-[11px] text-white/30 uppercase">07</span>
-              <span className="px-2 py-1 rounded bg-safety-orange/20 text-safety-orange font-mono text-[10px] uppercase">
-                Included free
-              </span>
-            </div>
-            <div className="mt-8">
-              <div className="text-5xl sm:text-6xl font-bold text-white tracking-tight mb-2">$0</div>
-              <div className="text-xl sm:text-2xl text-white/60 font-light">Unlimited submissions</div>
-              <p className="font-mono text-[13px] text-white/40 mt-3">
-                No per-submission fees. Ever.
-              </p>
-            </div>
-          </motion.div>
-
-          {/* Wide dark card - Ten more features */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.35 }}
-            className="bg-[#0a0a0a] p-6 sm:p-8 col-span-1 sm:col-span-2 lg:col-span-3 flex items-center justify-between group cursor-pointer"
-          >
-            <div>
-              <h3 className="text-lg sm:text-xl font-medium text-white mb-1">Ten more features</h3>
-              <p className="font-mono text-[13px] text-white/40">
-                File uploads, teams, SSO, HIPAA, and more.
-              </p>
-            </div>
-            <Link
-              href="#pricing"
-              className="flex items-center gap-2 text-safety-orange font-mono text-[13px] uppercase group-hover:gap-3 transition-all"
-            >
-              Explore
-              <ArrowRight size={16} weight="bold" />
-            </Link>
-          </motion.div>
         </div>
       </div>
     </section>

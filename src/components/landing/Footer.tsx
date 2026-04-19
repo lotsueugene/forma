@@ -2,6 +2,7 @@ import { Stack } from '@phosphor-icons/react/dist/ssr';
 import Link from 'next/link';
 import { prisma } from '@/lib/prisma';
 
+// Fallback links if database fetch fails
 const fallbackLinks = {
   product: [
     { label: 'Features', href: '#features', external: false },
@@ -40,6 +41,7 @@ async function getFooterLinks(): Promise<FooterLinks> {
       },
     });
 
+    // Group by section
     const grouped: FooterLinks = {};
     links.forEach((link) => {
       if (!grouped[link.section]) {
@@ -52,6 +54,7 @@ async function getFooterLinks(): Promise<FooterLinks> {
       });
     });
 
+    // Return fallback if no links in database
     if (Object.keys(grouped).length === 0) {
       return fallbackLinks;
     }
@@ -63,6 +66,7 @@ async function getFooterLinks(): Promise<FooterLinks> {
   }
 }
 
+// Section display order and titles
 const sectionConfig: Record<string, string> = {
   product: 'Product',
   developers: 'Developers',
@@ -73,79 +77,74 @@ const sectionConfig: Record<string, string> = {
 export default async function Footer() {
   const footerLinks = await getFooterLinks();
 
+  // Order sections as defined in sectionConfig
   const orderedSections = Object.keys(sectionConfig).filter(
     (section) => footerLinks[section] && footerLinks[section].length > 0
   );
 
   return (
-    <footer className="bg-[#0a0a0a] pt-16 sm:pt-24 pb-8 px-4 sm:px-6 relative z-10">
-      <div className="mx-auto max-w-[1400px]">
-        {/* Main grid */}
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-10 sm:gap-12 pb-16 sm:pb-20 border-b border-white/10">
-          {/* Brand + Status */}
-          <div className="md:col-span-4 flex flex-col gap-6">
-            <div className="flex items-center gap-2.5">
-              <Stack size={24} weight="fill" className="text-white" />
-              <span className="font-sans text-xl font-medium tracking-[-0.04em] text-white">
-                Forma
-              </span>
-            </div>
-
-            <p className="font-mono text-[13px] text-white/40 leading-relaxed max-w-xs">
-              The modern way to build and manage forms. Collect, automate,
-              and integrate with ease.
-            </p>
-
-            <div className="flex items-center gap-2.5">
-              <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse shadow-[0_0_6px_rgba(34,197,94,0.6)]" />
-              <span className="font-mono text-[11px] text-white/40 uppercase tracking-wider">
-                All systems operational
-              </span>
-            </div>
-          </div>
-
-          {/* Link columns */}
-          <div className="md:col-span-8 grid grid-cols-2 sm:grid-cols-4 gap-8">
-            {orderedSections.map((section) => (
-              <div key={section} className="flex flex-col gap-4">
-                <span className="font-mono text-[11px] text-white/30 uppercase tracking-wider font-medium">
-                  {sectionConfig[section]}
-                </span>
-                {footerLinks[section].map((link) => (
-                  <Link
-                    key={link.href}
-                    href={link.href}
-                    {...(link.external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
-                    className="font-mono text-[13px] text-white/50 hover:text-safety-orange transition-colors"
-                  >
-                    {link.label}
-                  </Link>
-                ))}
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Giant "Forma." text */}
-        <div className="py-12 sm:py-16 overflow-hidden">
-          <div
-            className="text-[80px] sm:text-[120px] lg:text-[180px] font-normal tracking-[-0.04em] leading-none text-white/[0.03] select-none"
-          >
-            Forma<span className="text-safety-orange/10">.</span>
-          </div>
-        </div>
-
-        {/* Bottom bar */}
-        <div className="pt-6 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="font-mono text-[11px] text-white/30 uppercase tracking-wider text-center sm:text-left">
-            {new Date().getFullYear()} Forma. All rights reserved.
-          </p>
-          <div className="flex items-center gap-2">
-            <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
-            <span className="font-mono text-[11px] text-white/30 uppercase tracking-wider">
-              Status
+    <footer className="bg-gray-50 py-16 sm:py-24 px-4 sm:px-6 relative z-10">
+      <div className="mx-auto max-w-[1400px] flex flex-col md:flex-row justify-between gap-10 sm:gap-16">
+        {/* Left: System Health */}
+        <div className="flex flex-col gap-6 sm:gap-8">
+          <div className="flex items-center gap-3">
+            <Stack size={28} weight="fill" className="text-gray-900 sm:w-8 sm:h-8" />
+            <span className="font-sans text-xl sm:text-2xl font-bold tracking-tighter text-gray-900">
+              Forma
             </span>
           </div>
+
+          <div className="flex flex-col gap-3 font-mono text-xs sm:text-sm tracking-widest text-gray-700 mt-2 sm:mt-4">
+            <div className="flex items-center gap-3">
+              <span className="h-2 w-2 rounded-full bg-safety-orange animate-pulse drop-shadow-[0_0_4px_rgba(255,77,0,0.8)]" />
+              <span>
+                API: <span className="text-green-600">OPTIMAL</span>
+              </span>
+            </div>
+            <div className="flex items-center gap-3">
+              <span className="h-2 w-2 rounded-full bg-safety-orange animate-pulse drop-shadow-[0_0_4px_rgba(255,77,0,0.8)]" />
+              <span>
+                FORMS: <span className="text-green-600">ONLINE</span>
+              </span>
+            </div>
+          </div>
+
+          <p className="font-mono text-[10px] sm:text-xs text-gray-600 uppercase tracking-wider max-w-xs mt-2 sm:mt-4">
+            The modern way to build and manage forms. Collect, automate, and integrate
+            with ease.
+          </p>
+        </div>
+
+        {/* Right: Sitemap */}
+        <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-8 sm:gap-16">
+          {orderedSections.map((section) => (
+            <div key={section} className="flex flex-col gap-5 font-mono text-xs uppercase tracking-widest">
+              <span className="text-gray-900 font-bold">{sectionConfig[section]}</span>
+              {footerLinks[section].map((link) => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  {...(link.external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+                  className="text-gray-600 hover:text-safety-orange transition-none"
+                >
+                  {link.label}
+                </Link>
+              ))}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Bottom Bar */}
+      <div className="mx-auto max-w-[1400px] mt-10 sm:mt-16 pt-6 sm:pt-8 border-t border-gray-200 flex flex-col md:flex-row items-center justify-between gap-4">
+        <p className="font-mono text-[10px] sm:text-xs text-gray-600 uppercase tracking-widest text-center md:text-left">
+          {new Date().getFullYear()} Forma. All rights reserved.
+        </p>
+        <div className="flex items-center gap-2">
+          <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse drop-shadow-[0_0_4px_rgba(39,201,63,0.8)]" />
+          <span className="font-mono text-[10px] sm:text-xs text-gray-600 uppercase tracking-widest">
+            All systems operational
+          </span>
         </div>
       </div>
     </footer>
