@@ -1,167 +1,169 @@
 'use client';
 
-import { motion } from 'framer-motion';
-import {
-  PencilSimple,
-  Code,
-  WebhooksLogo,
-  ChartLineUp,
-  ShieldCheck,
-  CreditCard,
-  Database,
-  Plugs,
-  Users,
-  GlobeHemisphereWest,
-  UploadSimple,
-  Robot,
-} from '@phosphor-icons/react';
-
-const features = [
-  {
-    icon: PencilSimple,
-    title: 'Drag & Drop Builder',
-    description:
-      'Create forms visually with conditional logic, multi-step flows, branching, and 17+ field types.',
-  },
-  {
-    icon: CreditCard,
-    title: 'Payment Collection',
-    description:
-      'Accept one-time payments via Stripe directly in your forms. Money goes straight to your bank account.',
-  },
-  {
-    icon: ChartLineUp,
-    title: 'Analytics Dashboard',
-    description:
-      'Track conversion rates, funnel drop-offs, geo data, submission trends, and revenue per form.',
-  },
-  {
-    icon: GlobeHemisphereWest,
-    title: 'Custom Domains',
-    description:
-      'Serve forms on your own domain with automatic SSL. Full white-label with branding removal.',
-  },
-  {
-    icon: UploadSimple,
-    title: 'File Uploads',
-    description:
-      'Collect files, documents, and images directly through your forms with secure cloud storage.',
-  },
-  {
-    icon: WebhooksLogo,
-    title: 'Webhooks & Events',
-    description:
-      'Real-time webhooks with retry logic, HMAC signatures, and delivery to Slack, Notion, and more.',
-  },
-  {
-    icon: Code,
-    title: 'Developer API',
-    description:
-      'RESTful API with API keys, programmatic form creation, and submission management.',
-  },
-  {
-    icon: Plugs,
-    title: '10+ Integrations',
-    description:
-      'Connect to Slack, Notion, Airtable, HubSpot, Zapier, Make, and more out of the box.',
-  },
-  {
-    icon: Users,
-    title: 'Team Collaboration',
-    description:
-      'Role-based access with owner, admin, editor, and viewer roles. Invite up to 10 team members.',
-  },
-  {
-    icon: ShieldCheck,
-    title: 'Security & Spam Protection',
-    description:
-      'reCAPTCHA, honeypot fields, rate limiting, and data encryption. GDPR-friendly.',
-  },
-  {
-    icon: Database,
-    title: 'Unlimited Submissions',
-    description:
-      'No submission limits on any plan. Full-text search, filtering, CSV/JSON export.',
-  },
-  {
-    icon: Robot,
-    title: 'AI-Powered',
-    description:
-      'Auto-generate entire forms from a text description. Smart field suggestions and spam detection.',
-  },
-];
+import { useEffect, useRef } from 'react';
+import Link from 'next/link';
 
 export default function FeaturesSection() {
+  const sectionRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('in');
+          }
+        });
+      },
+      { threshold: 0.15 }
+    );
+
+    const reveals = sectionRef.current?.querySelectorAll('.reveal');
+    reveals?.forEach((el) => observer.observe(el));
+
+    return () => observer.disconnect();
+  }, []);
+
   return (
-    <section id="features" className="relative py-16 sm:py-24 lg:py-32 bg-gray-50">
-      <div className="mx-auto w-full max-w-[1400px] px-4 lg:px-9">
-        {/* Section Header */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.5 }}
-          className="mb-12 sm:mb-16 lg:mb-20"
-        >
-          {/* Status Badge */}
-          <div className="text-pretty font-mono text-[15px] leading-[100%] tracking-[-0.0175rem] inline-flex items-center gap-3 uppercase mb-6 sm:mb-8">
-            <div className="size-2.5 transform-gpu rounded-full border bg-safety-orange border-transparent shadow-[0_0_8px_rgba(255,77,0,0.6)]" />
-            <p className="whitespace-nowrap text-gray-700 text-pretty font-mono text-[11px] sm:text-[13px] leading-[100%] tracking-[-0.015rem] uppercase">
-              Features
-            </p>
+    <section className="features-section" id="features" ref={sectionRef}>
+      <div style={{ maxWidth: 1280, margin: '0 auto', width: '100%' }}>
+        <div className="section-head">
+          <div className="section-head-left">
+            <div className="eyebrow"><span className="dot-pulse" />Features</div>
+            <h2>Everything you<br/>need to capture<br/>data<span className="orange-dot">.</span></h2>
+          </div>
+          <p className="section-head-meta">
+            From simple contact forms to complex multi-step workflows. Build, deploy,
+            and scale with confidence.
+          </p>
+        </div>
+
+        <div className="features-grid">
+          {/* 01 — Highlight tall */}
+          <div className="feature-card feature-highlight feature-tall">
+            <div>
+              <div className="fe-num">01</div>
+              <div className="spark-big">$0</div>
+              <h3>Unlimited submissions,<br/>every plan.</h3>
+              <p>No per-submission pricing. No surprises. Scale from 100 to 100,000 responses without changing your bill.</p>
+            </div>
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+              <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
+            </svg>
           </div>
 
-          <h2
-            className="font-normal text-[26px] sm:text-[32px] leading-[110%] tracking-[-0.06rem] lg:text-[48px] lg:tracking-[-0.12rem] mb-4 sm:mb-6 text-gray-900"
-          >
-            Everything you need to
-            <br />
-            capture data<span className="text-safety-orange">.</span>
-          </h2>
-
-          <p className="font-mono text-[14px] sm:text-[16px] leading-[140%] tracking-[-0.02rem] lg:text-[18px] text-gray-700 max-w-2xl">
-            From simple contact forms to complex multi-step workflows. Build,
-            deploy, and scale with confidence.
-          </p>
-        </motion.div>
-
-        {/* Features Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {features.map((feature, index) => (
-            <motion.div
-              key={feature.title}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: '-50px' }}
-              transition={{
-                type: 'spring',
-                stiffness: 100,
-                damping: 20,
-                delay: index * 0.05,
-              }}
-              className="group relative"
-            >
-              <div className="h-full border-gray-200 bg-white rounded-xl border p-6 transition-all duration-300 hover:border-gray-300 hover:shadow-lg">
-                {/* Icon */}
-                <div className="w-10 h-10 rounded-lg bg-safety-orange/10 flex items-center justify-center mb-4">
-                  <feature.icon
-                    size={22}
-                    className="text-safety-orange"
-                    weight="duotone"
-                  />
-                </div>
-
-                {/* Content */}
-                <h3 className="text-lg font-medium text-gray-900 mb-2">
-                  {feature.title}
-                </h3>
-                <p className="text-sm text-gray-700 leading-relaxed font-mono">
-                  {feature.description}
-                </p>
-
+          {/* 02 */}
+          <div className="feature-card">
+            <div>
+              <div className="fe-num">02</div>
+              <div className="fe-icon">
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M3 3h18v18H3z"/><path d="M3 9h18M9 21V9"/></svg>
               </div>
-            </motion.div>
-          ))}
+              <h3>Drag &amp; drop builder</h3>
+              <p>17+ field types, conditional logic, multi-step flows, branching.</p>
+            </div>
+          </div>
+
+          {/* 03 */}
+          <div className="feature-card">
+            <div>
+              <div className="fe-num">03</div>
+              <div className="fe-icon">
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>
+              </div>
+              <h3>Take payments</h3>
+              <p>Stripe Connect. Money lands in your bank, not ours.</p>
+            </div>
+          </div>
+
+          {/* 04 — Wide */}
+          <div className="feature-card feature-wide">
+            <div>
+              <div className="fe-num">04</div>
+              <div className="fe-icon">
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M3 3v18h18"/><path d="M7 14l4-4 4 4 5-5"/></svg>
+              </div>
+              <h3>Analytics that answer questions</h3>
+              <p>Conversion rates, funnel drop-offs, peak hours, geo. Revenue per form. All out of the box.</p>
+            </div>
+          </div>
+
+          {/* 05 */}
+          <div className="feature-card">
+            <div>
+              <div className="fe-num">05</div>
+              <div className="fe-icon">
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+              </div>
+              <h3>Realtime webhooks</h3>
+              <p>Retry logic, HMAC signatures. Slack, Notion, anywhere.</p>
+            </div>
+          </div>
+
+          {/* 06 */}
+          <div className="feature-card">
+            <div>
+              <div className="fe-num">06</div>
+              <div className="fe-icon">
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+              </div>
+              <h3>Custom domains</h3>
+              <p>Serve forms on your domain. SSL handled. White-label included.</p>
+            </div>
+          </div>
+
+          {/* 07 */}
+          <div className="feature-card">
+            <div>
+              <div className="fe-num">07</div>
+              <div className="fe-icon">
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+              </div>
+              <h3>Security, handled</h3>
+              <p>reCAPTCHA, honeypot, rate limits, encryption. GDPR-ready.</p>
+            </div>
+          </div>
+
+          {/* 08 */}
+          <div className="feature-card">
+            <div>
+              <div className="fe-num">08</div>
+              <div className="fe-icon">
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="4" y="4" width="16" height="16" rx="2"/><circle cx="9" cy="10" r="1.2" fill="currentColor"/><circle cx="15" cy="10" r="1.2" fill="currentColor"/><path d="M9 15h6"/></svg>
+              </div>
+              <h3>AI-generated forms</h3>
+              <p>Describe it in a sentence. Get a working form. Powered by Claude.</p>
+            </div>
+          </div>
+
+          {/* 09 — Wide highlight */}
+          <div className="feature-card feature-wide feature-highlight" style={{ minHeight: 'auto' }}>
+            <div>
+              <div className="fe-num">09</div>
+              <h3 style={{ fontSize: 40, lineHeight: 1.05, letterSpacing: '-0.03em', marginBottom: 0 }}>
+                Ten more features where those came from<span style={{ color: 'var(--orange)' }}>.</span>
+              </h3>
+            </div>
+            <a
+              href="/features"
+              style={{
+                fontFamily: 'var(--font-mono, "Geist Mono", ui-monospace, monospace)',
+                fontSize: 12,
+                textTransform: 'uppercase',
+                letterSpacing: '0.04em',
+                color: 'var(--orange)',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 8,
+                position: 'relative',
+                zIndex: 2,
+                cursor: 'pointer',
+              }}
+            >
+              See the full list
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="m9 18 6-6-6-6"/></svg>
+            </a>
+          </div>
         </div>
       </div>
     </section>

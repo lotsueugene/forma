@@ -1,11 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import { Check, X, Lightning, Crown, Buildings, ArrowRight, Star, Spinner } from '@phosphor-icons/react';
-import Magnetic from '@/components/animations/Magnetic';
-import { cn } from '@/lib/utils';
-import type { Icon } from '@phosphor-icons/react';
+import { useState, useEffect, useRef } from 'react';
 
 interface Feature {
   text: string;
@@ -28,27 +23,25 @@ interface PricingPlan {
   active: boolean;
 }
 
-// Default plans as fallback (should match database seed)
 const defaultPlans: PricingPlan[] = [
   {
     id: 'starter',
     name: 'Starter',
     slug: 'starter',
-    description: 'Perfect for side projects and personal use',
+    description: 'For side projects, personal use, and kicking the tires.',
     monthlyPrice: 0,
     yearlyPrice: 0,
     icon: 'Lightning',
     features: [
       { text: '3 forms', included: true },
-      { text: '100 submissions/month', included: true },
+      { text: '100 submissions / mo', included: true },
       { text: 'Basic analytics', included: true },
       { text: 'Email notifications', included: true },
-      { text: 'Community support', included: true },
       { text: 'Webhooks', included: false },
       { text: 'Custom branding', included: false },
       { text: 'Team members', included: false },
     ],
-    ctaText: 'Start Free',
+    ctaText: 'Start free',
     ctaLink: null,
     popular: false,
     sortOrder: 0,
@@ -58,21 +51,20 @@ const defaultPlans: PricingPlan[] = [
     id: 'pro',
     name: 'Pro',
     slug: 'pro',
-    description: 'For growing teams and businesses',
+    description: 'For growing teams who need everything. Most popular plan.',
     monthlyPrice: 15,
     yearlyPrice: 12.50,
     icon: 'Crown',
     features: [
       { text: 'Unlimited forms', included: true },
-      { text: '10,000 submissions/month', included: true },
+      { text: '10,000 submissions / mo', included: true },
       { text: 'Advanced analytics', included: true },
       { text: 'Webhooks & integrations', included: true },
       { text: 'Custom branding', included: true },
       { text: '5 team members', included: true },
-      { text: 'Priority support', included: true },
       { text: 'API access', included: true },
     ],
-    ctaText: 'Start Trial',
+    ctaText: 'Start 14-day trial',
     ctaLink: null,
     popular: true,
     sortOrder: 1,
@@ -82,7 +74,7 @@ const defaultPlans: PricingPlan[] = [
     id: 'enterprise',
     name: 'Enterprise',
     slug: 'enterprise',
-    description: 'For large organizations with custom needs',
+    description: 'For organizations with SSO, compliance, and dedicated-support needs.',
     monthlyPrice: null,
     yearlyPrice: null,
     icon: 'Buildings',
@@ -94,9 +86,8 @@ const defaultPlans: PricingPlan[] = [
       { text: 'HIPAA compliance', included: true },
       { text: 'Dedicated support', included: true },
       { text: 'SLA guarantee', included: true },
-      { text: 'Custom integrations', included: true },
     ],
-    ctaText: 'Contact Sales',
+    ctaText: 'Contact sales',
     ctaLink: '/contact',
     popular: false,
     sortOrder: 2,
@@ -104,22 +95,25 @@ const defaultPlans: PricingPlan[] = [
   },
 ];
 
-const iconMap: Record<string, Icon> = {
-  Lightning,
-  Crown,
-  Buildings,
-  Star,
-};
+const CheckIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="m5 12 5 5L20 7"/></svg>
+);
 
-const getIcon = (iconName: string): Icon => {
-  return iconMap[iconName] || Lightning;
-};
+const XIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M6 6l12 12M18 6l-12 12"/></svg>
+);
+
+const ChevronIcon = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+);
 
 export default function PricingSection() {
   const [isYearly, setIsYearly] = useState(true);
   const [plans, setPlans] = useState<PricingPlan[]>(defaultPlans);
   const [loading, setLoading] = useState(true);
+  const sectionRef = useRef<HTMLElement>(null);
 
+  // Fetch plans from API — preserving existing DB logic
   useEffect(() => {
     fetch('/api/pricing')
       .then(res => res.json())
@@ -132,7 +126,26 @@ export default function PricingSection() {
       .finally(() => setLoading(false));
   }, []);
 
-  // Calculate discount percentage from plans that have both monthly and yearly prices
+  // Scroll reveal
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('in');
+          }
+        });
+      },
+      { threshold: 0.15 }
+    );
+
+    const reveals = sectionRef.current?.querySelectorAll('.reveal');
+    reveals?.forEach((el) => observer.observe(el));
+
+    return () => observer.disconnect();
+  }, [loading]);
+
+  // Calculate discount percentage from plans
   const discountPercent = (() => {
     const planWithPrices = plans.find(
       p => p.monthlyPrice && p.yearlyPrice && p.monthlyPrice > 0 && p.yearlyPrice > 0
@@ -140,204 +153,83 @@ export default function PricingSection() {
     if (planWithPrices && planWithPrices.monthlyPrice && planWithPrices.yearlyPrice) {
       return Math.round((1 - planWithPrices.yearlyPrice / planWithPrices.monthlyPrice) * 100);
     }
-    return 0;
+    return 17;
   })();
 
+  const formatPrice = (plan: PricingPlan) => {
+    if (plan.monthlyPrice === null) return null;
+    const price = isYearly ? (plan.yearlyPrice ?? plan.monthlyPrice) : plan.monthlyPrice;
+    return price === 0 ? '0' : price.toFixed(2).replace(/\.00$/, '');
+  };
+
+  const getPriceLabel = (plan: PricingPlan) => {
+    if (plan.monthlyPrice === null) return null;
+    if (plan.monthlyPrice === 0) return 'forever';
+    return '/mo';
+  };
+
   return (
-    <section id="pricing" className="relative py-16 sm:py-24 lg:py-32 bg-white">
-      <div className="relative mx-auto w-full max-w-[1400px] px-4 lg:px-9">
-        {/* Section Header */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.5 }}
-          className="text-center mb-10 sm:mb-12 lg:mb-16"
-        >
-          {/* Status Badge */}
-          <div className="text-pretty font-mono text-[15px] leading-[100%] tracking-[-0.0175rem] inline-flex items-center gap-3 uppercase mb-6 sm:mb-8 justify-center">
-            <div className="size-2.5 transform-gpu rounded-full border bg-safety-orange border-transparent shadow-[0_0_8px_rgba(255,77,0,0.6)]" />
-            <p className="whitespace-nowrap text-gray-700 text-pretty font-mono text-[11px] sm:text-[13px] leading-[100%] tracking-[-0.015rem] uppercase">
-              Pricing
+    <section className="pricing-section" id="pricing" ref={sectionRef}>
+      <div style={{ maxWidth: 1280, margin: '0 auto', width: '100%' }}>
+        <div className="section-head reveal">
+          <div className="section-head-left">
+            <div className="eyebrow"><span className="dot-pulse" />Pricing</div>
+            <h2>Simple,<br/>transparent<br/>pricing<span className="orange-dot">.</span></h2>
+          </div>
+          <div>
+            <p className="section-head-meta" style={{ marginBottom: 12 }}>
+              Start free, scale as you grow. No hidden fees, no surprises.
             </p>
+            <div className="billing-toggle" role="tablist">
+              <button
+                className={!isYearly ? 'active' : ''}
+                onClick={() => setIsYearly(false)}
+              >
+                Monthly
+              </button>
+              <button
+                className={isYearly ? 'active' : ''}
+                onClick={() => setIsYearly(true)}
+              >
+                Yearly<span className="save">&minus;{discountPercent}%</span>
+              </button>
+            </div>
           </div>
+        </div>
 
-          <h2
-            className="font-normal text-[26px] sm:text-[32px] leading-[110%] tracking-[-0.06rem] lg:text-[48px] lg:tracking-[-0.12rem] mb-4 sm:mb-6 text-gray-900"
-          >
-            Simple, transparent pricing<span className="text-safety-orange">.</span>
-          </h2>
+        <div className="pricing-grid reveal">
+          {plans.map((plan) => {
+            const price = formatPrice(plan);
+            const priceLabel = getPriceLabel(plan);
 
-          <p className="font-mono text-[14px] sm:text-[16px] leading-[140%] tracking-[-0.02rem] lg:text-[18px] text-gray-700 max-w-2xl mx-auto mb-6 sm:mb-8">
-            Start free, scale as you grow. No hidden fees, no surprises.
-          </p>
-
-          {/* Billing Toggle */}
-          <div className="inline-flex items-center gap-1 p-1 rounded-lg bg-gray-100 border border-gray-200 flex-nowrap">
-            <button
-              onClick={() => setIsYearly(false)}
-              className={cn(
-                'px-4 py-2 font-mono text-[13px] uppercase tracking-[-0.015rem] rounded-md transition-all duration-150 whitespace-nowrap',
-                !isYearly
-                  ? 'bg-white text-gray-900 shadow-sm'
-                  : 'text-gray-700 hover:text-gray-900'
-              )}
-            >
-              Monthly
-            </button>
-            <button
-              onClick={() => setIsYearly(true)}
-              className={cn(
-                'px-4 py-2 font-mono text-[13px] uppercase tracking-[-0.015rem] rounded-md transition-all duration-150 inline-flex items-center gap-2 whitespace-nowrap',
-                isYearly
-                  ? 'bg-white text-gray-900 shadow-sm'
-                  : 'text-gray-700 hover:text-gray-900'
-              )}
-            >
-              Yearly
-              {discountPercent > 0 && (
-                <span
-                  className={cn(
-                    'text-[11px] px-2 py-0.5 rounded-sm whitespace-nowrap',
-                    isYearly
-                      ? 'bg-safety-orange text-white'
-                      : 'bg-safety-orange/20 text-safety-orange'
-                  )}
-                >
-                  -{discountPercent}%
-                </span>
-              )}
-            </button>
-          </div>
-        </motion.div>
-
-        {/* Pricing Cards */}
-        {loading ? (
-          <div className="flex items-center justify-center py-12">
-            <Spinner size={32} className="animate-spin text-gray-500" />
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-6">
-            {plans.map((plan, index) => {
-              const IconComponent = getIcon(plan.icon);
-
-              return (
-                <motion.div
-                  key={plan.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true, margin: '-50px' }}
-                  transition={{
-                    type: 'spring',
-                    stiffness: 100,
-                    damping: 20,
-                    delay: index * 0.1,
-                  }}
-                  className={cn('relative', plan.popular && 'lg:-mt-4 lg:mb-4')}
-                >
-                  {/* Popular badge */}
-                  {plan.popular && (
-                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-10">
-                      <div className="px-3 py-1 rounded-sm bg-safety-orange text-white font-mono text-[11px] uppercase tracking-wider shadow-[0_0_8px_rgba(255,77,0,0.5)]">
-                        Most Popular
-                      </div>
-                    </div>
-                  )}
-
-                  <div
-                    className={cn(
-                      'h-full flex flex-col p-6 lg:p-8 rounded-xl border transition-all duration-300',
-                      plan.popular
-                        ? 'bg-white border-safety-orange/30 shadow-[0_0_40px_rgba(239,111,46,0.1)]'
-                        : 'bg-white border-gray-200 hover:border-gray-300 hover:shadow-lg'
-                    )}
-                  >
-                    {/* Header */}
-                    <div className="mb-6">
-                      <div
-                        className={cn(
-                          'w-10 h-10 rounded-lg flex items-center justify-center mb-4',
-                          plan.popular ? 'bg-safety-orange/20' : 'bg-gray-100'
-                        )}
-                      >
-                        <IconComponent
-                          size={22}
-                          weight="duotone"
-                          className={plan.popular ? 'text-safety-orange' : 'text-gray-700'}
-                        />
-                      </div>
-                      <h3 className="text-xl font-semibold text-gray-900 mb-1">
-                        {plan.name}
-                      </h3>
-                      <p className="text-sm text-gray-700 font-mono">{plan.description}</p>
-                    </div>
-
-                    {/* Price */}
-                    <div className="mb-6">
-                      {plan.monthlyPrice !== null ? (
-                        <div className="flex items-baseline gap-1">
-                          <span className="text-4xl font-bold text-gray-900">
-                            ${isYearly ? plan.yearlyPrice : plan.monthlyPrice}
-                          </span>
-                          <span className="text-gray-500 font-mono text-sm">/month</span>
-                        </div>
-                      ) : (
-                        <div className="text-3xl font-bold text-gray-900">Custom</div>
-                      )}
-                      {plan.yearlyPrice !== null && plan.yearlyPrice > 0 && isYearly && (
-                        <p className="text-sm text-gray-500 font-mono mt-1">
-                          Billed annually (${plan.yearlyPrice * 12}/year)
-                        </p>
-                      )}
-                    </div>
-
-                    {/* Features */}
-                    <ul className="space-y-3 mb-8 flex-1">
-                      {plan.features.map((feature, i) => (
-                        <li key={i} className="flex items-start gap-3">
-                          {feature.included ? (
-                            <Check
-                              size={18}
-                              weight="bold"
-                              className="text-safety-orange mt-0.5 flex-shrink-0"
-                            />
-                          ) : (
-                            <X
-                              size={18}
-                              weight="bold"
-                              className="text-gray-300 mt-0.5 flex-shrink-0"
-                            />
-                          )}
-                          <span
-                            className={cn(
-                              'text-sm font-mono',
-                              feature.included ? 'text-gray-700' : 'text-gray-500'
-                            )}
-                          >
-                            {feature.text}
-                          </span>
-                        </li>
-                      ))}
-                    </ul>
-
-                    {/* CTA */}
-                    <Magnetic pull={0.1}>
-                      <a
-                        href={plan.ctaLink || '/signup'}
-                        className="w-full py-3 px-4 rounded-sm font-mono text-[13px] uppercase tracking-[-0.015rem] transition-all duration-150 flex items-center justify-center gap-2 bg-safety-orange text-white hover:bg-accent-200 border border-transparent"
-                      >
-                        {plan.ctaText}
-                        <ArrowRight size={16} weight="bold" />
-                      </a>
-                    </Magnetic>
+            return (
+              <div key={plan.id} className={`plan-card ${plan.popular ? 'plan-popular' : ''}`}>
+                <div className="plan-name">{plan.name}</div>
+                {price !== null ? (
+                  <div className="plan-price">
+                    ${price} <span className="per">{priceLabel}</span>
+                    {plan.monthlyPrice !== 0 && <span className="dot-end">.</span>}
                   </div>
-                </motion.div>
-              );
-            })}
-          </div>
-        )}
-
-        {/* Enterprise callout */}
+                ) : (
+                  <div className="plan-price" style={{ fontSize: 56 }}>
+                    Custom<span className="dot-end">.</span>
+                  </div>
+                )}
+                <p className="plan-desc">{plan.description}</p>
+                <a href={plan.ctaLink || '/signup'} className="plan-cta">
+                  {plan.ctaText}
+                  <ChevronIcon />
+                </a>
+                {plan.features.map((feat, i) => (
+                  <div key={i} className={`plan-feat ${!feat.included ? 'off' : ''}`}>
+                    {feat.included ? <CheckIcon /> : <XIcon />}
+                    {feat.text}
+                  </div>
+                ))}
+              </div>
+            );
+          })}
+        </div>
       </div>
     </section>
   );

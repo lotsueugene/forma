@@ -1,11 +1,10 @@
 'use client';
 
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Stack, X } from '@phosphor-icons/react';
-import Magnetic from '@/components/animations/Magnetic';
+import { Stack, List, X } from '@phosphor-icons/react';
+import { AnimatePresence, motion } from 'framer-motion';
 
 const navLinks = [
   { href: '#features', label: 'Features' },
@@ -16,109 +15,71 @@ const navLinks = [
 
 export default function Navigation() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isDark, setIsDark] = useState(false);
   const { data: session, status } = useSession();
   const isAuthenticated = status === 'authenticated' && session?.user;
 
+  const handleScroll = useCallback(() => {
+    const navBottom = 80;
+    const darkSections = document.querySelectorAll('#pricing, #final-cta');
+    let inDark = false;
+    darkSections.forEach((el) => {
+      const r = el.getBoundingClientRect();
+      if (r.top <= navBottom && r.bottom >= navBottom) {
+        inDark = true;
+      }
+    });
+    setIsDark(inDark);
+  }, []);
+
+  useEffect(() => {
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    handleScroll();
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [handleScroll]);
+
   return (
-    <header className="fixed inset-x-0 top-0 z-50 px-4 lg:px-9 bg-white/80 backdrop-blur-md border-b border-gray-200/60">
-      <div className="mx-auto flex items-center justify-between py-5 max-w-[1400px] relative">
-        {/* Logo - Left */}
-        <a href="/" className="z-50 flex items-center gap-2">
-          <Stack size={24} weight="fill" className="text-gray-900" />
-          <span className="font-sans text-xl font-medium tracking-[-0.04em] text-gray-900">
-            Forma
-          </span>
-        </a>
+    <>
+      <nav className={`landing-nav ${isDark ? 'nav-dark' : ''}`}>
+        <Link href="/" className="nav-logo">
+          <Stack size={22} weight="fill" color="#ef6f2e" />
+          Forma
+        </Link>
 
-        {/* Center Navigation - Features, Pricing, Docs, Blog */}
-        <nav className="hidden lg:flex items-center justify-center absolute left-1/2 -translate-x-1/2">
-          <ul className="group/menu flex items-center space-x-8">
-            {navLinks.map((link) => (
-              <li
-                key={link.href}
-                className="relative opacity-100 transition-opacity duration-250 group-hover/menu:opacity-60 hover:!opacity-100"
-              >
-                <Magnetic pull={0.1}>
-                  <Link
-                    href={link.href}
-                    className="text-pretty font-mono text-[12px] leading-[100%] tracking-[-0.015rem] uppercase relative flex w-fit items-center transition-colors duration-200 hover:text-safety-orange group after:absolute after:-bottom-px after:left-0 after:h-px after:w-0 after:bg-current after:transition-all after:duration-300 after:ease-in-out hover:after:w-full text-gray-700"
-                  >
-                    {link.label}
-                  </Link>
-                </Magnetic>
-              </li>
-            ))}
-          </ul>
-        </nav>
-
-        {/* Right - Auth Buttons */}
-        <div className="hidden lg:flex items-center gap-3">
-          {isAuthenticated ? (
-            <Magnetic pull={0.1}>
-              <Link
-                href="/dashboard"
-                className="group relative w-max cursor-pointer items-center justify-center border transition-colors duration-150 will-change-transform bg-[#ef6f2e] hover:bg-[#ee6018] text-white overflow-clip rounded-sm border-transparent h-[32px] px-4 flex"
-              >
-                <span className="relative z-10 flex items-center uppercase">
-                  <p className="text-pretty font-mono text-[12px] leading-[100%] tracking-[-0.015rem] uppercase">
-                    Dashboard
-                  </p>
-                </span>
-              </Link>
-            </Magnetic>
-          ) : (
-            <>
-              <Magnetic pull={0.1}>
-                <Link
-                  href="/login"
-                  className="group relative w-max cursor-pointer items-center justify-center border transition-colors duration-150 will-change-transform bg-transparent hover:bg-gray-100 text-gray-700 overflow-clip rounded-sm border-gray-300 h-[32px] px-4 flex"
-                >
-                  <span className="relative z-10 flex items-center uppercase">
-                    <p className="text-pretty font-mono text-[12px] leading-[100%] tracking-[-0.015rem] uppercase">
-                      Sign In
-                    </p>
-                  </span>
-                </Link>
-              </Magnetic>
-              <Magnetic pull={0.1}>
-                <Link
-                  href="/signup"
-                  className="group relative w-max cursor-pointer items-center justify-center border transition-colors duration-150 will-change-transform bg-[#ef6f2e] hover:bg-[#ee6018] text-white overflow-clip rounded-sm border-transparent h-[32px] px-4 flex"
-                >
-                  <span className="relative z-10 flex items-center uppercase">
-                    <p className="text-pretty font-mono text-[12px] leading-[100%] tracking-[-0.015rem] uppercase">
-                      Get Started
-                    </p>
-                  </span>
-                </Link>
-              </Magnetic>
-            </>
-          )}
+        <div className="nav-center">
+          {navLinks.map((link) => (
+            <Link key={link.href} href={link.href} className="nav-link">
+              {link.label}
+            </Link>
+          ))}
         </div>
 
-        {/* Mobile Menu Button */}
-        <button
-          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          className="relative -m-1 flex cursor-pointer items-center justify-center p-1 text-gray-700 hover:text-gray-900 lg:hidden"
-          aria-label="Toggle menu"
-        >
-          {mobileMenuOpen ? (
-            <X size={24} weight="bold" />
+        <div className="nav-cta">
+          {isAuthenticated ? (
+            <Link href="/dashboard" className="btn-landing btn-primary-landing">
+              Dashboard
+            </Link>
           ) : (
-            <svg
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path d="M3 6H21V8H3V6Z" fill="currentColor" />
-              <path d="M3 11H21V13H3V11Z" fill="currentColor" />
-              <path d="M3 16H21V18H3V16Z" fill="currentColor" />
-            </svg>
+            <>
+              <Link href="/login" className="btn-landing btn-ghost-landing">
+                Sign in
+              </Link>
+              <Link href="/signup" className="btn-landing btn-primary-landing">
+                Get started
+              </Link>
+            </>
           )}
-        </button>
-      </div>
+          {/* Mobile toggle */}
+          <button
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="hidden-desktop"
+            aria-label="Toggle menu"
+            style={{ display: 'none' }}
+          >
+            {mobileMenuOpen ? <X size={24} weight="bold" /> : <List size={24} weight="bold" />}
+          </button>
+        </div>
+      </nav>
 
       {/* Mobile Menu */}
       <AnimatePresence>
@@ -128,36 +89,26 @@ export default function Navigation() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
             transition={{ duration: 0.2 }}
-            className="fixed inset-x-0 top-[65px] z-40 bg-white border-b border-gray-200 lg:hidden"
+            className="fixed inset-x-0 top-[64px] z-40 bg-white border-b border-gray-200 lg:hidden"
           >
             <nav className="flex flex-col p-6">
-              {navLinks.map((link, index) => (
-                <motion.div
+              {navLinks.map((link) => (
+                <Link
                   key={link.href}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: index * 0.05 }}
+                  href={link.href}
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="block py-3 font-mono text-[13px] uppercase tracking-[-0.015rem] text-gray-700 border-b border-gray-200 transition-colors hover:text-safety-orange"
                 >
-                  <Link
-                    href={link.href}
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="block py-3 font-mono text-[13px] uppercase tracking-[-0.015rem] text-gray-700 border-b border-gray-200 transition-colors hover:text-safety-orange"
-                  >
-                    {link.label}
-                  </Link>
-                </motion.div>
+                  {link.label}
+                </Link>
               ))}
-              <motion.div
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: navLinks.length * 0.05 }}
-                className="mt-6 flex flex-col gap-3"
-              >
+              <div className="mt-6 flex flex-col gap-3">
                 {isAuthenticated ? (
                   <Link
                     href="/dashboard"
                     onClick={() => setMobileMenuOpen(false)}
-                    className="block w-full py-3 text-center font-mono text-[13px] uppercase tracking-[-0.015rem] bg-[#ef6f2e] text-white rounded-sm"
+                    className="btn-landing btn-primary-landing"
+                    style={{ width: '100%', justifyContent: 'center' }}
                   >
                     Dashboard
                   </Link>
@@ -166,24 +117,26 @@ export default function Navigation() {
                     <Link
                       href="/login"
                       onClick={() => setMobileMenuOpen(false)}
-                      className="block w-full py-3 text-center font-mono text-[13px] uppercase tracking-[-0.015rem] text-gray-700 hover:text-gray-900"
+                      className="btn-landing btn-ghost-landing"
+                      style={{ width: '100%', justifyContent: 'center' }}
                     >
                       Sign In
                     </Link>
                     <Link
                       href="/signup"
                       onClick={() => setMobileMenuOpen(false)}
-                      className="block w-full py-3 text-center font-mono text-[13px] uppercase tracking-[-0.015rem] bg-[#ef6f2e] text-white rounded-sm"
+                      className="btn-landing btn-primary-landing"
+                      style={{ width: '100%', justifyContent: 'center' }}
                     >
                       Get Started
                     </Link>
                   </>
                 )}
-              </motion.div>
+              </div>
             </nav>
           </motion.div>
         )}
       </AnimatePresence>
-    </header>
+    </>
   );
 }
