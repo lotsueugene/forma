@@ -2,9 +2,8 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { motion } from 'framer-motion';
-import { Stack } from '@phosphor-icons/react';
+import { Stack, ArrowRight } from '@phosphor-icons/react';
 
 const SUBMISSION_LEVELS = [100, 500, 1000, 5000, 10000, 25000, 50000, 100000];
 
@@ -12,9 +11,6 @@ const COMPETITORS = [
   {
     id: 'typeform',
     name: 'Typeform',
-    logo: (
-      <Image src="/logos/typeform.svg" alt="Typeform" width={20} height={20} />
-    ),
     pricing: [
       { threshold: 0, price: 29 },
       { threshold: 1000, price: 59 },
@@ -25,9 +21,6 @@ const COMPETITORS = [
   {
     id: 'jotform',
     name: 'Jotform',
-    logo: (
-      <Image src="/logos/jotform.png" alt="Jotform" width={20} height={20} className="rounded" />
-    ),
     pricing: [
       { threshold: 0, price: 0 },
       { threshold: 100, price: 39 },
@@ -38,9 +31,6 @@ const COMPETITORS = [
   {
     id: 'tally',
     name: 'Tally',
-    logo: (
-      <Image src="https://tally.so/favicon.ico" alt="Tally" width={20} height={20} className="rounded" />
-    ),
     pricing: [
       { threshold: 0, price: 0 },
       { threshold: 50000, price: 29 },
@@ -65,7 +55,7 @@ export default function ComparisonSection() {
   const savings = competitorPrice;
 
   return (
-    <section className="relative py-16 sm:py-24 lg:py-32 bg-gray-50">
+    <section className="relative py-16 sm:py-24 lg:py-32 bg-white">
       <div className="mx-auto w-full max-w-[1400px] px-4 lg:px-9">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -74,14 +64,14 @@ export default function ComparisonSection() {
           transition={{ duration: 0.5 }}
           className="mb-12 sm:mb-16 text-center"
         >
-          <div className="text-pretty font-mono text-[15px] leading-[100%] tracking-[-0.0175rem] inline-flex items-center gap-3 uppercase mb-6 sm:mb-8 justify-center">
-            <div className="size-2.5 transform-gpu rounded-full border bg-safety-orange border-transparent shadow-[0_0_8px_rgba(255,77,0,0.6)]" />
-            <p className="whitespace-nowrap text-gray-700 text-pretty font-mono text-[11px] sm:text-[13px] leading-[100%] tracking-[-0.015rem] uppercase">
+          <div className="inline-flex items-center gap-3 uppercase mb-6 sm:mb-8 justify-center">
+            <div className="w-2.5 h-2.5 rounded-full bg-safety-orange shadow-[0_0_8px_rgba(239,111,46,0.6)]" />
+            <span className="font-mono text-[11px] sm:text-[13px] tracking-[-0.015rem] uppercase text-gray-500">
               Pricing Comparison
-            </p>
+            </span>
           </div>
 
-          <h2 className="font-normal text-[26px] sm:text-[32px] leading-[110%] tracking-[-0.06rem] lg:text-[48px] lg:tracking-[-0.12rem] mb-4 sm:mb-6 text-gray-900">
+          <h2 className="font-normal text-[28px] sm:text-[36px] lg:text-[52px] leading-[1.1] tracking-[-0.03em] mb-6 text-gray-900">
             Forma vs {competitor.name}<span className="text-safety-orange">.</span>
           </h2>
 
@@ -91,20 +81,19 @@ export default function ComparisonSection() {
               <button
                 key={c.id}
                 onClick={() => setCompetitorId(c.id)}
-                className={`flex items-center gap-2 px-4 py-2 rounded-md text-[13px] font-mono uppercase tracking-[-0.015rem] transition-all ${
+                className={`flex items-center gap-2 px-4 py-2 rounded-md text-[12px] sm:text-[13px] font-mono uppercase tracking-[-0.015rem] transition-all ${
                   competitorId === c.id
                     ? 'bg-white text-gray-900 shadow-sm'
                     : 'text-gray-500 hover:text-gray-700'
                 }`}
               >
-                {c.logo}
                 {c.name}
               </button>
             ))}
           </div>
 
-          <p className="font-mono text-[14px] sm:text-[16px] leading-[140%] tracking-[-0.02rem] lg:text-[18px] text-gray-700 max-w-2xl mx-auto">
-            How much do you expect to spend per month?
+          <p className="font-mono text-[14px] sm:text-[15px] text-gray-500 max-w-2xl mx-auto">
+            Slide to see how much you could save per month.
           </p>
         </motion.div>
 
@@ -113,20 +102,21 @@ export default function ComparisonSection() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.5, delay: 0.1 }}
-          className="max-w-2xl mx-auto text-center"
+          className="max-w-2xl mx-auto"
         >
           {/* Slider */}
-          <div className="mb-10">
-            <div className="font-mono text-[13px] uppercase tracking-[-0.015rem] text-gray-500 mb-3">
+          <div className="mb-10 text-center">
+            <div className="font-mono text-[12px] uppercase tracking-wider text-gray-400 mb-3">
               Expected submissions per month
             </div>
-            <div className="text-[28px] sm:text-[36px] font-semibold text-gray-900 mb-6">
+            <div className="text-[32px] sm:text-[40px] font-semibold text-gray-900 mb-6 tracking-tight">
               {submissions.toLocaleString()}
             </div>
             <style>{`
-              .forma-slider { -webkit-appearance: none; appearance: none; width: 100%; height: 6px; border-radius: 999px; background: linear-gradient(to right, #ef6f2e ${(sliderIndex / (SUBMISSION_LEVELS.length - 1)) * 100}%, #e5e7eb ${(sliderIndex / (SUBMISSION_LEVELS.length - 1)) * 100}%); cursor: pointer; outline: none; }
-              .forma-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 22px; height: 22px; border-radius: 50%; background: #ef6f2e; border: 3px solid white; box-shadow: 0 1px 4px rgba(0,0,0,0.2); cursor: pointer; }
-              .forma-slider::-moz-range-thumb { width: 22px; height: 22px; border-radius: 50%; background: #ef6f2e; border: 3px solid white; box-shadow: 0 1px 4px rgba(0,0,0,0.2); cursor: pointer; }
+              .forma-slider { -webkit-appearance: none; appearance: none; width: 100%; height: 4px; border-radius: 999px; background: linear-gradient(to right, #ef6f2e ${(sliderIndex / (SUBMISSION_LEVELS.length - 1)) * 100}%, #e5e7eb ${(sliderIndex / (SUBMISSION_LEVELS.length - 1)) * 100}%); cursor: pointer; outline: none; }
+              .forma-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 20px; height: 20px; border-radius: 50%; background: #ef6f2e; border: 3px solid white; box-shadow: 0 1px 6px rgba(0,0,0,0.15); cursor: pointer; transition: transform 0.15s; }
+              .forma-slider::-webkit-slider-thumb:hover { transform: scale(1.15); }
+              .forma-slider::-moz-range-thumb { width: 20px; height: 20px; border-radius: 50%; background: #ef6f2e; border: 3px solid white; box-shadow: 0 1px 6px rgba(0,0,0,0.15); cursor: pointer; }
             `}</style>
             <input
               type="range"
@@ -145,31 +135,31 @@ export default function ComparisonSection() {
           {/* Price cards */}
           <div className="grid grid-cols-2 gap-4 mb-8">
             {/* Forma */}
-            <div className="border border-safety-orange/30 rounded-xl p-6 bg-safety-orange/[0.03]">
-              <div className="flex items-center gap-2 mb-4">
+            <div className="border border-safety-orange/20 rounded-2xl p-6 bg-safety-orange/[0.02]">
+              <div className="flex items-center gap-2 mb-5">
                 <Stack size={18} weight="fill" className="text-safety-orange" />
-                <span className="font-mono text-[13px] uppercase tracking-[-0.015rem] text-gray-900">Forma</span>
+                <span className="font-mono text-[13px] uppercase tracking-[-0.015rem] text-gray-900 font-medium">Forma</span>
               </div>
-              <div className="text-[36px] sm:text-[48px] font-semibold text-gray-900 leading-none mb-2">
+              <div className="text-[36px] sm:text-[48px] font-bold text-gray-900 leading-none mb-1 tracking-tight">
                 $0
               </div>
-              <div className="text-[24px] mb-3">🥳</div>
-              <p className="font-mono text-[11px] text-gray-500 uppercase tracking-[-0.015rem]">
+              <p className="font-mono text-[11px] text-gray-400 uppercase tracking-wider mt-3">
                 Unlimited submissions
               </p>
             </div>
 
             {/* Competitor */}
-            <div className="border border-gray-200 rounded-xl p-6">
-              <div className="flex items-center gap-2 mb-4">
-                {competitor.logo}
-                <span className="font-mono text-[13px] uppercase tracking-[-0.015rem] text-gray-900">{competitor.name}</span>
+            <div className="border border-gray-200 rounded-2xl p-6">
+              <div className="flex items-center gap-2 mb-5">
+                <span className="w-[18px] h-[18px] rounded bg-gray-200 flex items-center justify-center text-[10px] font-bold text-gray-500">
+                  {competitor.name[0]}
+                </span>
+                <span className="font-mono text-[13px] uppercase tracking-[-0.015rem] text-gray-900 font-medium">{competitor.name}</span>
               </div>
-              <div className="text-[36px] sm:text-[48px] font-semibold text-gray-900 leading-none mb-2">
+              <div className="text-[36px] sm:text-[48px] font-bold text-gray-900 leading-none mb-1 tracking-tight">
                 ${competitorPrice}
               </div>
-              <div className="text-[24px] mb-3">{competitorPrice > 0 ? '😭' : '🤝'}</div>
-              <p className="font-mono text-[11px] text-gray-500 uppercase tracking-[-0.015rem]">
+              <p className="font-mono text-[11px] text-gray-400 uppercase tracking-wider mt-3">
                 {competitorPrice > 0 ? 'per month' : 'also free'}
               </p>
             </div>
@@ -177,17 +167,27 @@ export default function ComparisonSection() {
 
           {/* Savings */}
           {savings > 0 && (
-            <p className="font-mono text-[14px] sm:text-[16px] text-gray-700 mb-8">
-              You save <span className="text-safety-orange font-semibold">${savings}/month</span> with Forma.
-            </p>
+            <motion.div
+              key={savings}
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="text-center mb-8 p-4 rounded-xl bg-safety-orange/5 border border-safety-orange/10"
+            >
+              <p className="font-mono text-[14px] sm:text-[15px] text-gray-700">
+                You save <span className="text-safety-orange font-semibold">${savings}/month</span> with Forma
+              </p>
+            </motion.div>
           )}
 
-          <Link
-            href="/signup"
-            className="inline-flex items-center gap-2 font-mono text-[13px] uppercase tracking-[-0.015rem] text-safety-orange hover:text-accent-200 transition-colors"
-          >
-            Get started free →
-          </Link>
+          <div className="text-center">
+            <Link
+              href="/signup"
+              className="inline-flex items-center gap-2 font-mono text-[13px] uppercase tracking-[-0.015rem] text-safety-orange hover:text-[#ee6018] transition-colors"
+            >
+              Get started free
+              <ArrowRight size={14} weight="bold" />
+            </Link>
+          </div>
         </motion.div>
       </div>
     </section>
