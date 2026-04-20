@@ -124,37 +124,36 @@ export default function AdminFormsPage() {
         </select>
       </div>
 
-      {/* Table */}
+      {/* Content */}
       {loading ? (
         <div className="flex items-center justify-center py-12">
           <Spinner size={32} className="animate-spin text-gray-400" />
         </div>
+      ) : forms.length === 0 ? (
+        <div className="bg-white border border-gray-200 rounded-xl p-8 text-center text-gray-500">
+          No forms found
+        </div>
       ) : (
-        <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-gray-200 bg-gray-50">
-                  <th className="text-left px-4 py-3 font-medium text-gray-600">Form</th>
-                  <th className="text-left px-4 py-3 font-medium text-gray-600">Workspace</th>
-                  <th className="text-center px-4 py-3 font-medium text-gray-600">Status</th>
-                  <th className="text-center px-4 py-3 font-medium text-gray-600">Submissions</th>
-                  <th className="text-left px-4 py-3 font-medium text-gray-600">Created</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {forms.length === 0 ? (
-                  <tr>
-                    <td colSpan={5} className="px-4 py-8 text-center text-gray-500">
-                      No forms found
-                    </td>
+        <>
+          {/* Desktop Table */}
+          <div className="hidden sm:block bg-white border border-gray-200 rounded-xl overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-gray-200 bg-gray-50">
+                    <th className="text-left px-4 py-3 font-medium text-gray-600">Form</th>
+                    <th className="text-left px-4 py-3 font-medium text-gray-600">Workspace</th>
+                    <th className="text-center px-4 py-3 font-medium text-gray-600">Status</th>
+                    <th className="text-center px-4 py-3 font-medium text-gray-600">Submissions</th>
+                    <th className="text-left px-4 py-3 font-medium text-gray-600">Created</th>
                   </tr>
-                ) : (
-                  forms.map((form) => (
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {forms.map((form) => (
                     <tr key={form.id} className="hover:bg-gray-50 transition-colors">
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0">
+                          <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center shrink-0">
                             {form.formType === 'endpoint' ? (
                               <Lightning size={16} className="text-gray-600" />
                             ) : (
@@ -171,7 +170,7 @@ export default function AdminFormsPage() {
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-1.5 text-gray-700 min-w-0">
-                          <Buildings size={14} className="text-gray-400 flex-shrink-0" />
+                          <Buildings size={14} className="text-gray-400 shrink-0" />
                           <span className="truncate">{form.workspace.name}</span>
                         </div>
                       </td>
@@ -193,26 +192,69 @@ export default function AdminFormsPage() {
                         {formatDate(form.createdAt)}
                       </td>
                     </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Pagination */}
+            {pagination.totalPages > 1 && (
+              <div className="flex items-center justify-between px-4 py-3 border-t border-gray-200 bg-gray-50">
+                <div className="text-sm text-gray-500">
+                  Page {pagination.page} of {pagination.totalPages} ({pagination.total} total)
+                </div>
+                <Pagination
+                  page={pagination.page}
+                  totalPages={pagination.totalPages}
+                  onPageChange={(p) => setPagination((prev) => ({ ...prev, page: p }))}
+                />
+              </div>
+            )}
           </div>
 
-          {/* Pagination */}
-          {pagination.totalPages > 1 && (
-            <div className="flex items-center justify-between px-4 py-3 border-t border-gray-200 bg-gray-50">
-              <div className="text-sm text-gray-500">
-                Page {pagination.page} of {pagination.totalPages} ({pagination.total} total)
+          {/* Mobile Cards */}
+          <div className="sm:hidden space-y-3">
+            {forms.map((form) => (
+              <div key={form.id} className="bg-white border border-gray-200 rounded-xl p-4">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center shrink-0">
+                    {form.formType === 'endpoint' ? (
+                      <Lightning size={18} className="text-gray-600" />
+                    ) : (
+                      <Files size={18} className="text-gray-600" />
+                    )}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="font-medium text-gray-900 truncate">{form.name}</div>
+                    <div className="text-xs text-gray-500 flex items-center gap-1">
+                      <Buildings size={10} className="text-gray-400" />
+                      {form.workspace.name}
+                    </div>
+                  </div>
+                  <span className={cn(
+                    'px-2 py-0.5 rounded-full text-[10px] font-medium capitalize',
+                    statusBadge(form.status)
+                  )}>
+                    {form.status}
+                  </span>
+                </div>
+                <div className="flex items-center gap-4 text-xs text-gray-500">
+                  <span className="flex items-center gap-1"><EnvelopeSimple size={12} /> {form.submissionCount.toLocaleString()} submissions</span>
+                  <span className="text-[10px] uppercase tracking-wider text-gray-400">{form.formType === 'endpoint' ? 'API' : 'Builder'}</span>
+                  <span className="ml-auto">{formatDate(form.createdAt)}</span>
+                </div>
               </div>
+            ))}
+
+            {pagination.totalPages > 1 && (
               <Pagination
                 page={pagination.page}
                 totalPages={pagination.totalPages}
                 onPageChange={(p) => setPagination((prev) => ({ ...prev, page: p }))}
               />
-            </div>
-          )}
-        </div>
+            )}
+          </div>
+        </>
       )}
     </div>
   );

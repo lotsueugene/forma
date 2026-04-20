@@ -95,33 +95,32 @@ export default function AdminWorkspacesPage() {
         />
       </form>
 
-      {/* Table */}
+      {/* Content */}
       {loading ? (
         <div className="flex items-center justify-center py-12">
           <Spinner size={32} className="animate-spin text-gray-400" />
         </div>
+      ) : workspaces.length === 0 ? (
+        <div className="bg-white border border-gray-200 rounded-xl p-8 text-center text-gray-500">
+          No workspaces found
+        </div>
       ) : (
-        <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-gray-200 bg-gray-50">
-                  <th className="text-left px-4 py-3 font-medium text-gray-600">Workspace</th>
-                  <th className="text-left px-4 py-3 font-medium text-gray-600">Owner</th>
-                  <th className="text-center px-4 py-3 font-medium text-gray-600">Members</th>
-                  <th className="text-center px-4 py-3 font-medium text-gray-600">Forms</th>
-                  <th className="text-left px-4 py-3 font-medium text-gray-600">Created</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {workspaces.length === 0 ? (
-                  <tr>
-                    <td colSpan={5} className="px-4 py-8 text-center text-gray-500">
-                      No workspaces found
-                    </td>
+        <>
+          {/* Desktop Table */}
+          <div className="hidden sm:block bg-white border border-gray-200 rounded-xl overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-gray-200 bg-gray-50">
+                    <th className="text-left px-4 py-3 font-medium text-gray-600">Workspace</th>
+                    <th className="text-left px-4 py-3 font-medium text-gray-600">Owner</th>
+                    <th className="text-center px-4 py-3 font-medium text-gray-600">Members</th>
+                    <th className="text-center px-4 py-3 font-medium text-gray-600">Forms</th>
+                    <th className="text-left px-4 py-3 font-medium text-gray-600">Created</th>
                   </tr>
-                ) : (
-                  workspaces.map((ws) => (
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {workspaces.map((ws) => (
                     <tr key={ws.id} className="hover:bg-gray-50 transition-colors">
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-3">
@@ -167,26 +166,66 @@ export default function AdminWorkspacesPage() {
                         {formatDate(ws.createdAt)}
                       </td>
                     </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Pagination */}
+            {pagination.totalPages > 1 && (
+              <div className="flex items-center justify-between px-4 py-3 border-t border-gray-200 bg-gray-50">
+                <div className="text-sm text-gray-500">
+                  Page {pagination.page} of {pagination.totalPages} ({pagination.total} total)
+                </div>
+                <Pagination
+                  page={pagination.page}
+                  totalPages={pagination.totalPages}
+                  onPageChange={(p) => setPagination((prev) => ({ ...prev, page: p }))}
+                />
+              </div>
+            )}
           </div>
 
-          {/* Pagination */}
-          {pagination.totalPages > 1 && (
-            <div className="flex items-center justify-between px-4 py-3 border-t border-gray-200 bg-gray-50">
-              <div className="text-sm text-gray-500">
-                Page {pagination.page} of {pagination.totalPages} ({pagination.total} total)
+          {/* Mobile Cards */}
+          <div className="sm:hidden space-y-3">
+            {workspaces.map((ws) => (
+              <div key={ws.id} className="bg-white border border-gray-200 rounded-xl p-4">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-10 h-10 rounded-lg bg-safety-orange/10 flex items-center justify-center flex-shrink-0">
+                    <Buildings size={18} className="text-safety-orange" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="font-medium text-gray-900 truncate">{ws.name}</div>
+                    {ws.owner ? (
+                      <div className="text-xs text-gray-500 truncate flex items-center gap-1">
+                        <Crown size={10} className="text-amber-500" />
+                        {ws.owner.name || ws.owner.email}
+                      </div>
+                    ) : (
+                      <div className="text-xs text-gray-400">No owner</div>
+                    )}
+                  </div>
+                  {ws.isPersonal && (
+                    <span className="text-[10px] text-gray-400 uppercase tracking-wider bg-gray-100 px-2 py-0.5 rounded">Personal</span>
+                  )}
+                </div>
+                <div className="flex items-center gap-4 text-xs text-gray-500">
+                  <span className="flex items-center gap-1"><Users size={12} /> {ws.memberCount} members</span>
+                  <span className="flex items-center gap-1"><Files size={12} /> {ws.formCount} forms</span>
+                  <span className="ml-auto">{formatDate(ws.createdAt)}</span>
+                </div>
               </div>
+            ))}
+
+            {pagination.totalPages > 1 && (
               <Pagination
                 page={pagination.page}
                 totalPages={pagination.totalPages}
                 onPageChange={(p) => setPagination((prev) => ({ ...prev, page: p }))}
               />
-            </div>
-          )}
-        </div>
+            )}
+          </div>
+        </>
       )}
     </div>
   );
