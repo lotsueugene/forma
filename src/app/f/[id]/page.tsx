@@ -19,7 +19,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       return { title: 'Form Not Found' };
     }
 
-    const settings = form.settings ? JSON.parse(form.settings) : null;
+    let settings = null;
+    try { settings = form.settings ? JSON.parse(form.settings) : null; } catch { /* ignore */ }
     const social = settings?.social;
 
     const title = social?.title || form.name;

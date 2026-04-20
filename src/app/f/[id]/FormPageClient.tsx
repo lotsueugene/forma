@@ -873,7 +873,8 @@ function renderField(
         </select>
       );
     case 'file': {
-      const fileData = formData[field.id] ? JSON.parse(formData[field.id] as string) : null;
+      let fileData = null;
+      try { fileData = formData[field.id] ? JSON.parse(formData[field.id] as string) : null; } catch { /* ignore malformed */ }
       return (
         <div className="relative">
           {fileData ? (
