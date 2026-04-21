@@ -21,10 +21,14 @@ export async function GET(request: NextRequest) {
     const baseUrl = process.env.NEXTAUTH_URL || request.nextUrl.origin;
     const redirectUri = `${baseUrl}/api/integrations/google-sheets/callback`;
 
-    // Encode workspace + form + user in state
-    const state = Buffer.from(
-      JSON.stringify({ workspaceId, formId, userId: session.user.id })
-    ).toString('base64url');
+    // Encode workspace + form + user in state with HMAC signature
+    const { createHmac } = await import('crypto');
+    const stateData = { workspaceId, formId, userId: session.user.id, ts: Date.now() };
+    const stateJson = JSON.stringify(stateData);
+    const sig = createHmac('sha256', process.env.NEXTAUTH_SECRET || '')
+      .update(stateJson)
+      .digest('hex');
+    const state = Buffer.from(JSON.stringify({ ...stateData, sig })).toString('base64url');
 
     const authUrl = buildGoogleAuthUrl(redirectUri, state);
 

@@ -31,13 +31,32 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Decode state
-    let state: { workspaceId: string; formId: string; userId: string };
+    // Decode and verify HMAC-signed state
+    let state: { workspaceId: string; formId: string; userId: string; ts: number; sig: string };
     try {
       state = JSON.parse(Buffer.from(stateParam, 'base64url').toString());
     } catch {
       return NextResponse.redirect(
         new URL('/dashboard/integrations?error=Invalid+state', baseUrl)
+      );
+    }
+
+    // Verify HMAC signature to prevent state tampering
+    const { createHmac } = await import('crypto');
+    const { sig, ...stateData } = state;
+    const expectedSig = createHmac('sha256', process.env.NEXTAUTH_SECRET || '')
+      .update(JSON.stringify(stateData))
+      .digest('hex');
+    if (sig !== expectedSig) {
+      return NextResponse.redirect(
+        new URL('/dashboard/integrations?error=Invalid+state+signature', baseUrl)
+      );
+    }
+
+    // Reject states older than 10 minutes
+    if (Date.now() - state.ts > 600000) {
+      return NextResponse.redirect(
+        new URL('/dashboard/integrations?error=State+expired', baseUrl)
       );
     }
 

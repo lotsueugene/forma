@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
+import DOMPurify from 'isomorphic-dompurify';
 import {
   Plus,
   Spinner,
@@ -675,7 +676,7 @@ export default function AdminBroadcastsPage() {
             <div className="p-4 flex-1 overflow-y-auto">
               <div className="prose prose-sm max-w-none bg-gray-50 rounded-lg p-4">
                 {selectedReply.htmlContent ? (
-                  <div dangerouslySetInnerHTML={{ __html: selectedReply.htmlContent }} />
+                  <div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(selectedReply.htmlContent, { ALLOWED_TAGS: ['p', 'br', 'a', 'strong', 'em', 'u', 'blockquote', 'ul', 'ol', 'li', 'h1', 'h2', 'h3', 'span', 'div', 'img', 'table', 'tr', 'td', 'th', 'thead', 'tbody'], ALLOWED_ATTR: ['href', 'target', 'src', 'alt', 'style', 'class'] }) }} />
                 ) : selectedReply.textContent ? (
                   <p className="whitespace-pre-wrap m-0">{selectedReply.textContent}</p>
                 ) : (

@@ -10,7 +10,7 @@ export async function POST(request: NextRequest) {
   try {
     if (!stripe) {
       return NextResponse.json(
-        { error: 'Stripe is not configured' },
+        { error: 'Payment service is currently unavailable' },
         { status: 503 }
       );
     }

@@ -64,7 +64,7 @@ export async function GET(
     // Verify user has editor+ access to view submission content
     const access = await verifyFormAccess(session.user.id, id, 'editor');
     if (!access.allowed) {
-      return NextResponse.json({ error: access.error }, { status: access.error === 'Form not found' ? 404 : 403 });
+      return NextResponse.json({ error: 'Not found' }, { status: 404 });
     }
 
     // Pagination

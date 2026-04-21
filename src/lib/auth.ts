@@ -45,15 +45,14 @@ export const authOptions: NextAuthOptions = {
           where: { email: credentials.email },
         });
 
-        if (!user || !user.password) {
-          securityLog({ action: 'auth.login_failed', details: { email: credentials.email, reason: 'user_not_found' } });
-          throw new Error('Invalid credentials');
-        }
+        // Always run bcrypt.compare to prevent timing attacks that reveal
+        // whether an email exists (bcrypt is slow, DB lookup is fast)
+        const dummyHash = '$2a$12$K4oL5p5sHZdz8DJ.j95vJO8c5Z6P4V2z2L7v7vEZvx5K0Q5BLvq2W';
+        const hashToCheck = user?.password || dummyHash;
+        const isValid = await bcrypt.compare(credentials.password, hashToCheck);
 
-        const isValid = await bcrypt.compare(credentials.password, user.password);
-
-        if (!isValid) {
-          securityLog({ action: 'auth.login_failed', userId: user.id, details: { reason: 'wrong_password' } });
+        if (!user || !user.password || !isValid) {
+          securityLog({ action: 'auth.login_failed', details: { email: credentials.email, reason: !user ? 'user_not_found' : 'wrong_password' } });
           throw new Error('Invalid credentials');
         }
 

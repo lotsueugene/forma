@@ -21,7 +21,7 @@ function subscriptionPeriodEndUnix(subscription: Stripe.Subscription): number {
 
 export async function POST(request: NextRequest) {
   if (!stripe) {
-    return NextResponse.json({ error: 'Stripe is not configured' }, { status: 503 });
+    return NextResponse.json({ error: 'Payment service is currently unavailable' }, { status: 503 });
   }
 
   const body = await request.text();
@@ -58,6 +58,24 @@ export async function POST(request: NextRequest) {
             const submissionMetadata = session.metadata.submissionMetadata
               ? JSON.parse(session.metadata.submissionMetadata)
               : {};
+
+            // Verify payment amount matches form configuration
+            const formCheck = await prisma.form.findUnique({
+              where: { id: formId },
+              select: { fields: true },
+            });
+            if (formCheck) {
+              try {
+                const fields = JSON.parse(formCheck.fields) as Array<{ type: string; amount?: number }>;
+                const paymentField = fields.find(f => f.type === 'payment' && f.amount);
+                if (paymentField) {
+                  const expectedCents = Math.round((paymentField.amount || 0) * 100);
+                  if (session.amount_total && Math.abs(session.amount_total - expectedCents) > 1) {
+                    console.error(`[SECURITY] Payment amount mismatch for form ${formId}. Expected: ${expectedCents}, Got: ${session.amount_total}`);
+                  }
+                }
+              } catch { /* field parsing failed, continue */ }
+            }
 
             // Add payment info to metadata
             submissionMetadata.payment = {

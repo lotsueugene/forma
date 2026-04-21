@@ -21,7 +21,7 @@ export async function GET(
     // Verify user has access to this form through workspace
     const access = await verifyFormAccess(session.user.id, id);
     if (!access.allowed) {
-      return NextResponse.json({ error: access.error }, { status: access.error === 'Form not found' ? 404 : 403 });
+      return NextResponse.json({ error: access.error }, { status: 404 });
     }
 
     const form = await prisma.form.findUnique({
@@ -78,7 +78,7 @@ export async function PUT(
     // Verify user has editor access to this form
     const access = await verifyFormAccess(session.user.id, id, 'editor');
     if (!access.allowed) {
-      return NextResponse.json({ error: access.error }, { status: access.error === 'Form not found' ? 404 : 403 });
+      return NextResponse.json({ error: access.error }, { status: 404 });
     }
 
     const existingForm = access.form!;
@@ -175,7 +175,7 @@ export async function DELETE(
     // Verify user has manager access to delete this form
     const access = await verifyFormAccess(session.user.id, id, 'manager');
     if (!access.allowed) {
-      return NextResponse.json({ error: access.error }, { status: access.error === 'Form not found' ? 404 : 403 });
+      return NextResponse.json({ error: access.error }, { status: 404 });
     }
 
     await prisma.form.delete({

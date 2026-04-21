@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { checkApiRateLimit } from '@/lib/api-rate-limiter';
 
 // GET /api/public/forms/[id]/bookings?fieldId=xxx
 // Returns existing bookings grouped by date for availability checking
@@ -9,12 +10,19 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
+
+    // Rate limit by IP
+    const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
+    if (!checkApiRateLimit(`bookings:${ip}`, 60)) {
+      return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
+    }
+
     const fieldId = request.nextUrl.searchParams.get('fieldId');
 
     // Find the form
     const form = await prisma.form.findFirst({
       where: { id, status: 'active' },
-      select: { id: true },
+      select: { id: true, fields: true },
     });
 
     if (!form) {
@@ -34,8 +42,13 @@ export async function GET(
     for (const sub of submissions) {
       const data = typeof sub.data === 'string' ? JSON.parse(sub.data) : sub.data;
 
-      // Look for booking field data (either by fieldId or scan all fields)
-      const bookingFields = fieldId ? [data[fieldId]] : Object.values(data);
+      // Only extract from identified booking fields — never scan all fields
+      // to prevent leaking non-booking data
+      const formFields = form.fields ? (typeof form.fields === 'string' ? JSON.parse(form.fields) : form.fields) : [];
+      const bookingFieldIds = fieldId ? [fieldId] : formFields
+        .filter((f: { type: string }) => f.type === 'booking')
+        .map((f: { id: string }) => f.id);
+      const bookingFields = bookingFieldIds.map((fid: string) => data[fid]);
 
       for (const fieldValue of bookingFields) {
         if (!fieldValue) continue;

@@ -67,6 +67,8 @@ async function deliverWithRetry(
     }
     const deliveryId = crypto.randomUUID();
     try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 10000); // 10s timeout
       const res = await fetch(endpoint.url, {
         method: 'POST',
         headers: {
@@ -76,7 +78,9 @@ async function deliverWithRetry(
           'X-Forma-Signature': signBody(endpoint.secret, rawBody),
         },
         body: rawBody,
+        signal: controller.signal,
       });
+      clearTimeout(timeout);
 
       lastStatusCode = res.status;
       if (res.ok) {

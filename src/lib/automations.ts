@@ -99,6 +99,16 @@ export async function processAutomations({
 /**
  * Replace {{variable}} templates with actual submission data
  */
+/** Escape HTML entities to prevent XSS in email templates */
+function escapeHtml(text: string): string {
+  return String(text)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
 function replaceTemplateVars(
   template: string,
   data: Record<string, unknown>,
@@ -112,7 +122,6 @@ function replaceTemplateVars(
 
     let displayValue: string;
     if (field.type === 'booking') {
-      // Format booking as readable text — value can be string or object
       let parsed: { date?: string; slots?: Array<{ start: string; end: string }> } | null = null;
       if (typeof value === 'string') {
         try { parsed = JSON.parse(value); } catch { parsed = null; }
@@ -123,14 +132,14 @@ function replaceTemplateVars(
         const dateStr = new Date(parsed.date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
         const fmt = (t: string) => { const [h, m] = t.split(':').map(Number); const ap = h >= 12 ? 'PM' : 'AM'; return `${h === 0 ? 12 : h > 12 ? h - 12 : h}:${m.toString().padStart(2, '0')} ${ap}`; };
         const slotsStr = parsed.slots.map(s => `${fmt(s.start)} - ${fmt(s.end)}`).join(', ');
-        displayValue = `${dateStr} · ${slotsStr}`;
+        displayValue = escapeHtml(`${dateStr} · ${slotsStr}`);
       } else {
-        displayValue = String(value);
+        displayValue = escapeHtml(String(value));
       }
     } else if (typeof value === 'object') {
-      displayValue = JSON.stringify(value);
+      displayValue = escapeHtml(JSON.stringify(value));
     } else {
-      displayValue = String(value);
+      displayValue = escapeHtml(String(value));
     }
     const varName = field.label.toLowerCase().replace(/\s+/g, '_');
     // Also create HTML-entity version (TipTap encodes & to &amp;)

@@ -34,7 +34,7 @@ export async function GET(
     // Verify user has access to this form
     const access = await verifyFormAccess(session.user.id, id);
     if (!access.allowed) {
-      return NextResponse.json({ error: access.error }, { status: access.error === 'Form not found' ? 404 : 403 });
+      return NextResponse.json({ error: 'Not found' }, { status: 404 });
     }
 
     // Check subscription - analytics requires Trial or Pro

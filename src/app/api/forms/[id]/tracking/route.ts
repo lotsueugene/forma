@@ -63,6 +63,14 @@ export async function POST(
       }
     }
 
+    // Limit tracking data size to prevent abuse (max 100 tracked fields)
+    if (tracking.dropOffs && Object.keys(tracking.dropOffs).length > 100) {
+      return NextResponse.json({ success: true });
+    }
+    if (tracking.fieldInteractions && Object.keys(tracking.fieldInteractions).length > 100) {
+      return NextResponse.json({ success: true });
+    }
+
     await prisma.form.update({
       where: { id },
       data: { settings: JSON.stringify({ ...settings, _tracking: tracking }) },
