@@ -184,52 +184,47 @@ export async function POST(
         let sent = 0;
         let failed = 0;
 
-        // Send sequentially with rate limiting (Resend: 5/sec max, use 3/sec)
-        for (let i = 0; i < recipientList.length; i++) {
-          const email = recipientList[i];
-          const recipientName = recipientMap.get(email) || '';
-          const baseUrl = process.env.NEXTAUTH_URL || 'https://withforma.io';
-          const unsubUrl = `${baseUrl}/unsubscribe?email=${encodeURIComponent(email)}&scope=${encodeURIComponent(id)}`;
-          const personalizedContent = content
-            .replace(/\{\{name\}\}/gi, recipientName || 'there')
-            .replace(/\{\{email\}\}/gi, email);
+        // Use Resend Batch API — up to 100 emails per request
+        const batchSize = 100;
+        for (let i = 0; i < recipientList.length; i += batchSize) {
+          const batch = recipientList.slice(i, i + batchSize);
+          const emails = batch.map(email => {
+            const recipientName = recipientMap.get(email) || '';
+            const baseUrl = process.env.NEXTAUTH_URL || 'https://withforma.io';
+            const unsubUrl = `${baseUrl}/unsubscribe?email=${encodeURIComponent(email)}&scope=${encodeURIComponent(id)}`;
+            const personalizedContent = content
+              .replace(/\{\{name\}\}/gi, recipientName || 'there')
+              .replace(/\{\{email\}\}/gi, email);
+            return {
+              from: fromEmail,
+              replyTo,
+              to: email,
+              subject: subject.replace(/\{\{name\}\}/gi, recipientName || 'there'),
+              html: buildBroadcastEmail(personalizedContent, senderName, workspace?.logoUrl, unsubUrl),
+            };
+          });
 
-          let emailSent = false;
           for (let attempt = 0; attempt < 3; attempt++) {
             try {
-              await resend.emails.send({
-                from: fromEmail,
-                replyTo,
-                to: email,
-                subject: subject.replace(/\{\{name\}\}/gi, recipientName || 'there'),
-                html: buildBroadcastEmail(personalizedContent, senderName, workspace?.logoUrl, unsubUrl),
-              });
-              sent++;
-              emailSent = true;
+              await resend.batch.send(emails);
+              sent += emails.length;
               break;
             } catch (err: unknown) {
               const isRateLimit = err instanceof Error && (err.message?.includes('rate limit') || err.message?.includes('429'));
               if (isRateLimit && attempt < 2) {
-                await new Promise(r => setTimeout(r, 1500));
+                await new Promise(r => setTimeout(r, 2000));
               } else {
-                failed++;
+                console.error('Batch send failed:', err);
+                failed += emails.length;
                 break;
               }
             }
           }
 
-          // Throttle: 350ms between sends
-          if (emailSent && i < recipientList.length - 1) {
-            await new Promise(r => setTimeout(r, 350));
-          }
-
-          // Update progress every 10 emails
-          if ((i + 1) % 10 === 0 || i === recipientList.length - 1) {
-            await prisma.respondentBroadcast.update({
-              where: { id: broadcast.id },
-              data: { sentCount: sent, failedCount: failed },
-            });
-          }
+          await prisma.respondentBroadcast.update({
+            where: { id: broadcast.id },
+            data: { sentCount: sent, failedCount: failed },
+          });
         }
 
         // Final status
