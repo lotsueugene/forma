@@ -23,18 +23,30 @@ function getResend(): Resend | null {
 const EMAIL_FROM = process.env.EMAIL_FROM || 'Forma <notifications@withforma.io>';
 
 /**
- * Send a generic email via Resend
+ * Send a generic email via Resend with retry on rate limit
  */
 export async function sendEmail({ to, subject, html, from }: { to: string; subject: string; html: string; from?: string }) {
   const resend = getResend();
   if (!resend) throw new Error('Email not configured');
 
-  await resend.emails.send({
-    from: from || EMAIL_FROM,
-    to,
-    subject,
-    html,
-  });
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      await resend.emails.send({
+        from: from || EMAIL_FROM,
+        to,
+        subject,
+        html,
+      });
+      return;
+    } catch (err: unknown) {
+      const isRateLimit = err instanceof Error && (err.message?.includes('rate limit') || err.message?.includes('429'));
+      if (isRateLimit && attempt < 2) {
+        await new Promise(r => setTimeout(r, 1500));
+      } else {
+        throw err;
+      }
+    }
+  }
 }
 
 export interface FormField {
