@@ -207,39 +207,54 @@ async function sendBroadcastEmails(
 
     console.log(`[Broadcast] Sending to ${filteredUsers.length} users (${unsubSet.size} unsubscribed)`);
 
-    // Send emails in batches
-    const batchSize = 50;
-    for (let i = 0; i < filteredUsers.length; i += batchSize) {
-      const batch = filteredUsers.slice(i, i + batchSize);
+    // Send emails sequentially with rate limiting (Resend allows 5/sec)
+    // Send 3 per second to stay safely under the limit, with retry on 429
+    for (let i = 0; i < filteredUsers.length; i++) {
+      const user = filteredUsers[i];
+      if (!user.email) continue;
 
-      await Promise.all(
-        batch.map(async (user) => {
-          if (!user.email) return;
+      const userName = user.name || 'there';
+      const baseUrl = process.env.NEXTAUTH_URL || 'https://withforma.io';
+      const unsubUrl = `${baseUrl}/unsubscribe?email=${encodeURIComponent(user.email)}&scope=platform`;
+      const html = generateBroadcastHtml(content, userName, unsubUrl);
 
-          try {
-            const userName = user.name || 'there';
-            const baseUrl = process.env.NEXTAUTH_URL || 'https://withforma.io';
-            const unsubUrl = `${baseUrl}/unsubscribe?email=${encodeURIComponent(user.email)}&scope=platform`;
-            const html = generateBroadcastHtml(content, userName, unsubUrl);
-            await resend.emails.send({
-              from: EMAIL_FROM,
-              to: user.email,
-              subject,
-              html,
-            });
-            sentCount++;
-          } catch (err) {
+      let sent = false;
+      for (let attempt = 0; attempt < 3; attempt++) {
+        try {
+          await resend.emails.send({
+            from: EMAIL_FROM,
+            to: user.email,
+            subject,
+            html,
+          });
+          sentCount++;
+          sent = true;
+          break;
+        } catch (err: unknown) {
+          const isRateLimit = err instanceof Error && (err.message?.includes('rate limit') || err.message?.includes('429'));
+          if (isRateLimit && attempt < 2) {
+            // Wait 1.5 seconds and retry
+            await new Promise(r => setTimeout(r, 1500));
+          } else {
             console.error(`Failed to send to ${user.email}:`, err);
             failedCount++;
+            break;
           }
-        })
-      );
+        }
+      }
 
-      // Update progress
-      await prisma.emailBroadcast.update({
-        where: { id: broadcastId },
-        data: { sentCount, failedCount },
-      });
+      // Throttle: wait 350ms between sends (≈3/sec)
+      if (sent && i < filteredUsers.length - 1) {
+        await new Promise(r => setTimeout(r, 350));
+      }
+
+      // Update progress every 10 emails
+      if ((i + 1) % 10 === 0 || i === filteredUsers.length - 1) {
+        await prisma.emailBroadcast.update({
+          where: { id: broadcastId },
+          data: { sentCount, failedCount },
+        });
+      }
     }
 
     // Mark as sent
