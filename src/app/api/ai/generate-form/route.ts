@@ -83,7 +83,7 @@ Do not include "options" for field types that don't need them (text, email, phon
   });
 
   const command = new InvokeModelCommand({
-    modelId: 'anthropic.claude-haiku-4-5-20251001-v1:0',
+    modelId: process.env.BEDROCK_MODEL_ID || 'us.anthropic.claude-3-5-haiku-20241022-v1:0',
     contentType: 'application/json',
     accept: 'application/json',
     body,
