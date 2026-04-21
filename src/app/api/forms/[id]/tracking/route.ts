@@ -11,7 +11,8 @@ export async function POST(
     const { id } = await params;
 
     // Rate limit by IP to prevent abuse (60 requests per minute per IP)
-    const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
+    const fwd = request.headers.get('x-forwarded-for');
+    const ip = fwd ? fwd.split(',').map(s => s.trim()).pop()! :
       request.headers.get('x-real-ip') || 'unknown';
     if (!checkApiRateLimit(`tracking:${ip}`, 60)) {
       return NextResponse.json({ success: true }); // Silent rate limit — don't break UX

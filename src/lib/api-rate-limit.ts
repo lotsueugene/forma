@@ -53,8 +53,14 @@ export function apiRateLimit(
  * Get client IP from request headers
  */
 export function getClientIp(request: Request): string {
+  // Use the LAST value of X-Forwarded-For — that's the one added by the
+  // trusted reverse proxy (Caddy). The first value is client-controlled
+  // and can be spoofed to bypass rate limiting.
   const forwarded = request.headers.get('x-forwarded-for');
-  if (forwarded) return forwarded.split(',')[0].trim();
+  if (forwarded) {
+    const parts = forwarded.split(',').map(s => s.trim());
+    return parts[parts.length - 1];
+  }
   const real = request.headers.get('x-real-ip');
   if (real) return real;
   return '127.0.0.1';

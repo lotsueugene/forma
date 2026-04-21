@@ -12,7 +12,8 @@ export async function GET(
     const { id } = await params;
 
     // Rate limit by IP
-    const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
+    const fwd = request.headers.get('x-forwarded-for');
+    const ip = fwd ? fwd.split(',').map(s => s.trim()).pop()! : 'unknown';
     if (!checkApiRateLimit(`bookings:${ip}`, 60)) {
       return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
     }

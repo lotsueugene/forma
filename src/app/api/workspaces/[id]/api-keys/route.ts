@@ -104,12 +104,17 @@ export async function POST(
 
     const { key, prefix, hash } = generateApiKey(type);
 
+    // Keys expire in 1 year by default
+    const expiresAt = new Date();
+    expiresAt.setFullYear(expiresAt.getFullYear() + 1);
+
     const apiKey = await prisma.apiKey.create({
       data: {
         name,
         key: hash, // Store hash, not plaintext
         prefix,
         workspaceId: id,
+        expiresAt,
       },
     });
 

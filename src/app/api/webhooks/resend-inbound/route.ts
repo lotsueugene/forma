@@ -33,17 +33,22 @@ interface ResendWebhookPayload {
 
 // Extract name and email from "Name <email@example.com>" format
 function parseEmailAddress(address: string): { email: string; name: string | null } {
-  // Format: "Name <email@example.com>" or just "email@example.com"
-  const bracketMatch = address.match(/^(.+?)\s*<([^<>]+@[^<>]+)>$/);
-  if (bracketMatch) {
-    return {
-      name: bracketMatch[1].trim() || null,
-      email: bracketMatch[2].toLowerCase().trim(),
-    };
+  // Truncate to prevent ReDoS on oversized inputs
+  const addr = address.slice(0, 256).trim();
+
+  // Parse "Name <email@example.com>" without regex backtracking
+  const ltIdx = addr.lastIndexOf('<');
+  const gtIdx = addr.lastIndexOf('>');
+  if (ltIdx !== -1 && gtIdx > ltIdx) {
+    const email = addr.slice(ltIdx + 1, gtIdx).trim().toLowerCase();
+    const name = addr.slice(0, ltIdx).trim() || null;
+    if (email.includes('@')) {
+      return { email, name };
+    }
   }
 
   // Just an email address without brackets
-  const emailOnly = address.match(/^([^\s<>]+@[^\s<>]+)$/);
+  const emailOnly = addr.match(/^([^\s<>]+@[^\s<>]+)$/);
   if (emailOnly) {
     return {
       name: null,

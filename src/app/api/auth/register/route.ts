@@ -14,9 +14,9 @@ const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
 export async function POST(request: NextRequest) {
   try {
     // Rate limiting by IP
-    const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
-               request.headers.get('x-real-ip') ||
-               'unknown';
+    const fwd = request.headers.get('x-forwarded-for');
+    const ip = fwd ? fwd.split(',').map(s => s.trim()).pop()! :
+               request.headers.get('x-real-ip') || 'unknown';
 
     const rateLimitResult = checkRateLimit(`register:${ip}`, { maxPerMinute: 3, maxPerHour: 5 });
     if (!rateLimitResult.allowed) {
