@@ -94,7 +94,7 @@ export default function AdminAuditLogPage() {
   const [loading, setLoading] = useState(true);
   const [logs, setLogs] = useState<AuditEntry[]>([]);
   const [pagination, setPagination] = useState<Pagination>({
-    page: 1, limit: 50, total: 0, totalPages: 0,
+    page: 1, limit: 20, total: 0, totalPages: 0,
   });
   const [search, setSearch] = useState('');
   const [actionFilter, setActionFilter] = useState('');
