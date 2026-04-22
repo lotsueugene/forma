@@ -572,7 +572,7 @@ export default function EditFormPage({ params }: { params: Promise<{ id: string 
   }
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] flex flex-col -m-4 lg:-m-6">
+    <div className="min-h-[calc(100vh-4rem)] flex flex-col -mx-4 -mb-4 lg:-mx-6 lg:-mb-6">
       {/* Top Bar */}
       <div className="h-14 flex items-center justify-between px-3 sm:px-4 lg:px-6 border-b border-gray-200 bg-white">
         <div className="flex items-center gap-2 sm:gap-4 min-w-0 flex-1">
