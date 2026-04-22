@@ -7,6 +7,7 @@ import bcrypt from 'bcryptjs';
 import { prisma } from './prisma';
 import { getDefaultWorkspace, createPersonalWorkspace } from './workspace-auth';
 import { auditLog, securityLog } from './audit';
+import { isAccountLocked, recordFailedAttempt, clearFailedAttempts } from './account-lockout';
 
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma) as NextAuthOptions['adapter'],
@@ -41,22 +42,36 @@ export const authOptions: NextAuthOptions = {
           throw new Error('Invalid credentials');
         }
 
+        const lockoutKey = `login:${credentials.email.toLowerCase()}`;
+
+        // Check if account is locked
+        const lockStatus = isAccountLocked(lockoutKey);
+        if (lockStatus.locked) {
+          const mins = Math.ceil(lockStatus.remainingMs / 60000);
+          throw new Error(`Account locked. Try again in ${mins} minute${mins !== 1 ? 's' : ''}.`);
+        }
+
         const user = await prisma.user.findUnique({
           where: { email: credentials.email },
         });
 
-        // Always run bcrypt.compare to prevent timing attacks that reveal
-        // whether an email exists (bcrypt is slow, DB lookup is fast)
+        // Always run bcrypt.compare to prevent timing attacks
         const dummyHash = '$2a$12$K4oL5p5sHZdz8DJ.j95vJO8c5Z6P4V2z2L7v7vEZvx5K0Q5BLvq2W';
         const hashToCheck = user?.password || dummyHash;
         const isValid = await bcrypt.compare(credentials.password, hashToCheck);
 
         if (!user || !user.password || !isValid) {
+          // Record failed attempt — may trigger lockout + email notification
+          await recordFailedAttempt(lockoutKey, {
+            email: credentials.email,
+            userId: user?.id,
+          });
           securityLog({ action: 'auth.login_failed', details: { email: credentials.email, reason: !user ? 'user_not_found' : 'wrong_password' } });
           throw new Error('Invalid credentials');
         }
 
-        // auth.login_success is logged via the signIn event (covers all providers)
+        // Successful login — clear any failed attempts
+        clearFailedAttempts(lockoutKey);
 
         return {
           id: user.id,

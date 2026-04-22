@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { checkApiRateLimit } from '@/lib/api-rate-limiter';
+import { isAccountLocked, recordFailedAttempt } from '@/lib/account-lockout';
 import crypto from 'crypto';
 import bcrypt from 'bcryptjs';
 
@@ -12,7 +13,15 @@ export async function POST(request: NextRequest) {
     const fwd = request.headers.get('x-forwarded-for');
     const ip = fwd ? fwd.split(',').map(s => s.trim()).pop()! : 'unknown';
 
-    if (!checkApiRateLimit(`reset:${ip}`, 5)) {
+    // Check lockout
+    const lockKey = `reset:${ip}`;
+    const lockStatus = isAccountLocked(lockKey);
+    if (lockStatus.locked) {
+      const mins = Math.ceil(lockStatus.remainingMs / 60000);
+      return NextResponse.json({ error: `Too many attempts. Try again in ${mins} minutes.` }, { status: 429 });
+    }
+
+    if (!checkApiRateLimit(lockKey, 5)) {
       return NextResponse.json({ error: 'Too many attempts. Try again later.' }, { status: 429 });
     }
 
@@ -42,6 +51,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (!storedToken) {
+      await recordFailedAttempt(lockKey, { ip });
       return NextResponse.json(
         { error: 'Invalid or expired reset link. Please request a new one.' },
         { status: 400 }

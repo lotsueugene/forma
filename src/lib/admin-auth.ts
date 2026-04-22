@@ -6,6 +6,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { checkApiRateLimit } from '@/lib/api-rate-limiter';
+import { isAccountLocked, recordFailedAttempt } from '@/lib/account-lockout';
 
 export interface AdminSession {
   user: {
@@ -42,8 +43,20 @@ export async function verifyAdmin(): Promise<AdminSession | null> {
     return null;
   }
 
+  // Check if admin is locked out (too many rate limit hits)
+  const adminLockKey = `admin:${user.id}`;
+  const lockStatus = isAccountLocked(adminLockKey);
+  if (lockStatus.locked) {
+    return null;
+  }
+
   // Rate limit admin requests (60 per minute per admin user)
-  if (!checkApiRateLimit(`admin:${user.id}`, 60)) {
+  if (!checkApiRateLimit(adminLockKey, 60)) {
+    // Record as failed attempt — 5 consecutive rate limit hits = lockout
+    await recordFailedAttempt(`admin-abuse:${user.id}`, {
+      email: user.email || undefined,
+      userId: user.id,
+    });
     return null;
   }
 
