@@ -8,64 +8,22 @@
  */
 
 /**
- * Reserved slugs that must never be assigned to a form. If one of these is
- * used, it would either collide with an app route or shadow a well-known
- * path served by hosting/infrastructure.
+ * Reserved slugs. Intentionally tiny — only the paths that the custom-domain
+ * middleware explicitly bypasses, so choosing one of these as a slug would
+ * silently never resolve on the user's custom domain.
  *
- * The list intentionally errs on the side of caution — adding a reserved
- * name later is fine, removing one after somebody has claimed it is not.
+ * We do NOT reserve generic app-route names like "admin", "login", or
+ * "dashboard": slugs live on the workspace's *own* custom domain, where the
+ * app's admin/login/etc. routes don't exist — the middleware rewrites every
+ * path to the form resolver. Reserving those would be imposing our opinions
+ * on the user's URL space for no real collision.
+ *
+ * See forma/src/middleware.ts for the definitive skip list.
  */
 export const RESERVED_SLUGS: ReadonlySet<string> = new Set([
-  // App routes
   'api',
-  'admin',
-  'dashboard',
-  'app',
-  'auth',
-  'login',
-  'signin',
-  'signup',
-  'register',
-  'logout',
-  'forgot-password',
-  'reset-password',
-  'verify',
-  'billing',
-  'pricing',
-  'settings',
-  'account',
-  'profile',
-  'docs',
-  'help',
-  'support',
-  'status',
-  'blog',
-  'careers',
-  'jobs',
-  'about',
-  'contact',
-  'privacy',
-  'terms',
-  'legal',
-  // Public form / booking / custom-domain routes already served by the app.
-  // Note: "bookings" is intentionally NOT reserved — it's the canonical
-  // suggested value for a form's bookingSlug (e.g. forms.acme.com/bookings)
-  // and the app itself serves the booking UI at /book/[id], not /bookings.
-  'f',
-  'cd',
-  'book',
-  'forms',
-  'workspaces',
-  'workspace',
-  // Framework and hosting conventions
   '_next',
   'static',
-  'public',
-  'assets',
-  'favicon.ico',
-  'robots.txt',
-  'sitemap.xml',
-  'manifest.json',
 ]);
 
 /**
