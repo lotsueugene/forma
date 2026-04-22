@@ -233,6 +233,7 @@ model Form {
   automations Automation[]
   respondentBroadcasts RespondentBroadcast[]
   defaultForDomains CustomDomain[] @relation("DefaultForm")
+  slugRedirects FormSlugRedirect[]
 
   views       Int      @default(0)
   createdAt   DateTime @default(now())
@@ -240,6 +241,25 @@ model Form {
 
   @@unique([workspaceId, slug])
   @@unique([workspaceId, bookingSlug])
+}
+
+// Keeps an old `slug` or `bookingSlug` pointing at its form for a grace
+// period after a rename so external links don't break silently. The
+// custom-domain resolver looks this up as a last-resort fallback and
+// issues a 301 redirect to the form's current URL.
+model FormSlugRedirect {
+  id          String   @id @default(cuid())
+  workspaceId String
+  slug        String   // The OLD slug/bookingSlug being redirected
+  kind        String   // 'slug' or 'bookingSlug' — which field the old value came from
+  formId      String
+  form        Form     @relation(fields: [formId], references: [id], onDelete: Cascade)
+  expiresAt   DateTime
+  createdAt   DateTime @default(now())
+
+  @@unique([workspaceId, slug])
+  @@index([formId])
+  @@index([expiresAt])
 }
 
 model Submission {

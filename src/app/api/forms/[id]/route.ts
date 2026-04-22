@@ -4,6 +4,9 @@ import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { verifyFormAccess } from '@/lib/workspace-auth';
 import { getSubscriptionInfo } from '@/lib/subscription';
+import { auditLog } from '@/lib/audit';
+import { getClientIp } from '@/lib/api-rate-limit';
+import { normalizeSlug, validateSlug, slugRedirectExpiresAt } from '@/lib/slug';
 
 // GET /api/forms/[id] - Get a single form
 export async function GET(
@@ -76,7 +79,9 @@ export async function PUT(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Verify user has editor access to this form
+    // Editor is the baseline for any edit on this form. Slug/bookingSlug
+    // changes require a stricter manager+ check below because they affect
+    // public URLs on the workspace's shared custom domain.
     const access = await verifyFormAccess(session.user.id, id, 'editor');
     if (!access.allowed) {
       return NextResponse.json({ error: access.error }, { status: 404 });
@@ -85,18 +90,32 @@ export async function PUT(
     const existingForm = access.form!;
     const { name, description, fields, settings, status, slug, bookingSlug } = await request.json();
 
-    const normalizeSlug = (raw: unknown): string | null => {
-      if (raw === null || raw === undefined) return null;
-      const str = String(raw).trim().toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
-      return str || null;
-    };
+    // Determine whether the request is trying to change slug or bookingSlug.
+    // We only gate the stricter role check on actual changes so editors can
+    // still save the rest of this form (social preview, status, etc.) in the
+    // same request without being blocked.
+    const slugWouldChange =
+      slug !== undefined && normalizeSlug(slug) !== existingForm.slug;
+    const bookingSlugWouldChange =
+      bookingSlug !== undefined && normalizeSlug(bookingSlug) !== existingForm.bookingSlug;
+
+    if (slugWouldChange || bookingSlugWouldChange) {
+      const managerAccess = await verifyFormAccess(session.user.id, id, 'manager');
+      if (!managerAccess.allowed) {
+        return NextResponse.json(
+          { error: 'Only managers and owners can change custom URL slugs.' },
+          { status: 403 }
+        );
+      }
+    }
 
     let nextSlug: string | null | undefined = undefined;
     if (slug !== undefined) {
       nextSlug = normalizeSlug(slug);
       if (nextSlug !== existingForm.slug) {
-        if (nextSlug && nextSlug.length < 2) {
-          return NextResponse.json({ error: 'Slug must be at least 2 characters' }, { status: 400 });
+        const validationError = validateSlug(nextSlug, 'Slug');
+        if (validationError) {
+          return NextResponse.json({ error: validationError }, { status: 400 });
         }
         if (nextSlug) {
           // Slug must not collide with any other form's slug OR bookingSlug in the workspace,
@@ -119,8 +138,9 @@ export async function PUT(
     if (bookingSlug !== undefined) {
       nextBookingSlug = normalizeSlug(bookingSlug);
       if (nextBookingSlug !== existingForm.bookingSlug) {
-        if (nextBookingSlug && nextBookingSlug.length < 2) {
-          return NextResponse.json({ error: 'Booking slug must be at least 2 characters' }, { status: 400 });
+        const validationError = validateSlug(nextBookingSlug, 'Booking slug');
+        if (validationError) {
+          return NextResponse.json({ error: validationError }, { status: 400 });
         }
         if (nextBookingSlug) {
           // Must not collide with any other form's slug/bookingSlug.
@@ -189,18 +209,115 @@ export async function PUT(
       }
     }
 
-    const form = await prisma.form.update({
-      where: { id },
-      data: {
-        name: name ?? existingForm.name,
-        description: description ?? existingForm.description,
-        slug: nextSlug !== undefined ? nextSlug : existingForm.slug,
-        bookingSlug: nextBookingSlug !== undefined ? nextBookingSlug : existingForm.bookingSlug,
-        fields: fields ? JSON.stringify(fields) : existingForm.fields,
-        settings: settings ? JSON.stringify(settings) : existingForm.settings,
-        status: status ?? existingForm.status,
-      },
+    // Figure out which (if any) slug values changed so we can (a) preserve
+    // the old values as redirects for a grace period and (b) log the change.
+    const slugChanged = nextSlug !== undefined && nextSlug !== existingForm.slug;
+    const bookingSlugChanged =
+      nextBookingSlug !== undefined && nextBookingSlug !== existingForm.bookingSlug;
+
+    const form = await prisma.$transaction(async (tx) => {
+      const updated = await tx.form.update({
+        where: { id },
+        data: {
+          name: name ?? existingForm.name,
+          description: description ?? existingForm.description,
+          slug: nextSlug !== undefined ? nextSlug : existingForm.slug,
+          bookingSlug: nextBookingSlug !== undefined ? nextBookingSlug : existingForm.bookingSlug,
+          fields: fields ? JSON.stringify(fields) : existingForm.fields,
+          settings: settings ? JSON.stringify(settings) : existingForm.settings,
+          status: status ?? existingForm.status,
+        },
+      });
+
+      // If the new slug matches an existing redirect in this workspace (e.g.
+      // this form just reclaimed a value that used to belong to another
+      // form), remove that stale redirect — the current owner wins.
+      const reclaimedValues = [nextSlug, nextBookingSlug].filter(
+        (v): v is string => typeof v === 'string' && v.length > 0
+      );
+      if (reclaimedValues.length > 0) {
+        await tx.formSlugRedirect.deleteMany({
+          where: { workspaceId: existingForm.workspaceId, slug: { in: reclaimedValues } },
+        });
+      }
+
+      // Record redirects from the OLD values so external links keep working.
+      const redirectRows: Array<{
+        workspaceId: string;
+        slug: string;
+        kind: string;
+        formId: string;
+        expiresAt: Date;
+      }> = [];
+      const expiresAt = slugRedirectExpiresAt();
+      if (slugChanged && existingForm.slug) {
+        redirectRows.push({
+          workspaceId: existingForm.workspaceId,
+          slug: existingForm.slug,
+          kind: 'slug',
+          formId: id,
+          expiresAt,
+        });
+      }
+      if (bookingSlugChanged && existingForm.bookingSlug) {
+        redirectRows.push({
+          workspaceId: existingForm.workspaceId,
+          slug: existingForm.bookingSlug,
+          kind: 'bookingSlug',
+          formId: id,
+          expiresAt,
+        });
+      }
+      if (redirectRows.length > 0) {
+        // upsert-like behaviour: clear any prior redirect for the same
+        // (workspaceId, slug) before inserting, so we can't hit the unique
+        // index even across forms. The current owner check above handles
+        // the case where a live form is claiming the value; here we handle
+        // stale redirects with the same key.
+        await tx.formSlugRedirect.deleteMany({
+          where: {
+            workspaceId: existingForm.workspaceId,
+            slug: { in: redirectRows.map((r) => r.slug) },
+          },
+        });
+        await tx.formSlugRedirect.createMany({ data: redirectRows });
+      }
+
+      return updated;
     });
+
+    // Audit: record any slug change so owners can see who broke (or fixed) a link.
+    if (slugChanged || bookingSlugChanged) {
+      const ip = getClientIp(request);
+      if (slugChanged) {
+        auditLog({
+          action: 'form.slug_change',
+          userId: session.user.id,
+          ip,
+          resourceType: 'form',
+          resourceId: id,
+          details: {
+            workspaceId: existingForm.workspaceId,
+            from: existingForm.slug,
+            to: nextSlug,
+          },
+        });
+      }
+      if (bookingSlugChanged) {
+        auditLog({
+          action: 'form.booking_slug_change',
+          userId: session.user.id,
+          ip,
+          resourceType: 'form',
+          resourceId: id,
+          details: {
+            workspaceId: existingForm.workspaceId,
+            from: existingForm.bookingSlug,
+            to: nextBookingSlug,
+          },
+        });
+      }
+    }
 
     return NextResponse.json({
       form: {

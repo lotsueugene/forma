@@ -1,4 +1,4 @@
-import { notFound } from 'next/navigation';
+import { notFound, permanentRedirect } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
 import FormPageClient from '@/app/f/[id]/FormPageClient';
 import BookingPageClient from '@/app/book/[id]/BookingPageClient';
@@ -86,6 +86,21 @@ export default async function CustomDomainPage({ params }: Props) {
   });
   if (byId) {
     return <FormPageClient formId={byId.id} />;
+  }
+
+  // Last resort: honour the slug-redirect grace period so an external link
+  // that was created before a rename still reaches the form. Only active
+  // forms get redirected; expired rows are ignored and cleaned up lazily.
+  const redirectRow = await prisma.formSlugRedirect.findUnique({
+    where: { workspaceId_slug: { workspaceId: workspace.id, slug: slugOrId } },
+    include: { form: true },
+  });
+  if (redirectRow && redirectRow.expiresAt > new Date() && redirectRow.form.status === 'active') {
+    const target =
+      redirectRow.kind === 'bookingSlug' && redirectRow.form.bookingSlug
+        ? redirectRow.form.bookingSlug
+        : redirectRow.form.slug || redirectRow.form.id;
+    permanentRedirect(`/${target}`);
   }
 
   notFound();

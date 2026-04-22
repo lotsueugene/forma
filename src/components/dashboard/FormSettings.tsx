@@ -14,10 +14,13 @@ import {
   Spinner,
   Copy,
   UploadSimple,
+  Warning,
+  Info,
 } from '@phosphor-icons/react';
 import { cn } from '@/lib/utils';
 import { useWorkspace } from '@/contexts/workspace-context';
 import UpgradeModal from './UpgradeModal';
+import { validateSlug } from '@/lib/slug';
 
 interface FormField {
   id: string;
@@ -91,6 +94,15 @@ export default function FormSettingsPanel({
   const [upgradeFeature, setUpgradeFeature] = useState('');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isDeletingForm, setIsDeletingForm] = useState(false);
+  const [showSlugConfirm, setShowSlugConfirm] = useState(false);
+
+  // Role gating — slug/bookingSlug changes are scoped to manager+ because
+  // they change public URLs on the workspace's shared custom domain and can
+  // break external links. The server re-checks this; the UI just avoids
+  // surfacing a control the user can't use.
+  const roleLevel: Record<string, number> = { owner: 4, manager: 3, editor: 2, viewer: 1 };
+  const userRole = currentWorkspace?.role || 'viewer';
+  const canEditSlug = roleLevel[userRole] >= roleLevel.manager;
 
   const requirePro = (feature: string) => {
     if (planType === 'free') {
@@ -141,10 +153,14 @@ export default function FormSettingsPanel({
     return () => { cancelled = true; };
   }, [currentWorkspace]);
 
-  // Slugs are normalized on input (lowercase + [a-z0-9-]) so we can compare trivially.
+  // Slugs are normalised on input (lowercase + [a-z0-9-]) so we can compare
+  // trivially. We validate against the same reserved-word list + length rules
+  // the server uses so the user gets inline feedback instead of a post-save
+  // error; the server remains the source of truth.
   const slugConflict = useMemo<string | null>(() => {
     if (!slug) return null;
-    if (slug.length < 2) return 'Slug must be at least 2 characters.';
+    const syntaxError = validateSlug(slug, 'Slug');
+    if (syntaxError) return syntaxError;
     if (bookingSlug && slug === bookingSlug) return 'Slug and booking slug must be different.';
     const other = workspaceForms.find((f) =>
       f.id !== form.id && ((f.slug && f.slug === slug) || (f.bookingSlug && f.bookingSlug === slug))
@@ -155,7 +171,8 @@ export default function FormSettingsPanel({
 
   const bookingSlugConflict = useMemo<string | null>(() => {
     if (!bookingSlug) return null;
-    if (bookingSlug.length < 2) return 'Booking slug must be at least 2 characters.';
+    const syntaxError = validateSlug(bookingSlug, 'Booking slug');
+    if (syntaxError) return syntaxError;
     if (slug && slug === bookingSlug) return 'Slug and booking slug must be different.';
     const other = workspaceForms.find((f) =>
       f.id !== form.id && ((f.slug && f.slug === bookingSlug) || (f.bookingSlug && f.bookingSlug === bookingSlug))
@@ -165,6 +182,11 @@ export default function FormSettingsPanel({
   }, [slug, bookingSlug, workspaceForms, form.id]);
 
   const hasSlugConflict = Boolean(slugConflict || bookingSlugConflict);
+
+  // Did the user actually change one of the URL-affecting fields? Used to
+  // gate the "this will break existing links" confirmation modal.
+  const slugChangePending =
+    (slug || '') !== (form.slug || '') || (bookingSlug || '') !== (form.bookingSlug || '');
 
   const verifiedDomain = workspaceDomain && workspaceDomain.status === 'verified' ? workspaceDomain.domain : null;
   const customDomainFormUrl = verifiedDomain && slug ? `https://${verifiedDomain}/${slug}` : null;
@@ -180,7 +202,7 @@ export default function FormSettingsPanel({
     setTimeout(() => setCopied(null), 2000);
   };
 
-  const saveSettings = async () => {
+  const performSave = async () => {
     setSaving(true);
     setError('');
     try {
@@ -208,6 +230,17 @@ export default function FormSettingsPanel({
     } finally {
       setSaving(false);
     }
+  };
+
+  // A slug change rewrites public URLs. We route through a confirmation
+  // modal so nobody flips a slug accidentally — the old link will keep
+  // redirecting for 14 days, but after that it 404s.
+  const saveSettings = async () => {
+    if (slugChangePending) {
+      setShowSlugConfirm(true);
+      return;
+    }
+    await performSave();
   };
 
   return (
@@ -414,6 +447,25 @@ export default function FormSettingsPanel({
           <div className="card p-6 space-y-5">
             <h3 className="font-medium text-gray-900">Link & Customizations Settings</h3>
             <div className="space-y-4 max-w-lg">
+              {!canEditSlug && (
+                <div className="flex gap-2 items-start p-3 bg-gray-50 border border-gray-200 rounded-lg text-xs text-gray-600">
+                  <Info size={16} className="text-gray-400 shrink-0 mt-0.5" />
+                  <span>
+                    URL slugs can only be changed by workspace managers and
+                    owners. Everything else on this tab is still editable.
+                  </span>
+                </div>
+              )}
+              {canEditSlug && !verifiedDomain && (
+                <div className="flex gap-2 items-start p-3 bg-blue-50/60 border border-blue-200 rounded-lg text-xs text-blue-900">
+                  <Info size={16} className="text-blue-500 shrink-0 mt-0.5" />
+                  <span>
+                    Slugs only take effect once a custom domain is verified
+                    for this workspace. You can set them now and they&apos;ll
+                    activate automatically.
+                  </span>
+                </div>
+              )}
               <div className="form-field">
                 <label className="form-label">Custom URL Slug</label>
                 <p className="text-xs text-gray-500 mb-2">
@@ -423,9 +475,11 @@ export default function FormSettingsPanel({
                   type="text"
                   value={slug}
                   onChange={(e) => setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-'))}
-                  className={cn('input', slugConflict && 'border-red-400 focus:border-red-500')}
+                  className={cn('input', slugConflict && 'border-red-400 focus:border-red-500', !canEditSlug && 'opacity-70 cursor-not-allowed')}
                   placeholder="e.g., contact, registration"
                   aria-invalid={Boolean(slugConflict)}
+                  disabled={!canEditSlug}
+                  readOnly={!canEditSlug}
                 />
                 {slugConflict && (
                   <p className="text-xs text-red-600 mt-1.5">{slugConflict}</p>
@@ -441,9 +495,11 @@ export default function FormSettingsPanel({
                     type="text"
                     value={bookingSlug}
                     onChange={(e) => setBookingSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-'))}
-                    className={cn('input', bookingSlugConflict && 'border-red-400 focus:border-red-500')}
+                    className={cn('input', bookingSlugConflict && 'border-red-400 focus:border-red-500', !canEditSlug && 'opacity-70 cursor-not-allowed')}
                     placeholder="e.g., bookings, book-a-time"
                     aria-invalid={Boolean(bookingSlugConflict)}
+                    disabled={!canEditSlug}
+                    readOnly={!canEditSlug}
                   />
                   {bookingSlugConflict && (
                     <p className="text-xs text-red-600 mt-1.5">{bookingSlugConflict}</p>
@@ -743,7 +799,7 @@ export default function FormSettingsPanel({
             {showDeleteConfirm && (
               <div className="mt-4 p-4 rounded-xl border border-red-200 bg-red-50 space-y-3">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
+                  <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center shrink-0">
                     <Trash size={20} className="text-red-600" />
                   </div>
                   <div>
@@ -788,6 +844,63 @@ export default function FormSettingsPanel({
         onClose={() => setShowUpgrade(false)}
         feature={upgradeFeature}
       />
+
+      {showSlugConfirm && (
+        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-5 space-y-4">
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center shrink-0">
+                <Warning size={20} className="text-amber-600" weight="fill" />
+              </div>
+              <div>
+                <h3 className="font-medium text-gray-900">Change the public URL?</h3>
+                <p className="text-sm text-gray-600 mt-1">
+                  Existing links to this form will keep working for 14 days,
+                  then return a 404. Update any shared links, emails, QR codes,
+                  or embeds that point to the old URL.
+                </p>
+              </div>
+            </div>
+            <div className="text-xs text-gray-500 bg-gray-50 rounded-lg p-3 space-y-1 font-mono">
+              {(slug || '') !== (form.slug || '') && (
+                <div>
+                  <span className="text-gray-400">slug:&nbsp;&nbsp;&nbsp;&nbsp;</span>
+                  <span className="line-through text-gray-400">{form.slug || '(none)'}</span>
+                  <span className="mx-1">→</span>
+                  <span className="text-gray-900">{slug || '(cleared)'}</span>
+                </div>
+              )}
+              {(bookingSlug || '') !== (form.bookingSlug || '') && (
+                <div>
+                  <span className="text-gray-400">booking: </span>
+                  <span className="line-through text-gray-400">{form.bookingSlug || '(none)'}</span>
+                  <span className="mx-1">→</span>
+                  <span className="text-gray-900">{bookingSlug || '(cleared)'}</span>
+                </div>
+              )}
+            </div>
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => setShowSlugConfirm(false)}
+                className="btn btn-secondary text-sm"
+                disabled={saving}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={async () => {
+                  setShowSlugConfirm(false);
+                  await performSave();
+                }}
+                className="btn btn-primary text-sm"
+                disabled={saving}
+              >
+                {saving ? <><Spinner size={14} className="animate-spin" /> Saving...</> : 'Change URL'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
