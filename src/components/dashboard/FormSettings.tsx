@@ -457,8 +457,8 @@ export default function FormSettingsPanel({
                 </div>
               )}
               {canEditSlug && !verifiedDomain && (
-                <div className="flex gap-2 items-start p-3 bg-blue-50/60 border border-blue-200 rounded-lg text-xs text-blue-900">
-                  <Info size={16} className="text-blue-500 shrink-0 mt-0.5" />
+                <div className="flex gap-2 items-start p-3 bg-safety-orange/8 border border-safety-orange/20 rounded-lg text-xs text-gray-700">
+                  <Info size={16} className="text-safety-orange shrink-0 mt-0.5" />
                   <span>
                     Slugs only take effect once a custom domain is verified
                     for this workspace. You can set them now and they&apos;ll
