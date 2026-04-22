@@ -16,14 +16,19 @@ export async function GET() {
       return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
     }
 
-    // Get counts in parallel
+    // Get counts in parallel. We compute plan distribution per USER,
+    // not by grouping Subscription rows — the Subscription table holds
+    // both the newer user-level rows and legacy workspace-level rows,
+    // so grouping there double-counts users who have both (e.g. total
+    // would come out higher than totalUsers). See getOrCreateSubscription
+    // for the canonical resolution order we mirror here.
     const [
       totalUsers,
       totalWorkspaces,
       totalForms,
       totalSubmissions,
       recentUsers,
-      subscriptionStats,
+      usersForPlan,
     ] = await Promise.all([
       prisma.user.count(),
       prisma.workspace.count(),
@@ -39,9 +44,27 @@ export async function GET() {
           createdAt: true,
         },
       }),
-      prisma.subscription.groupBy({
-        by: ['plan'],
-        _count: { plan: true },
+      prisma.user.findMany({
+        select: {
+          id: true,
+          role: true,
+          subscription: {
+            select: { plan: true, trialEndsAt: true, status: true },
+          },
+          workspaceMembers: {
+            where: { role: 'owner' },
+            select: {
+              workspace: {
+                select: {
+                  isPersonal: true,
+                  subscription: {
+                    select: { plan: true, trialEndsAt: true, status: true },
+                  },
+                },
+              },
+            },
+          },
+        },
       }),
     ]);
 
@@ -74,13 +97,45 @@ export async function GET() {
       },
     });
 
-    // Format subscription stats
-    const proCount = subscriptionStats.find(s => s.plan === 'pro')?._count.plan || 0;
+    // Resolve each user's effective plan the same way the app does at
+    // runtime: user-level subscription first, then the owned personal
+    // workspace, then any owned workspace. Admin role users count as
+    // Pro (they get Pro-equivalent features in getSubscriptionInfo).
+    // Expired trials collapse to Free.
+    const now = new Date();
+    let free = 0, trial = 0, pro = 0;
+    for (const u of usersForPlan) {
+      if (u.role === 'admin') {
+        pro++;
+        continue;
+      }
+
+      let sub = u.subscription;
+      if (!sub) {
+        const owned = u.workspaceMembers.map((m) => m.workspace);
+        const personal = owned.find((w) => w.isPersonal && w.subscription);
+        const any = owned.find((w) => w.subscription);
+        sub = personal?.subscription || any?.subscription || null;
+      }
+
+      if (!sub) { free++; continue; }
+      if (sub.plan === 'pro') { pro++; continue; }
+      if (
+        sub.plan === 'trial' &&
+        sub.trialEndsAt &&
+        sub.trialEndsAt > now
+      ) {
+        trial++;
+        continue;
+      }
+      free++;
+    }
+
     const planBreakdown = {
-      free: subscriptionStats.find(s => s.plan === 'free')?._count.plan || 0,
-      trial: subscriptionStats.find(s => s.plan === 'trial')?._count.plan || 0,
-      pro: proCount,
-      proPaying: payingSubscriptions.length, // Actual paying customers
+      free,
+      trial,
+      pro,
+      proPaying: payingSubscriptions.length, // Actual paying Stripe customers
     };
 
     return NextResponse.json({
