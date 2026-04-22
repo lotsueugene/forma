@@ -24,6 +24,11 @@ interface AuditEntry {
   resourceId: string | null;
   details: Record<string, unknown> | null;
   createdAt: string;
+  // Enrichment provided by the API — resolved names for anything
+  // referenced by id so we never render a raw cuid in the primary UI.
+  user: { id: string; name: string | null; email: string | null } | null;
+  resource: { type: string; id: string; name: string } | null;
+  workspace: { id: string; name: string } | null;
 }
 
 interface Pagination {
@@ -192,36 +197,71 @@ export default function AdminAuditLogPage() {
                         <span className="text-[10px] text-gray-400 font-mono">{log.ip}</span>
                       )}
                     </div>
-                    <div className="flex items-center gap-3 mt-0.5 text-xs text-gray-500">
-                      {log.details?.email ? (
-                        <span className="truncate max-w-[200px]" title={log.userId || ''}>
-                          {log.details.name ? `${String(log.details.name)} · ` : ''}{String(log.details.email)}
-                        </span>
-                      ) : log.userId ? (
-                        <span className="font-mono truncate max-w-[200px]" title={log.userId}>
-                          user: {log.userId.slice(0, 12)}...
-                        </span>
-                      ) : null}
+                    <div className="flex items-center gap-3 mt-0.5 text-xs text-gray-500 flex-wrap">
+                      {(() => {
+                        // Prefer freshly joined user info over whatever was
+                        // stamped into details at log time (names/emails can
+                        // change and joined data is always current).
+                        const name = log.user?.name || (log.details?.name as string | undefined) || null;
+                        const email = log.user?.email || (log.details?.email as string | undefined) || null;
+                        if (name || email) {
+                          return (
+                            <span className="truncate max-w-[260px]" title={log.userId || ''}>
+                              {name ? `${name}${email ? ' · ' : ''}` : ''}
+                              {email || ''}
+                            </span>
+                          );
+                        }
+                        if (log.userId) {
+                          return (
+                            <span className="text-gray-400 italic" title={log.userId}>
+                              deleted user
+                            </span>
+                          );
+                        }
+                        return null;
+                      })()}
                       {log.details?.provider ? (
                         <span className="px-1.5 py-0.5 bg-gray-100 rounded text-[10px] uppercase tracking-wider">
                           {String(log.details.provider)}
                         </span>
                       ) : null}
-                      {log.resourceType && (
-                        <span>
-                          {log.resourceType}: {log.resourceId?.slice(0, 12)}...
+                      {log.resource ? (
+                        <span className="truncate max-w-[260px]" title={log.resource.id}>
+                          <span className="text-gray-400 capitalize">{log.resource.type}:&nbsp;</span>
+                          <span className="text-gray-700">{log.resource.name}</span>
                         </span>
-                      )}
+                      ) : null}
+                      {log.workspace && log.resource?.type !== 'workspace' ? (
+                        <span className="truncate max-w-[220px]" title={log.workspace.id}>
+                          <span className="text-gray-400">in</span>{' '}
+                          <span className="text-gray-700">{log.workspace.name}</span>
+                        </span>
+                      ) : null}
                     </div>
                     {log.details && (() => {
-                      const shown = new Set(['email', 'name', 'provider']);
-                      const extra = Object.entries(log.details)
-                        .filter(([k, v]) => v !== null && v !== undefined && !shown.has(k));
-                      return extra.length > 0 ? (
-                        <div className="mt-1 text-xs text-gray-400 font-mono truncate max-w-[500px]">
-                          {extra.map(([k, v]) => `${k}=${String(v)}`).join(' · ')}
+                      // Hide keys we've already shown in a friendlier form,
+                      // plus raw IDs the UI resolved to names above.
+                      const hidden = new Set([
+                        'email',
+                        'name',
+                        'provider',
+                        'workspaceId',
+                        'formId',
+                        'userId',
+                        'actorId',
+                      ]);
+                      const extra = Object.entries(log.details).filter(
+                        ([k, v]) => v !== null && v !== undefined && v !== '' && !hidden.has(k)
+                      );
+                      if (extra.length === 0) return null;
+                      return (
+                        <div className="mt-1 text-xs text-gray-400 font-mono truncate max-w-[640px]">
+                          {extra
+                            .map(([k, v]) => `${k}: ${typeof v === 'object' ? JSON.stringify(v) : String(v)}`)
+                            .join(' · ')}
                         </div>
-                      ) : null;
+                      );
                     })()}
                   </div>
                   <div className="text-xs text-gray-400 whitespace-nowrap flex-shrink-0" title={new Date(log.createdAt).toLocaleString()}>
