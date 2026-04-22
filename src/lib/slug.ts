@@ -47,11 +47,13 @@ export const RESERVED_SLUGS: ReadonlySet<string> = new Set([
   'privacy',
   'terms',
   'legal',
-  // Public form / booking / custom-domain routes already served by the app
+  // Public form / booking / custom-domain routes already served by the app.
+  // Note: "bookings" is intentionally NOT reserved — it's the canonical
+  // suggested value for a form's bookingSlug (e.g. forms.acme.com/bookings)
+  // and the app itself serves the booking UI at /book/[id], not /bookings.
   'f',
   'cd',
   'book',
-  'bookings',
   'forms',
   'workspaces',
   'workspace',
@@ -64,15 +66,6 @@ export const RESERVED_SLUGS: ReadonlySet<string> = new Set([
   'robots.txt',
   'sitemap.xml',
   'manifest.json',
-  // Generic / dangerous
-  'home',
-  'index',
-  'www',
-  'mail',
-  'email',
-  'root',
-  'null',
-  'undefined',
 ]);
 
 /**
