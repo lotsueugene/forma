@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import {
   Gear,
   Palette,
@@ -113,6 +113,12 @@ export default function FormSettingsPanel({
   const hasBookingField = (form.fields || []).some((f) => f.type === 'booking');
   const hasChanges = JSON.stringify({ name, description, slug, bookingSlug, status, settings }) !== originalState;
 
+  // Workspace-level info for live URL preview + as-you-type collision detection
+  type WorkspaceFormRef = { id: string; name: string; slug: string | null; bookingSlug: string | null; hasBookingField?: boolean };
+  type WorkspaceDomainRef = { domain: string; status: 'pending' | 'verified' } | null;
+  const [workspaceForms, setWorkspaceForms] = useState<WorkspaceFormRef[]>([]);
+  const [workspaceDomain, setWorkspaceDomain] = useState<WorkspaceDomainRef>(null);
+
   useEffect(() => {
     if (!currentWorkspace) return;
     fetch(`/api/workspaces/${currentWorkspace.id}/subscription`)
@@ -120,6 +126,49 @@ export default function FormSettingsPanel({
       .then((data) => { if (data?.subscription?.plan) setPlanType(data.subscription.plan); })
       .catch(() => {});
   }, [currentWorkspace]);
+
+  useEffect(() => {
+    if (!currentWorkspace) return;
+    let cancelled = false;
+    fetch(`/api/workspaces/${currentWorkspace.id}/custom-domain`)
+      .then((res) => res.ok ? res.json() : null)
+      .then((data) => {
+        if (cancelled || !data) return;
+        setWorkspaceForms(Array.isArray(data.forms) ? data.forms : []);
+        setWorkspaceDomain(data.domain ? { domain: data.domain.domain, status: data.domain.status } : null);
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [currentWorkspace]);
+
+  // Slugs are normalized on input (lowercase + [a-z0-9-]) so we can compare trivially.
+  const slugConflict = useMemo<string | null>(() => {
+    if (!slug) return null;
+    if (slug.length < 2) return 'Slug must be at least 2 characters.';
+    if (bookingSlug && slug === bookingSlug) return 'Slug and booking slug must be different.';
+    const other = workspaceForms.find((f) =>
+      f.id !== form.id && ((f.slug && f.slug === slug) || (f.bookingSlug && f.bookingSlug === slug))
+    );
+    if (other) return `Already used by "${other.name}".`;
+    return null;
+  }, [slug, bookingSlug, workspaceForms, form.id]);
+
+  const bookingSlugConflict = useMemo<string | null>(() => {
+    if (!bookingSlug) return null;
+    if (bookingSlug.length < 2) return 'Booking slug must be at least 2 characters.';
+    if (slug && slug === bookingSlug) return 'Slug and booking slug must be different.';
+    const other = workspaceForms.find((f) =>
+      f.id !== form.id && ((f.slug && f.slug === bookingSlug) || (f.bookingSlug && f.bookingSlug === bookingSlug))
+    );
+    if (other) return `Already used by "${other.name}".`;
+    return null;
+  }, [slug, bookingSlug, workspaceForms, form.id]);
+
+  const hasSlugConflict = Boolean(slugConflict || bookingSlugConflict);
+
+  const verifiedDomain = workspaceDomain && workspaceDomain.status === 'verified' ? workspaceDomain.domain : null;
+  const customDomainFormUrl = verifiedDomain && slug ? `https://${verifiedDomain}/${slug}` : null;
+  const customDomainBookingUrl = verifiedDomain && bookingSlug ? `https://${verifiedDomain}/${bookingSlug}` : null;
 
   const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
   const formPageUrl = `${baseUrl}/f/${form.id}`;
@@ -269,7 +318,12 @@ export default function FormSettingsPanel({
                 </button>
               </div>
 
-              <button onClick={saveSettings} disabled={saving || !hasChanges} className={cn('btn btn-primary', !hasChanges && 'opacity-50')}>
+              <button
+                onClick={saveSettings}
+                disabled={saving || !hasChanges || hasSlugConflict}
+                className={cn('btn btn-primary', (!hasChanges || hasSlugConflict) && 'opacity-50')}
+                title={hasSlugConflict ? 'Fix slug conflicts before saving' : undefined}
+              >
                 {saving ? <><Spinner size={16} className="animate-spin" /> Saving...</> : 'Save Changes'}
               </button>
             </div>
@@ -343,7 +397,12 @@ export default function FormSettingsPanel({
                 </button>
               </div>
 
-              <button onClick={saveSettings} disabled={saving || !hasChanges} className={cn('btn btn-primary', !hasChanges && 'opacity-50')}>
+              <button
+                onClick={saveSettings}
+                disabled={saving || !hasChanges || hasSlugConflict}
+                className={cn('btn btn-primary', (!hasChanges || hasSlugConflict) && 'opacity-50')}
+                title={hasSlugConflict ? 'Fix slug conflicts before saving' : undefined}
+              >
                 {saving ? <><Spinner size={16} className="animate-spin" /> Saving...</> : 'Save Changes'}
               </button>
             </div>
@@ -357,28 +416,38 @@ export default function FormSettingsPanel({
             <div className="space-y-4 max-w-lg">
               <div className="form-field">
                 <label className="form-label">Custom URL Slug</label>
-                <p className="text-xs text-gray-500 mb-2">For custom domains: forms.yourdomain.com/<strong>{slug || 'your-slug'}</strong></p>
+                <p className="text-xs text-gray-500 mb-2">
+                  For custom domains: {verifiedDomain || 'forms.yourdomain.com'}/<strong>{slug || 'your-slug'}</strong>
+                </p>
                 <input
                   type="text"
                   value={slug}
                   onChange={(e) => setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-'))}
-                  className="input"
+                  className={cn('input', slugConflict && 'border-red-400 focus:border-red-500')}
                   placeholder="e.g., contact, registration"
+                  aria-invalid={Boolean(slugConflict)}
                 />
+                {slugConflict && (
+                  <p className="text-xs text-red-600 mt-1.5">{slugConflict}</p>
+                )}
               </div>
               {hasBookingField && (
                 <div className="form-field">
                   <label className="form-label">Custom Booking URL Slug</label>
                   <p className="text-xs text-gray-500 mb-2">
-                    Serves the dedicated booking UI on your custom domain: forms.yourdomain.com/<strong>{bookingSlug || 'bookings'}</strong>
+                    Serves the dedicated booking UI on your custom domain: {verifiedDomain || 'forms.yourdomain.com'}/<strong>{bookingSlug || 'bookings'}</strong>
                   </p>
                   <input
                     type="text"
                     value={bookingSlug}
                     onChange={(e) => setBookingSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-'))}
-                    className="input"
+                    className={cn('input', bookingSlugConflict && 'border-red-400 focus:border-red-500')}
                     placeholder="e.g., bookings, book-a-time"
+                    aria-invalid={Boolean(bookingSlugConflict)}
                   />
+                  {bookingSlugConflict && (
+                    <p className="text-xs text-red-600 mt-1.5">{bookingSlugConflict}</p>
+                  )}
                 </div>
               )}
               <div className="form-field">
@@ -390,6 +459,31 @@ export default function FormSettingsPanel({
                   </button>
                 </div>
               </div>
+              {customDomainFormUrl && (
+                <div className="form-field">
+                  <label className="form-label">Custom Domain Link</label>
+                  <div className="flex gap-2">
+                    <code className="input font-mono text-sm text-safety-orange flex-1 truncate">{customDomainFormUrl}</code>
+                    <button onClick={() => copyToClipboard(customDomainFormUrl, 'custom-domain-link')} className="btn btn-secondary">
+                      {copied === 'custom-domain-link' ? <Check size={16} /> : <Copy size={16} />}
+                    </button>
+                  </div>
+                </div>
+              )}
+              {customDomainBookingUrl && (
+                <div className="form-field">
+                  <label className="form-label">
+                    Booking Link <span className="text-[10px] uppercase tracking-wide bg-safety-orange/10 text-safety-orange px-1.5 py-0.5 rounded ml-1 align-middle">Booking</span>
+                  </label>
+                  <div className="flex gap-2">
+                    <code className="input font-mono text-sm text-safety-orange flex-1 truncate">{customDomainBookingUrl}</code>
+                    <button onClick={() => copyToClipboard(customDomainBookingUrl, 'custom-domain-booking-link')} className="btn btn-secondary">
+                      {copied === 'custom-domain-booking-link' ? <Check size={16} /> : <Copy size={16} />}
+                    </button>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1.5">Renders the booking-only UI on your verified custom domain.</p>
+                </div>
+              )}
 
               <hr className="border-gray-200" />
 
@@ -526,7 +620,12 @@ export default function FormSettingsPanel({
 
               {/* Custom CSS - hidden until properly implemented */}
 
-              <button onClick={saveSettings} disabled={saving || !hasChanges} className={cn('btn btn-primary', !hasChanges && 'opacity-50')}>
+              <button
+                onClick={saveSettings}
+                disabled={saving || !hasChanges || hasSlugConflict}
+                className={cn('btn btn-primary', (!hasChanges || hasSlugConflict) && 'opacity-50')}
+                title={hasSlugConflict ? 'Fix slug conflicts before saving' : undefined}
+              >
                 {saving ? <><Spinner size={16} className="animate-spin" /> Saving...</> : 'Save Changes'}
               </button>
             </div>
