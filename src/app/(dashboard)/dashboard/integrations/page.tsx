@@ -551,12 +551,17 @@ function IntegrationsAuthorized() {
     if (!currentWorkspace || !gsConnectingId || !gsSelectedSpreadsheet) return;
     setError(null);
     try {
+      // `testConnection: true` asks the PATCH endpoint to run a real
+      // Sheets API probe against the selected spreadsheet before we
+      // enable the integration. Catches "shared read-only" cases up
+      // front instead of silently breaking the first submission.
       const res = await fetch(`/api/workspaces/${currentWorkspace.id}/integrations/${gsConnectingId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           enabled: true,
           config: { spreadsheetId: gsSelectedSpreadsheet, sheetName: gsSheetName || 'Sheet1' },
+          testConnection: true,
         }),
       });
       if (!res.ok) {

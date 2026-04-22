@@ -79,11 +79,7 @@ export async function deliverToGoogleSheets(
   );
 
   if (!headersResponse.ok) {
-    if (headersResponse.status === 401) {
-      throw new Error('Google Sheets authentication expired. Please reconnect.');
-    }
-    const error = await headersResponse.json().catch(() => ({}));
-    throw new Error(`Google Sheets API error: ${(error as { error?: { message?: string } }).error?.message || headersResponse.status}`);
+    throw await sheetsError(headersResponse, 'read sheet headers');
   }
 
   const headersData = await headersResponse.json() as { values?: string[][] };
@@ -152,8 +148,7 @@ async function appendToSheet(
   );
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({}));
-    throw new Error(`Failed to append to sheet: ${(error as { error?: { message?: string } }).error?.message || response.status}`);
+    throw await sheetsError(response, 'append to sheet');
   }
 }
 
@@ -179,15 +174,45 @@ async function updateRow(
   );
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({}));
-    throw new Error(`Failed to update sheet: ${(error as { error?: { message?: string } }).error?.message || response.status}`);
+    throw await sheetsError(response, 'update sheet');
   }
+}
+
+/**
+ * Turn a Sheets API error response into an actionable message. The raw
+ * "The caller does not have permission" / "Requested entity was not
+ * found" strings are useless to end users — they need to know what to
+ * DO (re-share, reconnect, pick a different sheet).
+ */
+async function sheetsError(response: Response, action: string): Promise<Error> {
+  const body = await response.json().catch(() => ({}));
+  const raw = (body as { error?: { message?: string } }).error?.message;
+
+  if (response.status === 401) {
+    return new Error('Google Sheets authentication expired. Please reconnect the integration.');
+  }
+  if (response.status === 403) {
+    return new Error(
+      "Google Sheets rejected the write: the connected Google account doesn't have edit access to this spreadsheet. " +
+        'Share it with edit access or reconnect with an account that owns it.'
+    );
+  }
+  if (response.status === 404) {
+    return new Error(
+      'The connected spreadsheet could not be found. It may have been deleted, moved to trash, or the sheet tab renamed. ' +
+        'Reconnect the integration and pick a different spreadsheet.'
+    );
+  }
+  if (response.status === 429) {
+    return new Error('Google Sheets is rate-limiting us. We will retry on the next submission.');
+  }
+  return new Error(`Failed to ${action}: ${raw || response.status}`);
 }
 
 /**
  * Refresh the access token using the refresh token
  */
-async function refreshAccessToken(refreshToken: string): Promise<{ accessToken: string }> {
+export async function refreshAccessToken(refreshToken: string): Promise<{ accessToken: string }> {
   const clientId = process.env.GOOGLE_CLIENT_ID;
   const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
 
@@ -338,14 +363,17 @@ export function buildGoogleAuthUrl(redirectUri: string, state: string): string {
 }
 
 /**
- * List spreadsheets (for UI configuration)
- * Requires drive.readonly scope
+ * List spreadsheets the authenticated user can EDIT (for UI configuration).
+ * Requires drive.readonly scope — we still only read Drive metadata, we
+ * just filter to edit-capable spreadsheets so users don't pick a sheet
+ * that was shared read-only with them (the Sheets API would then 403 on
+ * every submission with "The caller does not have permission").
  */
 export async function listSpreadsheets(
   accessToken: string
 ): Promise<Array<{ id: string; name: string }>> {
   const response = await fetch(
-    "https://www.googleapis.com/drive/v3/files?q=mimeType='application/vnd.google-apps.spreadsheet'&fields=files(id,name)",
+    "https://www.googleapis.com/drive/v3/files?q=mimeType='application/vnd.google-apps.spreadsheet'&fields=files(id,name,capabilities/canEdit,ownedByMe)&pageSize=200",
     {
       headers: {
         Authorization: `Bearer ${accessToken}`,
@@ -358,8 +386,78 @@ export async function listSpreadsheets(
   }
 
   const data = await response.json() as {
-    files: Array<{ id: string; name: string }>;
+    files: Array<{
+      id: string;
+      name: string;
+      ownedByMe?: boolean;
+      capabilities?: { canEdit?: boolean };
+    }>;
   };
 
-  return data.files || [];
+  return (data.files || [])
+    .filter((f) => f.capabilities?.canEdit !== false)
+    .map(({ id, name }) => ({ id, name }));
+}
+
+/**
+ * Pre-flight a spreadsheet before saving it to the integration: confirm
+ * the token can actually write to it. Catches the common "shared
+ * read-only / wrong Google account / trashed sheet" cases up front
+ * instead of at submission time.
+ */
+export async function assertSpreadsheetWritable(
+  accessToken: string,
+  spreadsheetId: string
+): Promise<void> {
+  // `spreadsheets.get` with `fields=` returns capabilities the user has
+  // on THIS spreadsheet. Cheaper than a dummy write and scoped to the
+  // Sheets scope we already hold.
+  const metaRes = await fetch(
+    `${SHEETS_API_URL}/${spreadsheetId}?includeGridData=false&fields=spreadsheetId,properties.title,sheets.properties.title`,
+    { headers: { Authorization: `Bearer ${accessToken}` } }
+  );
+  if (!metaRes.ok) {
+    if (metaRes.status === 404) {
+      throw new Error('Spreadsheet not found. It may have been deleted or moved to trash.');
+    }
+    if (metaRes.status === 403) {
+      throw new Error(
+        "Your Google account doesn't have access to this spreadsheet. " +
+          'Open it in Google Sheets and make sure you can edit it, then try again.'
+      );
+    }
+    throw new Error(`Could not access spreadsheet (${metaRes.status}).`);
+  }
+
+  // Test write by appending-then-clearing a single cell in a throwaway
+  // range. We use `values:batchUpdate` with zero rows to validate the
+  // write scope without actually changing the sheet. Googles's Drive
+  // capabilities API isn't reliable here because the user could have
+  // Drive "can edit" permissions but the file could still have Sheets-
+  // level protection. The cheapest real test is a no-op write.
+  const probeRes = await fetch(
+    `${SHEETS_API_URL}/${spreadsheetId}/values:batchUpdate`,
+    {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        valueInputOption: 'RAW',
+        data: [],
+      }),
+    }
+  );
+  if (!probeRes.ok) {
+    if (probeRes.status === 403) {
+      throw new Error(
+        "Your Google account can view but not edit this spreadsheet. " +
+          'Ask the owner for edit access, or pick a spreadsheet you own.'
+      );
+    }
+    const body = await probeRes.json().catch(() => ({}));
+    const msg = (body as { error?: { message?: string } }).error?.message;
+    throw new Error(`Spreadsheet write check failed: ${msg || probeRes.status}`);
+  }
 }

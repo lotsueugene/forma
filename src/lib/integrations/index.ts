@@ -19,7 +19,11 @@ import { decryptConfig } from '@/lib/integration-secrets';
 import { deliverToSlack } from './slack';
 import { deliverToNotion } from './notion';
 import { deliverToAirtable } from './airtable';
-import { deliverToGoogleSheets } from './google-sheets';
+import {
+  deliverToGoogleSheets,
+  assertSpreadsheetWritable,
+  refreshAccessToken,
+} from './google-sheets';
 import { deliverToDiscord } from './discord';
 import { deliverToWebhook, deliverToZapier, deliverToMake } from './webhook';
 import { deliverToHubSpot } from './hubspot';
@@ -222,6 +226,40 @@ export async function testIntegration(
   type: string,
   config: IntegrationConfig
 ): Promise<{ success: boolean; error?: string }> {
+  // Google Sheets gets a special non-destructive test: we validate the
+  // spreadsheet ID, confirm the OAuth account can both READ and WRITE,
+  // but we do NOT append a "Forma Test" row to the user's real sheet.
+  // That kind of pollution is why users disable tests in other tools.
+  if (type === 'google-sheets') {
+    try {
+      if (!config.spreadsheetId) {
+        return { success: false, error: 'No spreadsheet selected.' };
+      }
+      // Prefer a freshly-minted access token via refresh so we don't
+      // spuriously 401 on a stale token. The refresh doesn't persist
+      // here (we don't have the integration id), but delivery's own
+      // refreshAndSaveToken path will persist on the next submission.
+      let accessToken = config.accessToken;
+      if (config.refreshToken) {
+        try {
+          accessToken = (await refreshAccessToken(config.refreshToken)).accessToken;
+        } catch {
+          // Fall back to whatever token we have; preflight will 401 if dead.
+        }
+      }
+      if (!accessToken) {
+        return { success: false, error: 'Google account not connected.' };
+      }
+      await assertSpreadsheetWritable(accessToken, config.spreadsheetId);
+      return { success: true };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : String(error),
+      };
+    }
+  }
+
   const testPayload: IntegrationPayload = {
     submissionId: 'test-submission-id',
     formId: 'test-form-id',
@@ -245,5 +283,6 @@ export async function testIntegration(
     };
   }
 }
+
 
 export type { IntegrationPayload as SubmissionPayload };
