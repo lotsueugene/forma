@@ -28,16 +28,36 @@ export async function GET(
       where: { workspaceId: id },
       include: {
         defaultForm: {
-          select: { id: true, name: true, slug: true },
+          select: { id: true, name: true, slug: true, bookingSlug: true },
         },
       },
     });
 
-    // Get list of active forms for the default form selector
-    const forms = await prisma.form.findMany({
+    // Get list of active forms for the default form selector.
+    // Derive hasBookingField server-side so the UI can mark forms that expose a booking URL
+    // without shipping the full form field definitions to the client.
+    const rawForms = await prisma.form.findMany({
       where: { workspaceId: id, status: 'active' },
-      select: { id: true, name: true, slug: true },
+      select: { id: true, name: true, slug: true, bookingSlug: true, fields: true },
       orderBy: { name: 'asc' },
+    });
+    const forms = rawForms.map((f) => {
+      let hasBookingField = false;
+      try {
+        const parsed = JSON.parse(f.fields || '[]');
+        if (Array.isArray(parsed)) {
+          hasBookingField = parsed.some((field: { type?: string }) => field?.type === 'booking');
+        }
+      } catch {
+        // ignore malformed field JSON
+      }
+      return {
+        id: f.id,
+        name: f.name,
+        slug: f.slug,
+        bookingSlug: f.bookingSlug,
+        hasBookingField,
+      };
     });
 
     return NextResponse.json({

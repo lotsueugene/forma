@@ -54,6 +54,7 @@ interface Form {
   name: string;
   description: string | null;
   slug: string | null;
+  bookingSlug: string | null;
   status: string;
   fields: FormField[];
   settings: FormSettings | null;
@@ -104,11 +105,13 @@ export default function FormSettingsPanel({
   const [name, setName] = useState(form.name);
   const [description, setDescription] = useState(form.description || '');
   const [slug, setSlug] = useState(form.slug || '');
+  const [bookingSlug, setBookingSlug] = useState(form.bookingSlug || '');
   const [status, setStatus] = useState(form.status);
   const [settings, setSettings] = useState<FormSettings>(form.settings || {});
-  const [originalState, setOriginalState] = useState(() => JSON.stringify({ name: form.name, description: form.description || '', slug: form.slug || '', status: form.status, settings: form.settings || {} }));
+  const [originalState, setOriginalState] = useState(() => JSON.stringify({ name: form.name, description: form.description || '', slug: form.slug || '', bookingSlug: form.bookingSlug || '', status: form.status, settings: form.settings || {} }));
 
-  const hasChanges = JSON.stringify({ name, description, slug, status, settings }) !== originalState;
+  const hasBookingField = (form.fields || []).some((f) => f.type === 'booking');
+  const hasChanges = JSON.stringify({ name, description, slug, bookingSlug, status, settings }) !== originalState;
 
   useEffect(() => {
     if (!currentWorkspace) return;
@@ -139,6 +142,7 @@ export default function FormSettingsPanel({
           name,
           description,
           slug: slug || null,
+          bookingSlug: bookingSlug || null,
           status,
           settings,
           fields: form.fields,
@@ -148,7 +152,7 @@ export default function FormSettingsPanel({
         const data = await res.json().catch(() => ({}));
         throw new Error(data.error || 'Failed to save');
       }
-      setOriginalState(JSON.stringify({ name, description, slug, status, settings }));
+      setOriginalState(JSON.stringify({ name, description, slug, bookingSlug, status, settings }));
       onFormUpdate();
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to save');
@@ -362,6 +366,21 @@ export default function FormSettingsPanel({
                   placeholder="e.g., contact, registration"
                 />
               </div>
+              {hasBookingField && (
+                <div className="form-field">
+                  <label className="form-label">Custom Booking URL Slug</label>
+                  <p className="text-xs text-gray-500 mb-2">
+                    Serves the dedicated booking UI on your custom domain: forms.yourdomain.com/<strong>{bookingSlug || 'bookings'}</strong>
+                  </p>
+                  <input
+                    type="text"
+                    value={bookingSlug}
+                    onChange={(e) => setBookingSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-'))}
+                    className="input"
+                    placeholder="e.g., bookings, book-a-time"
+                  />
+                </div>
+              )}
               <div className="form-field">
                 <label className="form-label">Direct Link</label>
                 <div className="flex gap-2">

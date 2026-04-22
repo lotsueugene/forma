@@ -1,6 +1,7 @@
-import { notFound, redirect } from 'next/navigation';
+import { notFound } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
 import FormPageClient from '@/app/f/[id]/FormPageClient';
+import BookingPageClient from '@/app/book/[id]/BookingPageClient';
 
 interface Props {
   params: Promise<{
@@ -38,54 +39,56 @@ export default async function CustomDomainPage({ params }: Props) {
 
   // If no path, show default form or first form
   if (!path || path.length === 0) {
-    // If default form is set and active, show it
     if (customDomain.defaultForm && customDomain.defaultForm.status === 'active') {
       return <FormPageClient formId={customDomain.defaultForm.id} />;
     }
-
-    // If only one form, show it directly
     if (forms.length === 1) {
       return <FormPageClient formId={forms[0].id} />;
     }
-
-    // If no forms, show 404
     if (forms.length === 0) {
       notFound();
     }
-
-    // Multiple forms but no default - show first form
     return <FormPageClient formId={forms[0].id} />;
   }
 
-  // Path provided - look up by slug first, then by ID
+  // Path provided — try bookingSlug first (renders dedicated booking UI),
+  // then slug (renders regular form UI), then raw ID as a fallback.
   const slugOrId = path[0];
 
-  // Try to find form by slug
-  let form = await prisma.form.findFirst({
+  const byBookingSlug = await prisma.form.findFirst({
+    where: {
+      bookingSlug: slugOrId,
+      workspaceId: workspace.id,
+      status: 'active',
+    },
+  });
+  if (byBookingSlug) {
+    return <BookingPageClient formId={byBookingSlug.id} />;
+  }
+
+  const bySlug = await prisma.form.findFirst({
     where: {
       slug: slugOrId,
       workspaceId: workspace.id,
       status: 'active',
     },
   });
-
-  // If not found by slug, try by ID
-  if (!form) {
-    form = await prisma.form.findFirst({
-      where: {
-        id: slugOrId,
-        workspaceId: workspace.id,
-        status: 'active',
-      },
-    });
+  if (bySlug) {
+    return <FormPageClient formId={bySlug.id} />;
   }
 
-  if (!form) {
-    notFound();
+  const byId = await prisma.form.findFirst({
+    where: {
+      id: slugOrId,
+      workspaceId: workspace.id,
+      status: 'active',
+    },
+  });
+  if (byId) {
+    return <FormPageClient formId={byId.id} />;
   }
 
-  // Render the form
-  return <FormPageClient formId={form.id} />;
+  notFound();
 }
 
 // Generate metadata
@@ -104,24 +107,21 @@ export async function generateMetadata({ params }: Props) {
     return { title: 'Not Found' };
   }
 
-  // If path provided, look up form by slug or ID
   if (path && path.length > 0) {
     const slugOrId = path[0];
 
-    // Try slug first, then ID
+    // bookingSlug → slug → id
     let form = await prisma.form.findFirst({
-      where: {
-        slug: slugOrId,
-        workspaceId: customDomain.workspaceId,
-      },
+      where: { bookingSlug: slugOrId, workspaceId: customDomain.workspaceId },
     });
-
     if (!form) {
       form = await prisma.form.findFirst({
-        where: {
-          id: slugOrId,
-          workspaceId: customDomain.workspaceId,
-        },
+        where: { slug: slugOrId, workspaceId: customDomain.workspaceId },
+      });
+    }
+    if (!form) {
+      form = await prisma.form.findFirst({
+        where: { id: slugOrId, workspaceId: customDomain.workspaceId },
       });
     }
 
@@ -133,7 +133,6 @@ export async function generateMetadata({ params }: Props) {
     }
   }
 
-  // No path - use default form metadata if set
   if (customDomain.defaultForm) {
     return {
       title: customDomain.defaultForm.name,

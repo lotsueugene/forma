@@ -49,6 +49,7 @@ interface Form {
   name: string;
   description: string | null;
   slug: string | null;
+  bookingSlug: string | null;
   status: string;
   formType: string;
   fields: Array<{ id: string; label: string; type: string; defaultValue?: string }>;

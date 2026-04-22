@@ -43,6 +43,7 @@ export async function GET(
         name: form.name,
         description: form.description,
         slug: form.slug,
+        bookingSlug: form.bookingSlug,
         status: form.status,
         formType: form.formType,
         fields: JSON.parse(form.fields),
@@ -82,29 +83,66 @@ export async function PUT(
     }
 
     const existingForm = access.form!;
-    const { name, description, fields, settings, status, slug } = await request.json();
+    const { name, description, fields, settings, status, slug, bookingSlug } = await request.json();
 
-    // Validate slug uniqueness within workspace if provided
-    if (slug !== undefined && slug !== existingForm.slug) {
-      if (slug) {
-        // Clean and validate slug format
-        const cleanSlug = slug.trim().toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
-        if (cleanSlug.length < 2) {
+    const normalizeSlug = (raw: unknown): string | null => {
+      if (raw === null || raw === undefined) return null;
+      const str = String(raw).trim().toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
+      return str || null;
+    };
+
+    let nextSlug: string | null | undefined = undefined;
+    if (slug !== undefined) {
+      nextSlug = normalizeSlug(slug);
+      if (nextSlug !== existingForm.slug) {
+        if (nextSlug && nextSlug.length < 2) {
           return NextResponse.json({ error: 'Slug must be at least 2 characters' }, { status: 400 });
         }
-
-        // Check if slug is already used by another form in this workspace
-        const existingSlug = await prisma.form.findFirst({
-          where: {
-            workspaceId: existingForm.workspaceId,
-            slug: cleanSlug,
-            id: { not: id },
-          },
-        });
-        if (existingSlug) {
-          return NextResponse.json({ error: 'This slug is already used by another form' }, { status: 400 });
+        if (nextSlug) {
+          // Slug must not collide with any other form's slug OR bookingSlug in the workspace,
+          // because the custom-domain resolver looks up both on the same path.
+          const conflict = await prisma.form.findFirst({
+            where: {
+              workspaceId: existingForm.workspaceId,
+              id: { not: id },
+              OR: [{ slug: nextSlug }, { bookingSlug: nextSlug }],
+            },
+          });
+          if (conflict) {
+            return NextResponse.json({ error: 'This slug is already used by another form' }, { status: 400 });
+          }
         }
       }
+    }
+
+    let nextBookingSlug: string | null | undefined = undefined;
+    if (bookingSlug !== undefined) {
+      nextBookingSlug = normalizeSlug(bookingSlug);
+      if (nextBookingSlug !== existingForm.bookingSlug) {
+        if (nextBookingSlug && nextBookingSlug.length < 2) {
+          return NextResponse.json({ error: 'Booking slug must be at least 2 characters' }, { status: 400 });
+        }
+        if (nextBookingSlug) {
+          // Must not collide with any other form's slug/bookingSlug.
+          const conflict = await prisma.form.findFirst({
+            where: {
+              workspaceId: existingForm.workspaceId,
+              id: { not: id },
+              OR: [{ slug: nextBookingSlug }, { bookingSlug: nextBookingSlug }],
+            },
+          });
+          if (conflict) {
+            return NextResponse.json({ error: 'This booking slug is already used by another form' }, { status: 400 });
+          }
+        }
+      }
+    }
+
+    // Disallow the same slug for both on the same form (they'd resolve to two renderers for one URL).
+    const effectiveSlug = nextSlug !== undefined ? nextSlug : existingForm.slug;
+    const effectiveBookingSlug = nextBookingSlug !== undefined ? nextBookingSlug : existingForm.bookingSlug;
+    if (effectiveSlug && effectiveBookingSlug && effectiveSlug === effectiveBookingSlug) {
+      return NextResponse.json({ error: 'Slug and booking slug must be different' }, { status: 400 });
     }
 
     // Enforce plan restrictions at save time
@@ -129,7 +167,8 @@ export async function PUT(
       data: {
         name: name ?? existingForm.name,
         description: description ?? existingForm.description,
-        slug: slug !== undefined ? (slug || null) : existingForm.slug,
+        slug: nextSlug !== undefined ? nextSlug : existingForm.slug,
+        bookingSlug: nextBookingSlug !== undefined ? nextBookingSlug : existingForm.bookingSlug,
         fields: fields ? JSON.stringify(fields) : existingForm.fields,
         settings: settings ? JSON.stringify(settings) : existingForm.settings,
         status: status ?? existingForm.status,
@@ -142,6 +181,7 @@ export async function PUT(
         name: form.name,
         description: form.description,
         slug: form.slug,
+        bookingSlug: form.bookingSlug,
         status: form.status,
         formType: form.formType,
         fields: JSON.parse(form.fields),

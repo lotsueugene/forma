@@ -218,6 +218,7 @@ model Form {
   name        String
   description String?
   slug        String?  // URL-friendly slug for custom domains (e.g., "contact")
+  bookingSlug String?  // URL-friendly slug that serves the booking-only UI on custom domains (e.g., "bookings")
   status      String   @default("draft") // draft, active, archived, paused
   formType    String   @default("builder") // endpoint (quick) or builder (full)
   fields      String   @default("[]") // JSON string of form fields
@@ -238,6 +239,7 @@ model Form {
   updatedAt   DateTime @updatedAt
 
   @@unique([workspaceId, slug])
+  @@unique([workspaceId, bookingSlug])
 }
 
 model Submission {

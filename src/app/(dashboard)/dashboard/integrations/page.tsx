@@ -30,6 +30,8 @@ interface FormOption {
   id: string;
   name: string;
   slug: string | null;
+  bookingSlug?: string | null;
+  hasBookingField?: boolean;
 }
 
 interface CustomDomainState {
@@ -876,19 +878,30 @@ function IntegrationsPageContent() {
                 </div>
               </div>
 
-              {/* Form URLs on this domain — only show forms with slugs */}
+              {/* Form URLs on this domain — show forms with a form slug and/or a booking slug */}
               {(() => {
-                const formsWithSlugs = availableForms.filter((f) => f.slug);
-                const formsWithoutSlugs = availableForms.length - formsWithSlugs.length;
+                type ActiveUrl = { formId: string; formName: string; slug: string; kind: 'form' | 'booking' };
+                const activeUrls: ActiveUrl[] = availableForms.flatMap((f) => {
+                  const rows: ActiveUrl[] = [];
+                  if (f.slug) rows.push({ formId: f.id, formName: f.name, slug: f.slug, kind: 'form' });
+                  if (f.bookingSlug) rows.push({ formId: f.id, formName: f.name, slug: f.bookingSlug, kind: 'booking' });
+                  return rows;
+                });
+                const formsWithoutAnySlug = availableForms.filter((f) => !f.slug && !f.bookingSlug).length;
                 return (
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1.5">Active URLs</label>
-                    {formsWithSlugs.length > 0 ? (
+                    {activeUrls.length > 0 ? (
                       <div className="bg-gray-50 rounded-lg border border-gray-200 divide-y divide-gray-200">
-                        {formsWithSlugs.map((form) => (
-                          <div key={form.id} className="flex items-center justify-between px-3 py-2 text-sm">
-                            <span className="text-gray-700 truncate">{form.name}</span>
-                            <code className="text-xs text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded shrink-0 ml-2">/{form.slug}</code>
+                        {activeUrls.map((row) => (
+                          <div key={`${row.formId}-${row.kind}`} className="flex items-center justify-between px-3 py-2 text-sm">
+                            <span className="text-gray-700 truncate flex items-center gap-2">
+                              {row.formName}
+                              {row.kind === 'booking' && (
+                                <span className="text-[10px] uppercase tracking-wide bg-safety-orange/10 text-safety-orange px-1.5 py-0.5 rounded">Booking</span>
+                              )}
+                            </span>
+                            <code className="text-xs text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded shrink-0 ml-2">/{row.slug}</code>
                           </div>
                         ))}
                       </div>
@@ -896,8 +909,8 @@ function IntegrationsPageContent() {
                       <p className="text-sm text-gray-400">No forms with slugs configured yet.</p>
                     )}
                     <p className="text-xs text-gray-500 mt-1.5">
-                      Set a slug in a form&apos;s settings to make it available at {customDomain.domain}/<strong>slug</strong>
-                      {formsWithoutSlugs > 0 && <span> &middot; {formsWithoutSlugs} form{formsWithoutSlugs !== 1 ? 's' : ''} without slugs</span>}
+                      Set a slug in a form&apos;s settings to make it available at {customDomain.domain}/<strong>slug</strong>. Forms with a booking field can also set a Booking slug that renders the booking UI.
+                      {formsWithoutAnySlug > 0 && <span> &middot; {formsWithoutAnySlug} form{formsWithoutAnySlug !== 1 ? 's' : ''} without any slug</span>}
                     </p>
                   </div>
                 );
