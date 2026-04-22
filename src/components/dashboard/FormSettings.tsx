@@ -481,7 +481,6 @@ export default function FormSettingsPanel({
                       {copied === 'custom-domain-booking-link' ? <Check size={16} /> : <Copy size={16} />}
                     </button>
                   </div>
-                  <p className="text-xs text-gray-500 mt-1.5">Renders the booking-only UI on your verified custom domain.</p>
                 </div>
               )}
 
