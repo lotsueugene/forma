@@ -145,6 +145,33 @@ export async function PUT(
       return NextResponse.json({ error: 'Slug and booking slug must be different' }, { status: 400 });
     }
 
+    // A bookingSlug only makes sense if the form actually has a booking field,
+    // otherwise the custom-domain resolver would route to BookingPageClient
+    // against a form with nothing to render. Check the effective fields
+    // (post-update if fields are in this request, otherwise the stored ones).
+    if (effectiveBookingSlug) {
+      let effectiveFields: Array<{ type?: string }> = [];
+      if (fields !== undefined) {
+        if (Array.isArray(fields)) {
+          effectiveFields = fields as Array<{ type?: string }>;
+        }
+      } else {
+        try {
+          const parsed = JSON.parse(existingForm.fields || '[]');
+          if (Array.isArray(parsed)) effectiveFields = parsed;
+        } catch {
+          // treat unparseable fields as empty — validator below will reject
+        }
+      }
+      const hasBookingField = effectiveFields.some((f) => f?.type === 'booking');
+      if (!hasBookingField) {
+        return NextResponse.json(
+          { error: 'Booking slug can only be set on forms that have a booking field' },
+          { status: 400 }
+        );
+      }
+    }
+
     // Enforce plan restrictions at save time
     if (settings) {
       const subInfo = await getSubscriptionInfo(existingForm.workspaceId);
