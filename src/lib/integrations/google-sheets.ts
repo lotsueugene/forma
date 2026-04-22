@@ -231,11 +231,12 @@ export async function refreshAndSaveToken(
     where: { id: integrationId },
   });
   if (integration) {
-    const config = JSON.parse(integration.config);
+    const { decryptConfig, encryptConfig } = await import('@/lib/integration-secrets');
+    const config = decryptConfig<Record<string, unknown>>(integration.config);
     config.accessToken = accessToken;
     await prisma.integration.update({
       where: { id: integrationId },
-      data: { config: JSON.stringify(config) },
+      data: { config: encryptConfig(config) },
     });
   }
 

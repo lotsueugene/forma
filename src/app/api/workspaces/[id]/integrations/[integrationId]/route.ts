@@ -5,6 +5,10 @@ import { prisma } from '@/lib/prisma';
 import { verifyWorkspaceAccess } from '@/lib/workspace-auth';
 import { getSubscriptionInfo } from '@/lib/subscription';
 import { testIntegration, type IntegrationConfig } from '@/lib/integrations';
+import { getIntegrationMeta, redactConfigForDisplay } from '@/lib/integrations/catalog';
+import { encryptConfig, decryptConfig } from '@/lib/integration-secrets';
+import { apiRateLimit, getClientIp } from '@/lib/api-rate-limit';
+import { auditLog } from '@/lib/audit';
 
 // GET /api/workspaces/[id]/integrations/[integrationId] - Get integration details
 export async function GET(
@@ -19,26 +23,31 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Verify workspace access
-    const access = await verifyWorkspaceAccess(session.user.id, workspaceId, 'viewer');
+    // Manager+: even the masked config is sensitive (shape of integration,
+    // prefix of tokens) and nothing on the UI needs it at lower roles.
+    const access = await verifyWorkspaceAccess(session.user.id, workspaceId, 'manager');
     if (!access.allowed) {
       return NextResponse.json({ error: access.error }, { status: 403 });
     }
 
     const integration = await prisma.integration.findFirst({
-      where: {
-        id: integrationId,
-        workspaceId,
-      },
+      where: { id: integrationId, workspaceId },
     });
 
     if (!integration) {
       return NextResponse.json({ error: 'Integration not found' }, { status: 404 });
     }
 
-    // Parse config but mask sensitive fields
-    const config = JSON.parse(integration.config) as IntegrationConfig;
-    const maskedConfig = maskSensitiveFields(integration.type, config);
+    let maskedConfig: Record<string, unknown> = {};
+    let complete = false;
+    try {
+      const config = decryptConfig<IntegrationConfig>(integration.config);
+      const meta = getIntegrationMeta(integration.type);
+      complete = meta ? meta.isComplete(config) : true;
+      maskedConfig = redactConfigForDisplay(integration.type, config);
+    } catch (err) {
+      console.error('Failed to decrypt integration config:', err);
+    }
 
     return NextResponse.json({
       integration: {
@@ -46,7 +55,13 @@ export async function GET(
         type: integration.type,
         name: integration.name,
         enabled: integration.enabled,
+        formId: integration.formId,
+        incomplete: !complete,
         config: maskedConfig,
+        lastRunAt: integration.lastRunAt,
+        lastStatus: integration.lastStatus,
+        lastStatusCode: integration.lastStatusCode,
+        lastError: integration.lastError,
         createdAt: integration.createdAt,
         updatedAt: integration.updatedAt,
       },
@@ -73,39 +88,78 @@ export async function PATCH(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Verify workspace access (manager or higher)
+    const ip = getClientIp(request);
+    const rl = apiRateLimit(`integrations:${session.user.id}:${ip}`, 'auth');
+    if (!rl.allowed) {
+      return NextResponse.json(
+        { error: 'Too many integration changes. Try again shortly.' },
+        { status: 429, headers: rl.retryAfter ? { 'Retry-After': String(rl.retryAfter) } : undefined }
+      );
+    }
+
     const access = await verifyWorkspaceAccess(session.user.id, workspaceId, 'manager');
     if (!access.allowed) {
       return NextResponse.json({ error: access.error }, { status: 403 });
     }
 
-    const integration = await prisma.integration.findFirst({
-      where: {
-        id: integrationId,
-        workspaceId,
-      },
-    });
+    const subscriptionInfo = await getSubscriptionInfo(workspaceId);
+    if (!subscriptionInfo.features.integrations) {
+      return NextResponse.json(
+        { error: 'Integrations require a Trial or Pro subscription' },
+        { status: 402 }
+      );
+    }
 
+    const integration = await prisma.integration.findFirst({
+      where: { id: integrationId, workspaceId },
+    });
     if (!integration) {
       return NextResponse.json({ error: 'Integration not found' }, { status: 404 });
     }
 
     const body = await request.json();
-    const { name, enabled, config, testConnection } = body as {
+    const { name, enabled, config, formId, testConnection } = body as {
       name?: string;
       enabled?: boolean;
       config?: Partial<IntegrationConfig>;
+      formId?: string | null;
       testConnection?: boolean;
     };
 
-    // Merge config if provided
-    let newConfig = JSON.parse(integration.config) as IntegrationConfig;
-    if (config) {
-      newConfig = { ...newConfig, ...config };
+    const meta = getIntegrationMeta(integration.type);
+    if (!meta) {
+      return NextResponse.json({ error: 'Unsupported integration type' }, { status: 400 });
     }
 
-    // Test connection if requested
-    if (testConnection) {
+    // Merge new config into existing config (so PATCH with just
+    // { spreadsheetId: 'x' } keeps the OAuth tokens intact).
+    let newConfig = decryptConfig<IntegrationConfig>(integration.config);
+    if (config) {
+      newConfig = { ...newConfig, ...config };
+      const validationError = meta.validate(newConfig);
+      if (validationError) {
+        return NextResponse.json({ error: validationError }, { status: 400 });
+      }
+    }
+
+    // Verify the formId (if changing) belongs to this workspace.
+    let resolvedFormId: string | null | undefined = undefined;
+    if (formId !== undefined) {
+      if (formId === null || formId === '') {
+        resolvedFormId = null;
+      } else {
+        const form = await prisma.form.findFirst({
+          where: { id: formId, workspaceId },
+          select: { id: true },
+        });
+        if (!form) {
+          return NextResponse.json({ error: 'Form not found in this workspace' }, { status: 400 });
+        }
+        resolvedFormId = form.id;
+      }
+    }
+
+    if (testConnection && meta.isComplete(newConfig)) {
       const testResult = await testIntegration(integration.type, newConfig);
       if (!testResult.success) {
         return NextResponse.json(
@@ -115,13 +169,32 @@ export async function PATCH(
       }
     }
 
-    // Update integration
     const updated = await prisma.integration.update({
       where: { id: integrationId },
       data: {
-        ...(name !== undefined && { name }),
+        ...(name !== undefined && { name: name.trim() || meta.name }),
         ...(enabled !== undefined && { enabled }),
-        ...(config && { config: JSON.stringify(newConfig) }),
+        ...(config && { config: encryptConfig(newConfig as unknown as Record<string, unknown>) }),
+        ...(resolvedFormId !== undefined && { formId: resolvedFormId }),
+      },
+    });
+
+    auditLog({
+      action: 'integration.updated',
+      userId: session.user.id,
+      ip,
+      resourceType: 'integration',
+      resourceId: updated.id,
+      details: {
+        workspaceId,
+        type: updated.type,
+        // We record WHAT fields changed, never the values.
+        changedFields: Object.keys({
+          ...(name !== undefined ? { name } : {}),
+          ...(enabled !== undefined ? { enabled } : {}),
+          ...(config ? { config: Object.keys(config) } : {}),
+          ...(resolvedFormId !== undefined ? { formId: resolvedFormId } : {}),
+        }),
       },
     });
 
@@ -131,6 +204,12 @@ export async function PATCH(
         type: updated.type,
         name: updated.name,
         enabled: updated.enabled,
+        formId: updated.formId,
+        incomplete: !meta.isComplete(newConfig),
+        lastRunAt: updated.lastRunAt,
+        lastStatus: updated.lastStatus,
+        lastStatusCode: updated.lastStatusCode,
+        lastError: updated.lastError,
         createdAt: updated.createdAt,
         updatedAt: updated.updatedAt,
       },
@@ -157,25 +236,27 @@ export async function DELETE(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Verify workspace access (manager or higher)
     const access = await verifyWorkspaceAccess(session.user.id, workspaceId, 'manager');
     if (!access.allowed) {
       return NextResponse.json({ error: access.error }, { status: 403 });
     }
 
     const integration = await prisma.integration.findFirst({
-      where: {
-        id: integrationId,
-        workspaceId,
-      },
+      where: { id: integrationId, workspaceId },
     });
-
     if (!integration) {
       return NextResponse.json({ error: 'Integration not found' }, { status: 404 });
     }
 
-    await prisma.integration.delete({
-      where: { id: integrationId },
+    await prisma.integration.delete({ where: { id: integrationId } });
+
+    auditLog({
+      action: 'integration.disconnected',
+      userId: session.user.id,
+      ip: getClientIp(request),
+      resourceType: 'integration',
+      resourceId: integration.id,
+      details: { workspaceId, type: integration.type },
     });
 
     return NextResponse.json({ success: true });
@@ -188,7 +269,7 @@ export async function DELETE(
   }
 }
 
-// POST /api/workspaces/[id]/integrations/[integrationId] - Test integration
+// POST /api/workspaces/[id]/integrations/[integrationId] - Manually fire a test delivery
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string; integrationId: string }> }
@@ -201,25 +282,50 @@ export async function POST(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Verify workspace access (manager or higher)
+    const ip = getClientIp(request);
+    const rl = apiRateLimit(`integration-test:${session.user.id}:${ip}`, 'auth');
+    if (!rl.allowed) {
+      return NextResponse.json(
+        { error: 'Too many test requests. Try again shortly.' },
+        { status: 429, headers: rl.retryAfter ? { 'Retry-After': String(rl.retryAfter) } : undefined }
+      );
+    }
+
     const access = await verifyWorkspaceAccess(session.user.id, workspaceId, 'manager');
     if (!access.allowed) {
       return NextResponse.json({ error: access.error }, { status: 403 });
     }
 
     const integration = await prisma.integration.findFirst({
-      where: {
-        id: integrationId,
-        workspaceId,
-      },
+      where: { id: integrationId, workspaceId },
     });
-
     if (!integration) {
       return NextResponse.json({ error: 'Integration not found' }, { status: 404 });
     }
 
-    const config = JSON.parse(integration.config) as IntegrationConfig;
+    const config = decryptConfig<IntegrationConfig>(integration.config);
     const result = await testIntegration(integration.type, config);
+
+    // Record the test run on the row so the UI's "Last:" indicator
+    // updates like a real delivery would.
+    await prisma.integration.update({
+      where: { id: integrationId },
+      data: {
+        lastRunAt: new Date(),
+        lastStatus: result.success ? 'success' : 'error',
+        lastStatusCode: result.success ? 200 : null,
+        lastError: result.success ? null : (result.error || 'Unknown error').slice(0, 500),
+      },
+    });
+
+    auditLog({
+      action: 'integration.tested',
+      userId: session.user.id,
+      ip,
+      resourceType: 'integration',
+      resourceId: integration.id,
+      details: { workspaceId, type: integration.type, success: result.success },
+    });
 
     if (!result.success) {
       return NextResponse.json(
@@ -236,20 +342,4 @@ export async function POST(
       { status: 500 }
     );
   }
-}
-
-function maskSensitiveFields(type: string, config: IntegrationConfig): Record<string, unknown> {
-  const masked = { ...config } as Record<string, unknown>;
-
-  // Mask API keys and tokens
-  const sensitiveFields = ['apiKey', 'accessToken', 'refreshToken', 'webhookUrl'];
-
-  for (const field of sensitiveFields) {
-    if (masked[field] && typeof masked[field] === 'string') {
-      const value = masked[field] as string;
-      masked[field] = value.slice(0, 8) + '...' + value.slice(-4);
-    }
-  }
-
-  return masked;
 }

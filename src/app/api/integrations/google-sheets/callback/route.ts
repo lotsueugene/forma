@@ -4,6 +4,9 @@ import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { exchangeCodeForTokens } from '@/lib/integrations/google-sheets';
 import { verifyWorkspaceAccess } from '@/lib/workspace-auth';
+import { encryptConfig } from '@/lib/integration-secrets';
+import { auditLog } from '@/lib/audit';
+import { getClientIp } from '@/lib/api-rate-limit';
 
 // GET /api/integrations/google-sheets/callback?code=xxx&state=xxx
 export async function GET(request: NextRequest) {
@@ -79,18 +82,33 @@ export async function GET(request: NextRequest) {
     const redirectUri = `${baseUrl}/api/integrations/google-sheets/callback`;
     const tokens = await exchangeCodeForTokens(code, redirectUri);
 
-    // Create the integration in a pending state (user still needs to pick a spreadsheet)
+    // Create the integration in a pending state (user still needs to pick a spreadsheet).
+    // Tokens are AES-GCM encrypted at rest — see integration-secrets.ts.
     const integration = await prisma.integration.create({
       data: {
         workspace: { connect: { id: state.workspaceId } },
         type: 'google-sheets',
         name: 'Google Sheets',
-        config: JSON.stringify({
+        config: encryptConfig({
           accessToken: tokens.accessToken,
           refreshToken: tokens.refreshToken,
         }),
         enabled: false, // Disabled until user picks a spreadsheet
         ...(state.formId ? { form: { connect: { id: state.formId } } } : {}),
+      },
+    });
+
+    auditLog({
+      action: 'integration.connected',
+      userId: session.user.id,
+      ip: getClientIp(request),
+      resourceType: 'integration',
+      resourceId: integration.id,
+      details: {
+        workspaceId: state.workspaceId,
+        type: 'google-sheets',
+        formId: state.formId || null,
+        pending: true,
       },
     });
 

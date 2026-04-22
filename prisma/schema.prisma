@@ -293,7 +293,11 @@ model Integration {
   id          String   @id @default(cuid())
   type        String   // slack, zapier, hubspot, etc.
   name        String
-  config      String   // JSON string of integration config (encrypted in production)
+  // AES-256-GCM encrypted JSON of the integration's config (API keys,
+  // OAuth tokens, webhook URLs). Legacy rows written before encryption
+  // was introduced are stored as raw JSON and transparently upgraded on
+  // next save — see src/lib/integration-secrets.ts.
+  config      String
   enabled     Boolean  @default(true)
 
   workspaceId String
@@ -301,6 +305,14 @@ model Integration {
 
   formId      String?  // Optional: only trigger for this specific form (null = all forms)
   form        Form?    @relation(fields: [formId], references: [id], onDelete: SetNull)
+
+  // Observability: last delivery attempt. Populated by deliverToIntegrations
+  // so the UI can show a "Last: HTTP 200 · 2m ago" strip per integration
+  // without us needing a separate IntegrationDelivery log table.
+  lastRunAt      DateTime?
+  lastStatus     String?    // 'success' | 'error'
+  lastStatusCode Int?       // HTTP status from the provider, if applicable
+  lastError      String?    // truncated error message on failure
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
