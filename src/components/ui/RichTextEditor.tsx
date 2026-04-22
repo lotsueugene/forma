@@ -5,8 +5,8 @@ import StarterKit from '@tiptap/starter-kit';
 import Underline from '@tiptap/extension-underline';
 import Link from '@tiptap/extension-link';
 import Placeholder from '@tiptap/extension-placeholder';
-import { TextB, TextItalic, TextUnderline, LinkSimple, ListBullets, ListNumbers } from '@phosphor-icons/react';
-import { useEffect } from 'react';
+import { TextB, TextItalic, TextUnderline, LinkSimple, ListBullets, ListNumbers, Check, X } from '@phosphor-icons/react';
+import { useEffect, useState, useRef } from 'react';
 
 interface Props {
   value: string;
@@ -17,6 +17,10 @@ interface Props {
 }
 
 export default function RichTextEditor({ value, onChange, placeholder, rows = 5 }: Props) {
+  const [showLinkInput, setShowLinkInput] = useState(false);
+  const [linkUrl, setLinkUrl] = useState('');
+  const linkInputRef = useRef<HTMLInputElement>(null);
+
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
@@ -56,7 +60,29 @@ export default function RichTextEditor({ value, onChange, placeholder, rows = 5 
     }
   }, [value, editor]);
 
+  // Focus link input when shown
+  useEffect(() => {
+    if (showLinkInput) {
+      setTimeout(() => linkInputRef.current?.focus(), 50);
+    }
+  }, [showLinkInput]);
+
   if (!editor) return null;
+
+  const handleLinkSubmit = () => {
+    if (linkUrl.trim()) {
+      const url = linkUrl.trim().startsWith('http') ? linkUrl.trim() : `https://${linkUrl.trim()}`;
+      editor.chain().focus().setLink({ href: url }).run();
+    }
+    setShowLinkInput(false);
+    setLinkUrl('');
+  };
+
+  const handleLinkCancel = () => {
+    setShowLinkInput(false);
+    setLinkUrl('');
+    editor.chain().focus().run();
+  };
 
   const buttons = [
     {
@@ -85,10 +111,8 @@ export default function RichTextEditor({ value, onChange, placeholder, rows = 5 
         if (editor.isActive('link')) {
           editor.chain().focus().unsetLink().run();
         } else {
-          const url = window.prompt('Enter URL');
-          if (url) {
-            editor.chain().focus().setLink({ href: url }).run();
-          }
+          setShowLinkInput(true);
+          setLinkUrl('');
         }
       },
     },
@@ -126,6 +150,41 @@ export default function RichTextEditor({ value, onChange, placeholder, rows = 5 
           </button>
         ))}
       </div>
+
+      {/* Link input bar */}
+      {showLinkInput && (
+        <div className="flex items-center gap-2 px-3 py-2 bg-gray-50 border-b border-gray-100">
+          <LinkSimple size={14} className="text-gray-400 shrink-0" />
+          <input
+            ref={linkInputRef}
+            type="url"
+            value={linkUrl}
+            onChange={(e) => setLinkUrl(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') { e.preventDefault(); handleLinkSubmit(); }
+              if (e.key === 'Escape') handleLinkCancel();
+            }}
+            placeholder="https://example.com"
+            className="flex-1 text-sm bg-white border border-gray-200 rounded-md px-2.5 py-1.5 outline-none focus:border-safety-orange"
+          />
+          <button
+            type="button"
+            onClick={handleLinkSubmit}
+            className="p-1.5 rounded-md text-emerald-600 hover:bg-emerald-50"
+            title="Apply"
+          >
+            <Check size={14} weight="bold" />
+          </button>
+          <button
+            type="button"
+            onClick={handleLinkCancel}
+            className="p-1.5 rounded-md text-gray-400 hover:bg-gray-200"
+            title="Cancel"
+          >
+            <X size={14} />
+          </button>
+        </div>
+      )}
 
       {/* Editor */}
       <EditorContent editor={editor} />
