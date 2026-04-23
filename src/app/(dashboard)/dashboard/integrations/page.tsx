@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   GlobeHemisphereWest,
   LinkSimple,
@@ -185,6 +185,42 @@ function IntegrationsAuthorized() {
   const [gsLoadingSheets, setGsLoadingSheets] = useState(false);
   const [gsSelectedSpreadsheet, setGsSelectedSpreadsheet] = useState('');
   const [gsSheetName, setGsSheetName] = useState('Sheet1');
+  // Tracks whether the user dismissed the picker in this session so the
+  // next load() doesn't auto-reopen it. Cleared on fresh OAuth return
+  // and when the user explicitly clicks "Finish setup" on a row.
+  const gsDismissedRef = useRef(false);
+
+  // Re-opens the spreadsheet picker for an existing (incomplete) Google
+  // Sheets integration. Used by load() on mount, by the OAuth callback
+  // after Google consent, and by the "Finish setup" action on an
+  // incomplete row so users can come back and pick a sheet later.
+  const resumeGoogleSheetsSetup = useCallback((integrationId: string) => {
+    setGsConnectingId(integrationId);
+    setGsSelectedSpreadsheet('');
+    setGsSheetName('Sheet1');
+    setGsSpreadsheets([]);
+    setGsLoadingSheets(true);
+    setError(null);
+    fetch(`/api/integrations/google-sheets/spreadsheets?integrationId=${integrationId}`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.spreadsheets) {
+          setGsSpreadsheets(data.spreadsheets);
+        } else if (data.error) {
+          setError(data.error);
+        }
+      })
+      .catch(() => setError('Failed to load spreadsheets'))
+      .finally(() => setGsLoadingSheets(false));
+  }, []);
+
+  const cancelGoogleSheetsSetup = () => {
+    gsDismissedRef.current = true;
+    setGsConnectingId(null);
+    setGsSpreadsheets([]);
+    setGsSelectedSpreadsheet('');
+    setGsSheetName('Sheet1');
+  };
 
   const load = useCallback(async () => {
     if (!currentWorkspace) return;
@@ -236,23 +272,17 @@ function IntegrationsAuthorized() {
         // already has the picker open for the same id this is a no-op;
         // if they completed setup, the row won't be marked incomplete
         // anymore and we won't re-open it.
-        const incompleteGs = (data.integrations || []).find(
-          (i: IntegrationState) => i.type === 'google-sheets' && i.incomplete
-        );
-        if (incompleteGs) {
-          setGsConnectingId(incompleteGs.id);
-          setGsLoadingSheets(true);
-          fetch(`/api/integrations/google-sheets/spreadsheets?integrationId=${incompleteGs.id}`)
-            .then((res) => res.json())
-            .then((sheetsData) => {
-              if (sheetsData.spreadsheets) {
-                setGsSpreadsheets(sheetsData.spreadsheets);
-              } else if (sheetsData.error) {
-                setError(sheetsData.error);
-              }
-            })
-            .catch(() => setError('Failed to load spreadsheets'))
-            .finally(() => setGsLoadingSheets(false));
+        // Only auto-open the picker if the user hasn't explicitly
+        // dismissed it (via "Finish later") in this session — otherwise
+        // every list refresh would re-open the modal against their
+        // intent. Users can always click "Finish setup" on the row.
+        if (!gsDismissedRef.current) {
+          const incompleteGs = (data.integrations || []).find(
+            (i: IntegrationState) => i.type === 'google-sheets' && i.incomplete
+          );
+          if (incompleteGs) {
+            resumeGoogleSheetsSetup(incompleteGs.id);
+          }
         }
       } else if (integrationsRes.status === 402) {
         setIntegrationsFeatureEnabled(false);
@@ -263,7 +293,7 @@ function IntegrationsAuthorized() {
     } finally {
       setLoading(false);
     }
-  }, [currentWorkspace]);
+  }, [currentWorkspace, resumeGoogleSheetsSetup]);
 
   useEffect(() => {
     load();
@@ -280,23 +310,14 @@ function IntegrationsAuthorized() {
     }
 
     if (connectedId) {
-      setGsConnectingId(connectedId);
-      setGsLoadingSheets(true);
-      fetch(`/api/integrations/google-sheets/spreadsheets?integrationId=${connectedId}`)
-        .then((res) => res.json())
-        .then((data) => {
-          if (data.spreadsheets) {
-            setGsSpreadsheets(data.spreadsheets);
-          } else if (data.error) {
-            setError(data.error);
-          }
-        })
-        .catch(() => setError('Failed to load spreadsheets'))
-        .finally(() => setGsLoadingSheets(false));
+      // Fresh OAuth return — ignore any prior session dismissal so the
+      // picker opens automatically after the user grants consent.
+      gsDismissedRef.current = false;
+      resumeGoogleSheetsSetup(connectedId);
       window.history.replaceState({}, '', '/dashboard/integrations');
-      load(); // Refresh integrations list
+      load();
     }
-  }, [searchParams, load]);
+  }, [searchParams, load, resumeGoogleSheetsSetup]);
 
   // Separate counts so the headline tells the truth. Previously lumped
   // custom domain + webhooks + integrations together as "production
@@ -703,20 +724,15 @@ function IntegrationsAuthorized() {
                     when they come back. */}
                 <button
                   type="button"
-                  className="btn btn-ghost text-gray-600"
-                  onClick={() => {
-                    setGsConnectingId(null);
-                    setGsSpreadsheets([]);
-                    setGsSelectedSpreadsheet('');
-                    setGsSheetName('Sheet1');
-                  }}
+                  className="btn btn-secondary"
+                  onClick={cancelGoogleSheetsSetup}
                 >
                   Finish later
                 </button>
-                {/* Destructive path is now separate and clearly labelled. */}
+                {/* Destructive path is separate and clearly labelled. */}
                 <button
                   type="button"
-                  className="btn btn-ghost text-red-600"
+                  className="btn btn-secondary text-red-600 border-red-200 hover:bg-red-50 hover:border-red-300 hover:text-red-700 ml-auto"
                   onClick={() => {
                     if (!gsConnectingId) return;
                     const target = integrations.find((i) => i.id === gsConnectingId) || null;
@@ -1134,26 +1150,52 @@ function IntegrationsAuthorized() {
                           </div>
                         </div>
                         <div className="flex items-center gap-2 shrink-0">
-                          {/* Manual test button so users can verify delivery
-                              without waiting for a real submission. */}
+                          {integration.incomplete && integration.type === 'google-sheets' ? (
+                            /* Incomplete Google Sheets rows can't be
+                               tested or toggled — delivery would fail
+                               because no spreadsheet is selected. Give
+                               the user a primary path back to the
+                               picker instead of dead Test/Paused
+                               controls. */
+                            <button
+                              type="button"
+                              onClick={() => {
+                                gsDismissedRef.current = false;
+                                resumeGoogleSheetsSetup(integration.id);
+                              }}
+                              className="btn btn-primary text-xs"
+                              title="Pick a spreadsheet to finish setup"
+                            >
+                              Finish setup
+                            </button>
+                          ) : (
+                            <>
+                              {/* Manual test button so users can verify delivery
+                                  without waiting for a real submission. */}
+                              <button
+                                type="button"
+                                onClick={() => testIntegrationNow(integration.id)}
+                                className="btn btn-secondary text-xs"
+                                title="Send a test submission"
+                              >
+                                Test
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => toggleIntegration(integration.id, !integration.enabled)}
+                                className={`btn btn-secondary text-xs ${
+                                  integration.enabled
+                                    ? 'border-emerald-200 text-emerald-700 hover:bg-emerald-50 hover:border-emerald-300 hover:text-emerald-800'
+                                    : ''
+                                }`}
+                              >
+                                {integration.enabled ? 'Active' : 'Paused'}
+                              </button>
+                            </>
+                          )}
                           <button
                             type="button"
-                            onClick={() => testIntegrationNow(integration.id)}
-                            className="btn btn-ghost text-xs text-gray-700"
-                            title="Send a test submission"
-                          >
-                            Test
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => toggleIntegration(integration.id, !integration.enabled)}
-                            className={`btn btn-ghost text-xs ${integration.enabled ? 'text-emerald-600' : 'text-gray-700'}`}
-                          >
-                            {integration.enabled ? 'Active' : 'Paused'}
-                          </button>
-                          <button
-                            type="button"
-                            className="btn btn-ghost text-red-600"
+                            className="btn btn-secondary text-xs text-red-600 border-red-200 hover:bg-red-50 hover:border-red-300 hover:text-red-700"
                             onClick={() => setDeleteTarget(integration)}
                             title="Remove integration"
                           >
