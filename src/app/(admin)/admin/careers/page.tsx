@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import ConfirmModal from '@/components/ui/ConfirmModal';
+import { Select } from '@/components/ui/Select';
+import { Checkbox } from '@/components/ui/Checkbox';
 import {
   Plus,
   PencilSimple,
@@ -321,27 +323,19 @@ export default function AdminCareersPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="form-field">
                   <label className="form-label">Department</label>
-                  <select
+                  <Select
                     value={formData.department}
-                    onChange={(e) => setFormData({ ...formData, department: e.target.value })}
-                    className="input"
-                  >
-                    {departments.map((dept) => (
-                      <option key={dept} value={dept}>{dept}</option>
-                    ))}
-                  </select>
+                    onChange={(v) => setFormData({ ...formData, department: v })}
+                    options={departments.map((dept) => ({ value: dept, label: dept }))}
+                  />
                 </div>
                 <div className="form-field">
                   <label className="form-label">Job Type</label>
-                  <select
+                  <Select
                     value={formData.type}
-                    onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-                    className="input"
-                  >
-                    {jobTypes.map((type) => (
-                      <option key={type} value={type}>{type}</option>
-                    ))}
-                  </select>
+                    onChange={(v) => setFormData({ ...formData, type: v })}
+                    options={jobTypes.map((t) => ({ value: t, label: t }))}
+                  />
                 </div>
               </div>
 
@@ -408,42 +402,28 @@ export default function AdminCareersPage() {
           <div className="space-y-4">
             <div className="card p-6 space-y-4">
               <h3 className="font-medium text-gray-900">Publish</h3>
-              <label className="flex items-center gap-3 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={formData.published}
-                  onChange={(e) => setFormData({ ...formData, published: e.target.checked })}
-                  className="w-4 h-4 rounded border-gray-300 text-[#ef6f2e] focus:ring-[#ef6f2e]"
-                />
-                <span className="text-sm text-gray-700">Publish this job</span>
-              </label>
-              <label className="flex items-center gap-3 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={formData.featured}
-                  onChange={(e) => setFormData({ ...formData, featured: e.target.checked })}
-                  className="w-4 h-4 rounded border-gray-300 text-[#ef6f2e] focus:ring-[#ef6f2e]"
-                />
-                <span className="text-sm text-gray-700">Feature this job</span>
-              </label>
+              <Checkbox
+                checked={formData.published}
+                onChange={(e) => setFormData({ ...formData, published: e.target.checked })}
+                label="Publish this job"
+              />
+              <Checkbox
+                checked={formData.featured}
+                onChange={(e) => setFormData({ ...formData, featured: e.target.checked })}
+                label="Feature this job"
+              />
             </div>
 
             <div className="card p-6 space-y-4">
               <h3 className="font-medium text-gray-900">Application</h3>
               <div className="form-field">
                 <label className="form-label">Application Form</label>
-                <select
+                <Select
                   value={formData.applyFormId}
-                  onChange={(e) => setFormData({ ...formData, applyFormId: e.target.value })}
-                  className="input"
-                >
-                  <option value="">Select a form...</option>
-                  {forms.map((form) => (
-                    <option key={form.id} value={form.id}>
-                      {form.name}
-                    </option>
-                  ))}
-                </select>
+                  onChange={(v) => setFormData({ ...formData, applyFormId: v })}
+                  placeholder="Select a form…"
+                  options={forms.map((form) => ({ value: form.id, label: form.name }))}
+                />
                 <p className="form-helper">Recommended: Use a Forma form to collect applications</p>
               </div>
 

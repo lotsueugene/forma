@@ -25,6 +25,7 @@ import {
 } from '@phosphor-icons/react';
 import { useWorkspace } from '@/contexts/workspace-context';
 import { useSearchParams } from 'next/navigation';
+import { Select } from '@/components/ui/Select';
 
 interface FormOption {
   id: string;
@@ -649,16 +650,12 @@ function IntegrationsAuthorized() {
               <div>
                 <label className="text-xs text-gray-500 mb-1 block">Select a spreadsheet</label>
                 {gsSpreadsheets.length > 0 ? (
-                  <select
-                    className="input text-sm"
+                  <Select
                     value={gsSelectedSpreadsheet}
-                    onChange={(e) => setGsSelectedSpreadsheet(e.target.value)}
-                  >
-                    <option value="">Choose a spreadsheet...</option>
-                    {gsSpreadsheets.map((s) => (
-                      <option key={s.id} value={s.id}>{s.name}</option>
-                    ))}
-                  </select>
+                    onChange={setGsSelectedSpreadsheet}
+                    placeholder="Choose a spreadsheet…"
+                    options={gsSpreadsheets.map((s) => ({ value: s.id, label: s.name }))}
+                  />
                 ) : (
                   <>
                     <input
@@ -1071,16 +1068,14 @@ function IntegrationsAuthorized() {
                 {/* Form selector — which form triggers this integration */}
                 <div>
                   <label className="text-xs text-gray-500 mb-1 block">Trigger on</label>
-                  <select
-                    className="input text-sm"
-                    value={integrationConfig.formId || ''}
-                    onChange={(e) => setIntegrationConfig({ ...integrationConfig, formId: e.target.value })}
-                  >
-                    <option value="">All forms</option>
-                    {availableForms.map((form) => (
-                      <option key={form.id} value={form.id}>{form.name}</option>
-                    ))}
-                  </select>
+                  <Select
+                    value={(integrationConfig.formId as string) || ''}
+                    onChange={(v) => setIntegrationConfig({ ...integrationConfig, formId: v })}
+                    options={[
+                      { value: '', label: 'All forms', description: 'Fire on every form in this workspace' },
+                      ...availableForms.map((form) => ({ value: form.id, label: form.name })),
+                    ]}
+                  />
                 </div>
 
                 {addingIntegrationType !== 'google-sheets' && (
@@ -1225,19 +1220,21 @@ function IntegrationsAuthorized() {
                   Default form (root URL)
                 </label>
                 <div className="flex items-center gap-2">
-                  <select
-                    className="input flex-1"
-                    value={customDomain.defaultFormId || ''}
-                    onChange={(e) => saveDefaultForm(e.target.value || null)}
-                    disabled={savingDefaultForm}
-                  >
-                    <option value="">First active form</option>
-                    {availableForms.map((form) => (
-                      <option key={form.id} value={form.id}>
-                        {form.name} {form.slug ? `(/${form.slug})` : ''}
-                      </option>
-                    ))}
-                  </select>
+                  <div className="flex-1 min-w-0">
+                    <Select
+                      value={customDomain.defaultFormId || ''}
+                      onChange={(v) => saveDefaultForm(v || null)}
+                      disabled={savingDefaultForm}
+                      options={[
+                        { value: '', label: 'First active form', description: 'Forma picks the first published form at visit time' },
+                        ...availableForms.map((form) => ({
+                          value: form.id,
+                          label: form.name,
+                          description: form.slug ? `/${form.slug}` : undefined,
+                        })),
+                      ]}
+                    />
+                  </div>
                   {savingDefaultForm && <Spinner size={16} className="animate-spin text-gray-400" />}
                 </div>
               </div>

@@ -22,6 +22,7 @@ import { useSession } from 'next-auth/react';
 import { useWorkspace } from '@/contexts/workspace-context';
 import UpgradeModal from '@/components/dashboard/UpgradeModal';
 import ConfirmModal from '@/components/ui/ConfirmModal';
+import { Select } from '@/components/ui/Select';
 
 interface TeamMember {
   id: string;
@@ -799,15 +800,15 @@ export default function TeamPage() {
                 </div>
                 <div className="form-field">
                   <label className="form-label">Role</label>
-                  <select
+                  <Select
                     value={inviteRole}
-                    onChange={(e) => setInviteRole(e.target.value)}
-                    className="input"
-                  >
-                    <option value="viewer">Viewer</option>
-                    <option value="editor">Editor</option>
-                    <option value="manager">Manager</option>
-                  </select>
+                    onChange={setInviteRole}
+                    options={[
+                      { value: 'viewer', label: 'Viewer', description: 'Can view forms & submissions' },
+                      { value: 'editor', label: 'Editor', description: 'Can create and edit forms' },
+                      { value: 'manager', label: 'Manager', description: 'Full workspace control except billing' },
+                    ]}
+                  />
                 </div>
               </div>
               <div className="p-6 border-t border-gray-200 flex justify-end gap-3">

@@ -10,6 +10,7 @@ import {
   Buildings,
 } from '@phosphor-icons/react';
 import Pagination from '@/components/ui/Pagination';
+import { Select } from '@/components/ui/Select';
 import { cn } from '@/lib/utils';
 
 interface AdminForm {
@@ -108,20 +109,23 @@ export default function AdminFormsPage() {
             className="w-full h-10 pl-10 pr-4 text-sm bg-white border border-gray-300 rounded-lg outline-none focus:border-safety-orange focus:ring-1 focus:ring-safety-orange"
           />
         </form>
-        <select
-          value={statusFilter}
-          onChange={(e) => {
-            setStatusFilter(e.target.value);
-            setPagination((p) => ({ ...p, page: 1 }));
-          }}
-          className="h-10 px-3 text-sm bg-white border border-gray-300 rounded-lg outline-none focus:border-safety-orange min-w-[130px]"
-        >
-          <option value="">All Status</option>
-          <option value="active">Active</option>
-          <option value="draft">Draft</option>
-          <option value="paused">Paused</option>
-          <option value="archived">Archived</option>
-        </select>
+        <div className="min-w-[160px]">
+          <Select
+            value={statusFilter}
+            onChange={(v) => {
+              setStatusFilter(v);
+              setPagination((p) => ({ ...p, page: 1 }));
+            }}
+            options={[
+              { value: '', label: 'All status' },
+              { value: 'active', label: 'Active' },
+              { value: 'draft', label: 'Draft' },
+              { value: 'paused', label: 'Paused' },
+              { value: 'archived', label: 'Archived' },
+            ]}
+            aria-label="Filter by status"
+          />
+        </div>
       </div>
 
       {/* Content */}

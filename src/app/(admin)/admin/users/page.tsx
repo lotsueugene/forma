@@ -11,6 +11,7 @@ import {
   DotsThreeVertical,
 } from '@phosphor-icons/react';
 import Pagination from '@/components/ui/Pagination';
+import { Select } from '@/components/ui/Select';
 import { cn } from '@/lib/utils';
 import { AnimatePresence, motion } from 'framer-motion';
 import ConfirmModal from '@/components/ui/ConfirmModal';
@@ -163,18 +164,21 @@ export default function AdminUsersPage() {
             />
           </div>
         </form>
-        <select
-          value={roleFilter}
-          onChange={(e) => {
-            setRoleFilter(e.target.value);
-            setPagination(p => ({ ...p, page: 1 }));
-          }}
-          className="input w-full sm:w-auto"
-        >
-          <option value="">All roles</option>
-          <option value="user">Users only</option>
-          <option value="admin">Admins only</option>
-        </select>
+        <div className="w-full sm:w-44">
+          <Select
+            value={roleFilter}
+            onChange={(v) => {
+              setRoleFilter(v);
+              setPagination(p => ({ ...p, page: 1 }));
+            }}
+            options={[
+              { value: '', label: 'All roles' },
+              { value: 'user', label: 'Users only' },
+              { value: 'admin', label: 'Admins only' },
+            ]}
+            aria-label="Filter by role"
+          />
+        </div>
       </div>
 
       {/* Users Table - Desktop */}

@@ -21,6 +21,8 @@ import { cn } from '@/lib/utils';
 import { useWorkspace } from '@/contexts/workspace-context';
 import UpgradeModal from './UpgradeModal';
 import { validateSlug } from '@/lib/slug';
+import { Select } from '@/components/ui/Select';
+import { ColorPicker } from '@/components/ui/ColorPicker';
 
 interface FormField {
   id: string;
@@ -287,12 +289,16 @@ export default function FormSettingsPanel({
               </div>
               <div className="form-field">
                 <label className="form-label">Status</label>
-                <select value={status} onChange={(e) => setStatus(e.target.value)} className="input">
-                  <option value="active">Active (accepting submissions)</option>
-                  <option value="paused">Paused (visible but not accepting)</option>
-                  <option value="draft">Draft (not visible)</option>
-                  <option value="archived">Archived</option>
-                </select>
+                <Select
+                  value={status}
+                  onChange={(v) => setStatus(v)}
+                  options={[
+                    { value: 'active', label: 'Active', description: 'Accepting submissions' },
+                    { value: 'paused', label: 'Paused', description: 'Visible but not accepting' },
+                    { value: 'draft', label: 'Draft', description: 'Not visible' },
+                    { value: 'archived', label: 'Archived' },
+                  ]}
+                />
               </div>
 
               {/* Display Mode */}
@@ -369,25 +375,25 @@ export default function FormSettingsPanel({
             <h3 className="font-medium text-gray-900">Branding & Appearance</h3>
             <div className="space-y-4 max-w-lg">
               <div className="form-field">
-                <label className="form-label">Accent Color</label>
-                <div className="flex items-center gap-2">
-                  <input type="color" value={settings.branding?.accentColor || '#ef6f2e'} onChange={(e) => setSettings({ ...settings, branding: { ...settings.branding, accentColor: e.target.value } })} className="w-10 h-10 rounded-lg border border-gray-200 cursor-pointer p-0.5" />
-                  <input type="text" value={settings.branding?.accentColor || '#ef6f2e'} onChange={(e) => setSettings({ ...settings, branding: { ...settings.branding, accentColor: e.target.value } })} className="input flex-1 text-sm" />
-                </div>
+                <label className="form-label">Accent color</label>
+                <ColorPicker
+                  value={settings.branding?.accentColor || '#ef6f2e'}
+                  onChange={(v) => setSettings({ ...settings, branding: { ...settings.branding, accentColor: v } })}
+                />
               </div>
               <div className="form-field">
-                <label className="form-label">Background Color</label>
-                <div className="flex items-center gap-2">
-                  <input type="color" value={settings.branding?.backgroundColor || '#ffffff'} onChange={(e) => setSettings({ ...settings, branding: { ...settings.branding, backgroundColor: e.target.value } })} className="w-10 h-10 rounded-lg border border-gray-200 cursor-pointer p-0.5" />
-                  <input type="text" value={settings.branding?.backgroundColor || '#ffffff'} onChange={(e) => setSettings({ ...settings, branding: { ...settings.branding, backgroundColor: e.target.value } })} className="input flex-1 text-sm" />
-                </div>
+                <label className="form-label">Background color</label>
+                <ColorPicker
+                  value={settings.branding?.backgroundColor || '#ffffff'}
+                  onChange={(v) => setSettings({ ...settings, branding: { ...settings.branding, backgroundColor: v } })}
+                />
               </div>
               <div className="form-field">
-                <label className="form-label">Text Color</label>
-                <div className="flex items-center gap-2">
-                  <input type="color" value={settings.branding?.textColor || '#111827'} onChange={(e) => setSettings({ ...settings, branding: { ...settings.branding, textColor: e.target.value } })} className="w-10 h-10 rounded-lg border border-gray-200 cursor-pointer p-0.5" />
-                  <input type="text" value={settings.branding?.textColor || '#111827'} onChange={(e) => setSettings({ ...settings, branding: { ...settings.branding, textColor: e.target.value } })} className="input flex-1 text-sm" />
-                </div>
+                <label className="form-label">Text color</label>
+                <ColorPicker
+                  value={settings.branding?.textColor || '#111827'}
+                  onChange={(v) => setSettings({ ...settings, branding: { ...settings.branding, textColor: v } })}
+                />
               </div>
               {settings.branding?.accentColor && (
                 <button onClick={() => setSettings({ ...settings, branding: undefined })} className="text-xs text-gray-500 hover:text-gray-700">

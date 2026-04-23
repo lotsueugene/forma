@@ -43,6 +43,7 @@ import BookingsView from '@/components/dashboard/BookingsView';
 import AutomationsView from '@/components/dashboard/AutomationsView';
 import { useWorkspace } from '@/contexts/workspace-context';
 import FormSettingsPanel from '@/components/dashboard/FormSettings';
+import { Checkbox } from '@/components/ui/Checkbox';
 
 interface Form {
   id: string;
@@ -1036,13 +1037,12 @@ export default function FormDetailPage() {
                           >
                             <div className="flex items-start justify-between gap-3">
                               <div className="flex items-start gap-3 min-w-0 flex-1">
-                                <input
-                                  type="checkbox"
-                                  checked={selectedSubmissions.includes(submission.id)}
-                                  onChange={() => toggleSubmission(submission.id)}
-                                  onClick={(e) => e.stopPropagation()}
-                                  className="rounded border-gray-300 mt-1"
-                                />
+                                <div className="mt-1" onClick={(e) => e.stopPropagation()}>
+                                  <Checkbox
+                                    checked={selectedSubmissions.includes(submission.id)}
+                                    onChange={() => toggleSubmission(submission.id)}
+                                  />
+                                </div>
                                 <div className="min-w-0 flex-1">
                                   <div className="font-medium text-gray-900 truncate">
                                     {firstValue}
@@ -1121,11 +1121,11 @@ export default function FormDetailPage() {
                         <thead>
                           <tr className="border-b border-gray-200 text-left text-sm text-gray-500 bg-gray-50">
                             <th className="p-4 w-12">
-                              <input
-                                type="checkbox"
+                              <Checkbox
                                 checked={selectedSubmissions.length === filteredSubmissions.length && filteredSubmissions.length > 0}
+                                indeterminate={selectedSubmissions.length > 0 && selectedSubmissions.length < filteredSubmissions.length}
                                 onChange={toggleSelectAll}
-                                className="rounded border-gray-300"
+                                aria-label="Select all submissions"
                               />
                             </th>
                             {dynamicColumns.map(col => (
@@ -1157,11 +1157,10 @@ export default function FormDetailPage() {
                                   }
                                 >
                                   <td className="p-4 w-12" onClick={(e) => e.stopPropagation()}>
-                                    <input
-                                      type="checkbox"
+                                    <Checkbox
                                       checked={selectedSubmissions.includes(submission.id)}
                                       onChange={() => toggleSubmission(submission.id)}
-                                      className="rounded border-gray-300"
+                                      aria-label="Select submission"
                                     />
                                   </td>
                                   {dynamicColumns.map(col => {

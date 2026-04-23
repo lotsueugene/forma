@@ -13,6 +13,8 @@ import {
 } from '@phosphor-icons/react';
 import { cn } from '@/lib/utils';
 import ConfirmModal from '@/components/ui/ConfirmModal';
+import { Select } from '@/components/ui/Select';
+import { Checkbox } from '@/components/ui/Checkbox';
 
 interface Announcement {
   id: string;
@@ -178,16 +180,16 @@ export default function AdminAnnouncementsPage() {
             </div>
             <div>
               <label className="block text-sm text-gray-600 mb-1">Type</label>
-              <select
+              <Select
                 value={formData.type}
-                onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-                className="input w-full"
-              >
-                <option value="info">Info</option>
-                <option value="warning">Warning</option>
-                <option value="success">Success</option>
-                <option value="update">Update</option>
-              </select>
+                onChange={(v) => setFormData({ ...formData, type: v })}
+                options={[
+                  { value: 'info', label: 'Info' },
+                  { value: 'warning', label: 'Warning' },
+                  { value: 'success', label: 'Success' },
+                  { value: 'update', label: 'Update' },
+                ]}
+              />
             </div>
           </div>
 
@@ -233,39 +235,27 @@ export default function AdminAnnouncementsPage() {
             </div>
           </div>
 
-          <div className="flex flex-wrap gap-4">
-            <label className="flex items-center gap-2 text-sm text-gray-700">
-              <input
-                type="checkbox"
-                checked={formData.targetAll}
-                onChange={(e) => setFormData({ ...formData, targetAll: e.target.checked })}
-              />
-              Target all users
-            </label>
-            <label className="flex items-center gap-2 text-sm text-gray-700">
-              <input
-                type="checkbox"
-                checked={formData.dismissible}
-                onChange={(e) => setFormData({ ...formData, dismissible: e.target.checked })}
-              />
-              Dismissible
-            </label>
-            <label className="flex items-center gap-2 text-sm text-gray-700">
-              <input
-                type="checkbox"
-                checked={formData.showBanner}
-                onChange={(e) => setFormData({ ...formData, showBanner: e.target.checked })}
-              />
-              Show as banner
-            </label>
-            <label className="flex items-center gap-2 text-sm text-gray-700">
-              <input
-                type="checkbox"
-                checked={formData.showModal}
-                onChange={(e) => setFormData({ ...formData, showModal: e.target.checked })}
-              />
-              Show as modal
-            </label>
+          <div className="flex flex-wrap gap-6">
+            <Checkbox
+              checked={formData.targetAll}
+              onChange={(e) => setFormData({ ...formData, targetAll: e.target.checked })}
+              label="Target all users"
+            />
+            <Checkbox
+              checked={formData.dismissible}
+              onChange={(e) => setFormData({ ...formData, dismissible: e.target.checked })}
+              label="Dismissible"
+            />
+            <Checkbox
+              checked={formData.showBanner}
+              onChange={(e) => setFormData({ ...formData, showBanner: e.target.checked })}
+              label="Show as banner"
+            />
+            <Checkbox
+              checked={formData.showModal}
+              onChange={(e) => setFormData({ ...formData, showModal: e.target.checked })}
+              label="Show as modal"
+            />
           </div>
 
           <div className="flex gap-2">

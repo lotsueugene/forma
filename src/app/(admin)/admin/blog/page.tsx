@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import ConfirmModal from '@/components/ui/ConfirmModal';
+import { Checkbox } from '@/components/ui/Checkbox';
 import {
   Plus,
   PencilSimple,
@@ -318,24 +319,16 @@ export default function AdminBlogPage() {
           <div className="space-y-4">
             <div className="card p-6 space-y-4">
               <h3 className="font-medium text-gray-900">Publish</h3>
-              <label className="flex items-center gap-3 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={formData.published}
-                  onChange={(e) => setFormData({ ...formData, published: e.target.checked })}
-                  className="w-4 h-4 rounded border-gray-300 text-[#ef6f2e] focus:ring-[#ef6f2e]"
-                />
-                <span className="text-sm text-gray-700">Publish this post</span>
-              </label>
-              <label className="flex items-center gap-3 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={formData.featured}
-                  onChange={(e) => setFormData({ ...formData, featured: e.target.checked })}
-                  className="w-4 h-4 rounded border-gray-300 text-[#ef6f2e] focus:ring-[#ef6f2e]"
-                />
-                <span className="text-sm text-gray-700">Feature this post</span>
-              </label>
+              <Checkbox
+                checked={formData.published}
+                onChange={(e) => setFormData({ ...formData, published: e.target.checked })}
+                label="Publish this post"
+              />
+              <Checkbox
+                checked={formData.featured}
+                onChange={(e) => setFormData({ ...formData, featured: e.target.checked })}
+                label="Feature this post"
+              />
             </div>
 
             <div className="card p-6 space-y-4">

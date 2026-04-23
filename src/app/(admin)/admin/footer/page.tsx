@@ -12,6 +12,8 @@ import {
 } from '@phosphor-icons/react';
 import { cn } from '@/lib/utils';
 import ConfirmModal from '@/components/ui/ConfirmModal';
+import { Select } from '@/components/ui/Select';
+import { Checkbox } from '@/components/ui/Checkbox';
 
 interface FooterLink {
   id: string;
@@ -195,15 +197,11 @@ export default function AdminFooterPage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <label className="block text-sm text-gray-600 mb-1">Section</label>
-              <select
+              <Select
                 value={formData.section}
-                onChange={(e) => setFormData({ ...formData, section: e.target.value })}
-                className="input w-full"
-              >
-                {SECTIONS.map(s => (
-                  <option key={s} value={s}>{sectionLabels[s]}</option>
-                ))}
-              </select>
+                onChange={(v) => setFormData({ ...formData, section: v })}
+                options={SECTIONS.map((s) => ({ value: s, label: sectionLabels[s] }))}
+              />
             </div>
             <div>
               <label className="block text-sm text-gray-600 mb-1">Label</label>
@@ -242,23 +240,19 @@ export default function AdminFooterPage() {
             </p>
           </div>
 
-          <div className="flex flex-wrap gap-4">
-            <label className="flex items-center gap-2 text-sm text-gray-700">
-              <input
-                type="checkbox"
-                checked={formData.external}
-                onChange={(e) => setFormData({ ...formData, external: e.target.checked })}
-              />
-              External link (opens in new tab)
-            </label>
-            <label className="flex items-center gap-2 text-sm text-gray-700">
-              <input
-                type="checkbox"
-                checked={formData.active}
-                onChange={(e) => setFormData({ ...formData, active: e.target.checked })}
-              />
-              Active (visible in footer)
-            </label>
+          <div className="flex flex-wrap gap-6">
+            <Checkbox
+              checked={formData.external}
+              onChange={(e) => setFormData({ ...formData, external: e.target.checked })}
+              label="External link"
+              description="Opens in a new tab"
+            />
+            <Checkbox
+              checked={formData.active}
+              onChange={(e) => setFormData({ ...formData, active: e.target.checked })}
+              label="Active"
+              description="Visible in footer"
+            />
           </div>
 
           <div className="flex gap-2">

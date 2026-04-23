@@ -17,6 +17,8 @@ import {
 } from '@phosphor-icons/react';
 import { cn } from '@/lib/utils';
 import ConfirmModal from '@/components/ui/ConfirmModal';
+import { Select } from '@/components/ui/Select';
+import { Checkbox } from '@/components/ui/Checkbox';
 
 interface Feature {
   text: string;
@@ -284,15 +286,11 @@ export default function AdminPricingPage() {
             </div>
             <div>
               <label className="block text-sm text-gray-600 mb-1">Icon</label>
-              <select
+              <Select
                 value={formData.icon}
-                onChange={(e) => setFormData({ ...formData, icon: e.target.value })}
-                className="input w-full"
-              >
-                {iconOptions.map(opt => (
-                  <option key={opt.value} value={opt.value}>{opt.value}</option>
-                ))}
-              </select>
+                onChange={(v) => setFormData({ ...formData, icon: v })}
+                options={iconOptions.map((opt) => ({ value: opt.value, label: opt.value }))}
+              />
             </div>
           </div>
 
@@ -419,14 +417,11 @@ export default function AdminPricingPage() {
                     className="input flex-1"
                     placeholder="e.g., Unlimited forms"
                   />
-                  <label className="flex items-center gap-1 text-sm text-gray-600 whitespace-nowrap">
-                    <input
-                      type="checkbox"
-                      checked={feature.included}
-                      onChange={(e) => updateFeature(index, 'included', e.target.checked)}
-                    />
-                    Included
-                  </label>
+                  <Checkbox
+                    checked={feature.included}
+                    onChange={(e) => updateFeature(index, 'included', e.target.checked)}
+                    label="Included"
+                  />
                   <button
                     type="button"
                     onClick={() => removeFeature(index)}
@@ -447,23 +442,18 @@ export default function AdminPricingPage() {
             </button>
           </div>
 
-          <div className="flex flex-wrap gap-4">
-            <label className="flex items-center gap-2 text-sm text-gray-700">
-              <input
-                type="checkbox"
-                checked={formData.popular}
-                onChange={(e) => setFormData({ ...formData, popular: e.target.checked })}
-              />
-              Mark as Popular
-            </label>
-            <label className="flex items-center gap-2 text-sm text-gray-700">
-              <input
-                type="checkbox"
-                checked={formData.active}
-                onChange={(e) => setFormData({ ...formData, active: e.target.checked })}
-              />
-              Active (visible on landing page)
-            </label>
+          <div className="flex flex-wrap gap-6">
+            <Checkbox
+              checked={formData.popular}
+              onChange={(e) => setFormData({ ...formData, popular: e.target.checked })}
+              label="Mark as popular"
+            />
+            <Checkbox
+              checked={formData.active}
+              onChange={(e) => setFormData({ ...formData, active: e.target.checked })}
+              label="Active"
+              description="Visible on landing page"
+            />
           </div>
 
           <div className="flex gap-2">

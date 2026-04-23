@@ -21,6 +21,7 @@ import { useWorkspace } from '@/contexts/workspace-context';
 import UpgradeModal from '@/components/dashboard/UpgradeModal';
 import ConfirmModal from '@/components/ui/ConfirmModal';
 import RichTextEditor from '@/components/ui/RichTextEditor';
+import { Select } from '@/components/ui/Select';
 
 interface FormOption {
   id: string;
@@ -258,16 +259,14 @@ export default function BroadcastsPage() {
                         <FunnelSimple size={14} />
                         Send to respondents of
                       </label>
-                      <select
+                      <Select
                         value={selectedForm}
-                        onChange={(e) => setSelectedForm(e.target.value)}
-                        className="input"
-                      >
-                        <option value="">All forms</option>
-                        {forms.map(f => (
-                          <option key={f.id} value={f.id}>{f.name}</option>
-                        ))}
-                      </select>
+                        onChange={setSelectedForm}
+                        options={[
+                          { value: '', label: 'All forms' },
+                          ...forms.map((f) => ({ value: f.id, label: f.name })),
+                        ]}
+                      />
                     </div>
 
                     {/* From name */}

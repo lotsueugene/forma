@@ -18,6 +18,7 @@ import {
 } from '@phosphor-icons/react';
 import { cn } from '@/lib/utils';
 import RichTextEditor from '@/components/ui/RichTextEditor';
+import { Checkbox } from '@/components/ui/Checkbox';
 import ConfirmModal from '@/components/ui/ConfirmModal';
 
 interface Broadcast {
@@ -369,14 +370,11 @@ export default function AdminBroadcastsPage() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="flex items-center gap-2 text-sm text-gray-700">
-                    <input
-                      type="checkbox"
-                      checked={formData.targetAll}
-                      onChange={(e) => setFormData({ ...formData, targetAll: e.target.checked })}
-                    />
-                    Send to all users
-                  </label>
+                  <Checkbox
+                    checked={formData.targetAll}
+                    onChange={(e) => setFormData({ ...formData, targetAll: e.target.checked })}
+                    label="Send to all users"
+                  />
                 </div>
                 {!formData.targetAll && (
                   <div>
@@ -393,14 +391,12 @@ export default function AdminBroadcastsPage() {
               </div>
 
               <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
-                <label className="flex items-center gap-2 text-sm text-amber-700">
-                  <input
-                    type="checkbox"
-                    checked={formData.sendNow}
-                    onChange={(e) => setFormData({ ...formData, sendNow: e.target.checked })}
-                  />
-                  Send immediately (cannot be undone)
-                </label>
+                <Checkbox
+                  checked={formData.sendNow}
+                  onChange={(e) => setFormData({ ...formData, sendNow: e.target.checked })}
+                  label={<span className="text-amber-800">Send immediately</span>}
+                  description={<span className="text-amber-700">This cannot be undone</span>}
+                />
               </div>
 
               <div className="flex gap-2">

@@ -27,6 +27,7 @@ import {
 import { cn } from '@/lib/utils';
 import { useWorkspace } from '@/contexts/workspace-context';
 import ConfirmModal from '@/components/ui/ConfirmModal';
+import { Select } from '@/components/ui/Select';
 // Removed hardcoded plan-catalog, using database plans instead
 
 interface PricingPlan {
@@ -776,17 +777,12 @@ export default function SettingsPage() {
       <div className="flex flex-col lg:flex-row gap-6">
         {/* Mobile Dropdown */}
         <div className="lg:hidden">
-          <select
+          <Select
             value={activeTab}
-            onChange={(e) => setActiveTab(e.target.value as SettingsTab)}
-            className="w-full h-12 px-4 text-base bg-white border border-gray-300 rounded-lg outline-none focus:border-safety-orange"
-          >
-            {filteredTabs.map((tab) => (
-              <option key={tab.id} value={tab.id}>
-                {tab.label}
-              </option>
-            ))}
-          </select>
+            onChange={(v) => setActiveTab(v as SettingsTab)}
+            options={filteredTabs.map((tab) => ({ value: tab.id, label: tab.label }))}
+            aria-label="Settings section"
+          />
         </div>
 
         {/* Desktop Sidebar */}
@@ -1805,14 +1801,14 @@ export default function SettingsPage() {
                   </div>
                   <div className="form-field">
                     <label className="form-label">Key Type</label>
-                    <select
+                    <Select
                       value={newKeyType}
-                      onChange={(e) => setNewKeyType(e.target.value as 'live' | 'test')}
-                      className="input"
-                    >
-                      <option value="live">Live (Production)</option>
-                      <option value="test">Test (Development)</option>
-                    </select>
+                      onChange={(v) => setNewKeyType(v as 'live' | 'test')}
+                      options={[
+                        { value: 'live', label: 'Live', description: 'Production' },
+                        { value: 'test', label: 'Test', description: 'Development' },
+                      ]}
+                    />
                   </div>
                 </>
               )}

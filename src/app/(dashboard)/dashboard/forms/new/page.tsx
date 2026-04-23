@@ -46,6 +46,8 @@ import { cn, generateId } from '@/lib/utils';
 import { useWorkspace } from '@/contexts/workspace-context';
 import WeeklyScheduleEditor from '@/components/dashboard/WeeklyScheduleEditor';
 import UpgradeModal from '@/components/dashboard/UpgradeModal';
+import { Select } from '@/components/ui/Select';
+import { ColorPicker } from '@/components/ui/ColorPicker';
 
 interface FormSettings {
   branding?: {
@@ -825,13 +827,17 @@ export default function NewFormPage() {
                     </div>
                     <div className="form-field">
                       <label className="form-label">Currency</label>
-                      <select value={selectedField.currency || 'usd'} onChange={(e) => updateField(selectedField.id, { currency: e.target.value })} className="input">
-                        <option value="usd">USD ($)</option>
-                        <option value="eur">EUR (€)</option>
-                        <option value="gbp">GBP (£)</option>
-                        <option value="cad">CAD ($)</option>
-                        <option value="aud">AUD ($)</option>
-                      </select>
+                      <Select
+                        value={selectedField.currency || 'usd'}
+                        onChange={(v) => updateField(selectedField.id, { currency: v })}
+                        options={[
+                          { value: 'usd', label: 'USD ($)' },
+                          { value: 'eur', label: 'EUR (€)' },
+                          { value: 'gbp', label: 'GBP (£)' },
+                          { value: 'cad', label: 'CAD ($)' },
+                          { value: 'aud', label: 'AUD ($)' },
+                        ]}
+                      />
                     </div>
                   </div>
                 )}
@@ -1059,43 +1065,37 @@ export default function NewFormPage() {
                       <p className="text-xs text-gray-500">Show this field when:</p>
 
                       {/* Field selector */}
-                      <select
+                      <Select
                         value={selectedField.condition.fieldId}
-                        onChange={(e) =>
+                        onChange={(v) =>
                           updateField(selectedField.id, {
-                            condition: { ...selectedField.condition!, fieldId: e.target.value },
+                            condition: { ...selectedField.condition!, fieldId: v },
                           })
                         }
-                        className="input text-sm"
-                      >
-                        {fields
+                        options={fields
                           .filter((f) => f.id !== selectedField.id)
-                          .map((f) => (
-                            <option key={f.id} value={f.id}>
-                              {f.label}
-                            </option>
-                          ))}
-                      </select>
+                          .map((f) => ({ value: f.id, label: f.label }))}
+                      />
 
                       {/* Operator selector */}
-                      <select
+                      <Select
                         value={selectedField.condition.operator}
-                        onChange={(e) =>
+                        onChange={(v) =>
                           updateField(selectedField.id, {
                             condition: {
                               ...selectedField.condition!,
-                              operator: e.target.value as ConditionOperator,
+                              operator: v as ConditionOperator,
                             },
                           })
                         }
-                        className="input text-sm"
-                      >
-                        <option value="equals">Equals</option>
-                        <option value="not_equals">Does not equal</option>
-                        <option value="contains">Contains</option>
-                        <option value="not_empty">Is not empty</option>
-                        <option value="is_empty">Is empty</option>
-                      </select>
+                        options={[
+                          { value: 'equals', label: 'Equals' },
+                          { value: 'not_equals', label: 'Does not equal' },
+                          { value: 'contains', label: 'Contains' },
+                          { value: 'not_empty', label: 'Is not empty' },
+                          { value: 'is_empty', label: 'Is empty' },
+                        ]}
+                      />
 
                       {/* Value input (not needed for empty checks) */}
                       {!['not_empty', 'is_empty'].includes(selectedField.condition.operator) && (
@@ -1104,22 +1104,19 @@ export default function NewFormPage() {
                             const targetField = fields.find(f => f.id === selectedField.condition?.fieldId);
                             if (targetField && ['radio', 'select'].includes(targetField.type)) {
                               return (
-                                <select
-                                  value={selectedField.condition.value || ''}
-                                  onChange={(e) =>
+                                <Select
+                                  value={(selectedField.condition?.value as string) || ''}
+                                  onChange={(v) =>
                                     updateField(selectedField.id, {
-                                      condition: { ...selectedField.condition!, value: e.target.value },
+                                      condition: { ...selectedField.condition!, value: v },
                                     })
                                   }
-                                  className="input text-sm"
-                                >
-                                  <option value="">Select value...</option>
-                                  {(targetField.options || []).map((opt) => (
-                                    <option key={opt} value={opt}>
-                                      {opt}
-                                    </option>
-                                  ))}
-                                </select>
+                                  placeholder="Select value…"
+                                  options={[
+                                    { value: '', label: 'Select value…' },
+                                    ...(targetField.options || []).map((opt) => ({ value: opt, label: opt })),
+                                  ]}
+                                />
                               );
                             }
                             return (
@@ -1196,25 +1193,25 @@ export default function NewFormPage() {
                     </div>
                     <div className="space-y-3">
                       <div className="form-field">
-                        <label className="form-label">Accent Color</label>
-                        <div className="flex items-center gap-2">
-                          <input type="color" value={formSettings.branding?.accentColor || '#ef6f2e'} onChange={(e) => setFormSettings({ ...formSettings, branding: { ...formSettings.branding, accentColor: e.target.value } })} className="w-10 h-10 rounded-lg border border-gray-200 cursor-pointer p-0.5" />
-                          <input type="text" value={formSettings.branding?.accentColor || '#ef6f2e'} onChange={(e) => setFormSettings({ ...formSettings, branding: { ...formSettings.branding, accentColor: e.target.value } })} className="input flex-1 text-sm" placeholder="#ef6f2e" />
-                        </div>
+                        <label className="form-label">Accent color</label>
+                        <ColorPicker
+                          value={formSettings.branding?.accentColor || '#ef6f2e'}
+                          onChange={(v) => setFormSettings({ ...formSettings, branding: { ...formSettings.branding, accentColor: v } })}
+                        />
                       </div>
                       <div className="form-field">
-                        <label className="form-label">Background Color</label>
-                        <div className="flex items-center gap-2">
-                          <input type="color" value={formSettings.branding?.backgroundColor || '#ffffff'} onChange={(e) => setFormSettings({ ...formSettings, branding: { ...formSettings.branding, backgroundColor: e.target.value } })} className="w-10 h-10 rounded-lg border border-gray-200 cursor-pointer p-0.5" />
-                          <input type="text" value={formSettings.branding?.backgroundColor || '#ffffff'} onChange={(e) => setFormSettings({ ...formSettings, branding: { ...formSettings.branding, backgroundColor: e.target.value } })} className="input flex-1 text-sm" placeholder="#ffffff" />
-                        </div>
+                        <label className="form-label">Background color</label>
+                        <ColorPicker
+                          value={formSettings.branding?.backgroundColor || '#ffffff'}
+                          onChange={(v) => setFormSettings({ ...formSettings, branding: { ...formSettings.branding, backgroundColor: v } })}
+                        />
                       </div>
                       <div className="form-field">
-                        <label className="form-label">Text Color</label>
-                        <div className="flex items-center gap-2">
-                          <input type="color" value={formSettings.branding?.textColor || '#111827'} onChange={(e) => setFormSettings({ ...formSettings, branding: { ...formSettings.branding, textColor: e.target.value } })} className="w-10 h-10 rounded-lg border border-gray-200 cursor-pointer p-0.5" />
-                          <input type="text" value={formSettings.branding?.textColor || '#111827'} onChange={(e) => setFormSettings({ ...formSettings, branding: { ...formSettings.branding, textColor: e.target.value } })} className="input flex-1 text-sm" placeholder="#111827" />
-                        </div>
+                        <label className="form-label">Text color</label>
+                        <ColorPicker
+                          value={formSettings.branding?.textColor || '#111827'}
+                          onChange={(v) => setFormSettings({ ...formSettings, branding: { ...formSettings.branding, textColor: v } })}
+                        />
                       </div>
                       {formSettings.branding?.accentColor && (
                         <button onClick={() => setFormSettings({ ...formSettings, branding: undefined })} className="text-xs text-gray-500 hover:text-gray-700">Reset to defaults</button>

@@ -230,6 +230,35 @@ button, [role="button"] {
   color: var(--neutral-600);
 }
 
+/* Strip the native browser chrome on type=number/date/datetime-local so
+   `.input` reads as a clean, brand-consistent field rather than the OS
+   widget. Users still get keyboard arrow-step on number, and the calendar
+   picker still opens on click — we just hide the ugly built-in spinners
+   and default icon backgrounds. */
+.input[type='number']::-webkit-outer-spin-button,
+.input[type='number']::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  appearance: none;
+  margin: 0;
+}
+.input[type='number'] {
+  -moz-appearance: textfield; /* firefox */
+  appearance: textfield;
+}
+.input[type='date']::-webkit-calendar-picker-indicator,
+.input[type='time']::-webkit-calendar-picker-indicator,
+.input[type='datetime-local']::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  filter: invert(47%) sepia(8%) saturate(0%) hue-rotate(0deg) brightness(95%) contrast(89%);
+  opacity: 0.6;
+  transition: opacity 150ms;
+}
+.input[type='date']:hover::-webkit-calendar-picker-indicator,
+.input[type='time']:hover::-webkit-calendar-picker-indicator,
+.input[type='datetime-local']:hover::-webkit-calendar-picker-indicator {
+  opacity: 1;
+}
+
 /* Card - Light Theme */
 .card {
   background: white;

@@ -8,6 +8,7 @@ import { cn } from '@/lib/utils';
 import { useWorkspace } from '@/contexts/workspace-context';
 import type { DashboardNotification, NotificationsListResponse } from '@/types/notifications';
 import { useNotificationStream } from '@/hooks/useNotificationStream';
+import { Select } from '@/components/ui/Select';
 
 type Filter = 'all' | 'unread';
 
@@ -172,14 +173,18 @@ export default function NotificationsPage() {
           </div>
           <div className="flex items-center gap-2">
             <span className="text-sm text-gray-600 hidden sm:inline">Workspace:</span>
-            <select
-              className="input h-9 py-0 text-sm"
-              value={workspaceScope}
-              onChange={(e) => setWorkspaceScope(e.target.value)}
-            >
-              <option value="current">Current</option>
-              <option value="all">All</option>
-            </select>
+            <div className="w-32">
+              <Select
+                size="sm"
+                value={workspaceScope}
+                onChange={setWorkspaceScope}
+                options={[
+                  { value: 'current', label: 'Current' },
+                  { value: 'all', label: 'All' },
+                ]}
+                aria-label="Workspace scope"
+              />
+            </div>
           </div>
         </div>
 

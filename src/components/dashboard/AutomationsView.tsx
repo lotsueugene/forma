@@ -5,6 +5,7 @@ import { Plus, Lightning, Trash, EnvelopeSimple, Clock, Check, X, CaretDown, Clo
 import Link from 'next/link';
 import ConfirmModal from '@/components/ui/ConfirmModal';
 import RichTextEditor from '@/components/ui/RichTextEditor';
+import { Select } from '@/components/ui/Select';
 
 interface AutomationAction {
   type: 'send_email';
@@ -316,15 +317,18 @@ export default function AutomationsView({ formId, fields }: Props) {
                     <span className="text-xs font-medium text-gray-700">Send Email</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <select
-                      value={action.delay}
-                      onChange={(e) => updateAction(i, { delay: parseInt(e.target.value) })}
-                      className="text-xs border border-gray-200 rounded-lg px-2 py-1 bg-white text-gray-600"
-                    >
-                      {DELAY_OPTIONS.map(opt => (
-                        <option key={opt.value} value={opt.value}>{opt.label}</option>
-                      ))}
-                    </select>
+                    <div className="w-36">
+                      <Select
+                        size="sm"
+                        value={String(action.delay)}
+                        onChange={(v) => updateAction(i, { delay: parseInt(v, 10) })}
+                        options={DELAY_OPTIONS.map((opt) => ({
+                          value: String(opt.value),
+                          label: opt.label,
+                        }))}
+                        aria-label="Delay before sending"
+                      />
+                    </div>
                     {newActions.length > 1 && (
                       <button
                         type="button"

@@ -20,6 +20,7 @@ import {
 import { cn } from '@/lib/utils';
 import { useWorkspace } from '@/contexts/workspace-context';
 import Pagination from '@/components/ui/Pagination';
+import { Select } from '@/components/ui/Select';
 
 interface Form {
   id: string;
@@ -235,28 +236,34 @@ export default function FormsPage() {
         </div>
 
         {/* Status Filter */}
-        <select
-          value={statusFilter}
-          onChange={(e) => { setStatusFilter(e.target.value as typeof statusFilter); setPage(1); }}
-          className="h-10 px-3 text-sm bg-white border border-gray-300 rounded-lg outline-none focus:border-safety-orange min-w-[120px]"
-        >
-          <option value="all">All Status</option>
-          <option value="active">Active</option>
-          <option value="paused">Paused</option>
-          <option value="draft">Draft</option>
-        </select>
+        <div className="min-w-[140px]">
+          <Select
+            value={statusFilter}
+            onChange={(v) => { setStatusFilter(v as typeof statusFilter); setPage(1); }}
+            options={[
+              { value: 'all', label: 'All status' },
+              { value: 'active', label: 'Active' },
+              { value: 'paused', label: 'Paused' },
+              { value: 'draft', label: 'Draft' },
+            ]}
+            aria-label="Filter by status"
+          />
+        </div>
 
         {/* Sort */}
-        <select
-          value={sortBy}
-          onChange={(e) => { setSortBy(e.target.value as SortOption); setPage(1); }}
-          className="h-10 px-3 text-sm bg-white border border-gray-300 rounded-lg outline-none focus:border-safety-orange min-w-[150px]"
-        >
-          <option value="newest">Newest First</option>
-          <option value="oldest">Oldest First</option>
-          <option value="most-submissions">Most Submissions</option>
-          <option value="alphabetical">Alphabetical</option>
-        </select>
+        <div className="min-w-[170px]">
+          <Select
+            value={sortBy}
+            onChange={(v) => { setSortBy(v as SortOption); setPage(1); }}
+            options={[
+              { value: 'newest', label: 'Newest first' },
+              { value: 'oldest', label: 'Oldest first' },
+              { value: 'most-submissions', label: 'Most submissions' },
+              { value: 'alphabetical', label: 'Alphabetical' },
+            ]}
+            aria-label="Sort forms"
+          />
+        </div>
 
         {/* View Toggle */}
         <div className="flex h-10 rounded-lg border border-gray-300 overflow-hidden bg-white">
