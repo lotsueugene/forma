@@ -173,6 +173,58 @@
   to { opacity: 1; transform: translateY(0); }
 }
 
+/* Open source badge — centered hero CTA */
+.oss-badge {
+  position: relative; z-index: 3;
+  align-self: center;
+  display: inline-flex; align-items: center; gap: 10px;
+  margin-bottom: 40px;
+  font-family: var(--font-mono, 'Geist Mono', ui-monospace, monospace);
+  font-size: 12px;
+  text-transform: uppercase; letter-spacing: 0.02em;
+  padding: 10px 18px 10px 16px;
+  border: 1px solid var(--ink);
+  border-radius: 999px;
+  background: var(--ink);
+  color: #fff;
+  text-decoration: none;
+  box-shadow:
+    0 1px 2px rgba(0,0,0,0.08),
+    0 10px 30px -10px rgba(239,111,46,0.45);
+  opacity: 0;
+  animation: fadeUp 900ms var(--ease) 120ms forwards;
+  transition: transform 200ms var(--ease-soft), box-shadow 200ms var(--ease-soft);
+}
+.oss-badge:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 1px 2px rgba(0,0,0,0.08),
+    0 16px 40px -10px rgba(239,111,46,0.6);
+}
+.oss-badge:active { transform: translateY(0); }
+.oss-badge-pulse {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--orange);
+  box-shadow: 0 0 0 0 rgba(239,111,46,0.7);
+  animation: ossPulse 2s infinite;
+}
+@keyframes ossPulse {
+  0%   { box-shadow: 0 0 0 0 rgba(239,111,46,0.7); }
+  70%  { box-shadow: 0 0 0 8px rgba(239,111,46,0); }
+  100% { box-shadow: 0 0 0 0 rgba(239,111,46,0); }
+}
+.oss-badge-label { color: #fff; font-weight: 500; }
+.oss-badge-sep { color: rgba(255,255,255,0.35); }
+.oss-badge-cta {
+  display: inline-flex; align-items: center; gap: 6px;
+  color: var(--orange); font-weight: 600;
+}
+.oss-badge svg:last-child {
+  transition: transform 200ms var(--ease-soft);
+  opacity: 0.7;
+}
+.oss-badge:hover svg:last-child { transform: translateX(2px); opacity: 1; }
+
 /* Conversational prompt */
 .prompt-widget {
   max-width: 540px;
@@ -1129,6 +1181,16 @@
   .prompt-widget { max-width: 100%; }
   .prompt-tabs { overflow-x: auto; }
   .hero-ctas { flex-direction: column; align-items: flex-start; gap: 12px; }
+  .oss-badge {
+    font-size: 10px;
+    padding: 8px 12px 8px 10px;
+    gap: 8px;
+    margin-bottom: 28px;
+    max-width: calc(100% - 32px);
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .oss-badge-sep { display: none; }
   .hero-visual { aspect-ratio: auto; }
   .floating-form { position: relative; padding: 24px 20px 20px; transform: none; }
   .ff-question { font-size: 20px; }
