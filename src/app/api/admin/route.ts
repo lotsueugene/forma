@@ -68,21 +68,32 @@ export async function GET() {
       }),
     ]);
 
-    // Calculate MRR (Monthly Recurring Revenue) - only count actual paying customers
-    const payingSubscriptions = await prisma.subscription.findMany({
-      where: {
-        plan: 'pro',
-        stripeSubscriptionId: { not: null }, // Only actual Stripe customers, not admin freebies
-      },
-      select: { stripePriceId: true },
-    });
+    // Calculate MRR (Monthly Recurring Revenue) - only count actual paying customers.
+    // Prices are read from the PricingPlan table so MRR stays correct when admins
+    // change pricing in the dashboard. yearlyPrice is stored as the monthly equivalent.
+    const [payingSubscriptions, proPlan] = await Promise.all([
+      prisma.subscription.findMany({
+        where: {
+          plan: 'pro',
+          stripeSubscriptionId: { not: null }, // Only actual Stripe customers, not admin freebies
+        },
+        select: { stripePriceId: true },
+      }),
+      prisma.pricingPlan.findUnique({
+        where: { slug: 'pro' },
+        select: { monthlyPrice: true, yearlyPrice: true },
+      }),
+    ]);
+
+    const monthlyRate = proPlan?.monthlyPrice ?? 0;
+    const yearlyRate = proPlan?.yearlyPrice ?? 0;
 
     let mrr = 0;
     for (const sub of payingSubscriptions) {
       if (sub.stripePriceId === STRIPE_PRICES.pro_yearly) {
-        mrr += 12.5; // $150/year = $12.50/month
+        mrr += yearlyRate;
       } else {
-        mrr += 15; // $15/month
+        mrr += monthlyRate;
       }
     }
     mrr = Math.round(mrr * 100) / 100; // Round to 2 decimal places
