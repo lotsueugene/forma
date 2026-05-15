@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { verifyAdmin } from '@/lib/admin-auth';
+import { auditLog } from '@/lib/audit';
+import { getClientIp } from '@/lib/api-rate-limit';
 
 // GET /api/admin/users/[userId] - Get user details
 export async function GET(
@@ -87,6 +89,11 @@ export async function PATCH(
       );
     }
 
+    const before = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { role: true, email: true },
+    });
+
     const user = await prisma.user.update({
       where: { id: userId },
       data: {
@@ -99,6 +106,17 @@ export async function PATCH(
         role: true,
       },
     });
+
+    if (role && before && before.role !== role) {
+      auditLog({
+        action: role === 'admin' ? 'admin.promote_user' : 'admin.demote_user',
+        userId: admin.user.id,
+        ip: getClientIp(request),
+        resourceType: 'user',
+        resourceId: user.id,
+        details: { targetEmail: user.email, from: before.role, to: role },
+      });
+    }
 
     return NextResponse.json({ user });
   } catch (error) {
@@ -129,6 +147,16 @@ export async function DELETE(
         { error: 'Cannot delete yourself' },
         { status: 400 }
       );
+    }
+
+    // Snapshot the target user before deletion — once the row is gone, an audit
+    // log entry with just the deleted userId is meaningless.
+    const targetUser = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true, email: true, name: true, role: true },
+    });
+    if (!targetUser) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
     // Find all workspaces where this user is the owner
@@ -214,6 +242,20 @@ export async function DELETE(
       await tx.user.delete({
         where: { id: userId },
       });
+    });
+
+    auditLog({
+      action: 'admin.delete_user',
+      userId: admin.user.id,
+      ip: getClientIp(request),
+      resourceType: 'user',
+      resourceId: targetUser.id,
+      details: {
+        targetEmail: targetUser.email,
+        targetName: targetUser.name,
+        targetRole: targetUser.role,
+        cascadedWorkspaces: workspaceIds.length,
+      },
     });
 
     return NextResponse.json({ success: true });

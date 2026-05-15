@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Warning, X } from '@phosphor-icons/react';
 
@@ -35,12 +35,17 @@ export default function ConfirmModal({
   typedConfirmationLabel,
 }: ConfirmModalProps) {
   const [typed, setTyped] = useState('');
-
-  // Reset the typed input every time the modal opens so a previous match
-  // can't auto-confirm a different deletion.
-  useEffect(() => {
-    if (open) setTyped('');
-  }, [open]);
+  // Track which modal-open this typed value belongs to, keyed by the target
+  // value + open flag. When the modal re-opens for a different target (or
+  // re-opens at all) we reset typed in render — this is React's "adjust
+  // state during render" pattern and avoids the cascading-render trap of
+  // doing it in a useEffect.
+  const openKey = open ? requireTypedConfirmation ?? '__open__' : '__closed__';
+  const [lastOpenKey, setLastOpenKey] = useState(openKey);
+  if (openKey !== lastOpenKey) {
+    setLastOpenKey(openKey);
+    if (typed !== '') setTyped('');
+  }
 
   const typedMatches =
     !requireTypedConfirmation || typed === requireTypedConfirmation;

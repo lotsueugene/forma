@@ -39,15 +39,17 @@ model Session {
 }
 
 model User {
-  id            String    @id @default(cuid())
-  name          String?
-  email         String?   @unique
-  emailVerified DateTime?
-  password      String?
-  image         String?
-  role          String    @default("user") // user, admin
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  id              String    @id @default(cuid())
+  name            String?
+  email           String?   @unique
+  emailVerified   DateTime?
+  password        String?
+  image           String?
+  role            String    @default("user") // user, admin
+  suspendedAt     DateTime? // null = active; non-null = suspended (login blocked)
+  suspendedReason String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 
   accounts           Account[]
   sessions           Session[]
@@ -56,6 +58,8 @@ model User {
   settings           UserSettings?
   notifications      Notification[]
   subscription       Subscription?
+
+  @@index([suspendedAt])
 }
 
 model VerificationToken {
@@ -716,4 +720,18 @@ model AuditLog {
   @@index([action])
   @@index([userId])
   @@index([createdAt])
+}
+
+// Admin-editable email templates. Slug is the lookup key (e.g. "welcome").
+// Body is HTML; {{name}} / {{email}} placeholders are substituted at send time.
+// Code-defined fallbacks exist for every template, so a missing row never
+// breaks an outbound send.
+model EmailTemplate {
+  id        String   @id @default(cuid())
+  slug      String   @unique
+  subject   String
+  body      String   // HTML body — keep it simple, plain text wrapped in basic tags
+  updatedBy String?  // userId of admin who last edited
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

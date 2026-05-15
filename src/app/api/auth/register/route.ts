@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs';
 import { prisma } from '@/lib/prisma';
 import { createPersonalWorkspace } from '@/lib/workspace-auth';
 import { checkRateLimit } from '@/lib/rate-limiter';
+import { sendWelcomeEmail } from '@/lib/email';
 
 // Email validation regex
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -109,6 +110,12 @@ export async function POST(request: NextRequest) {
 
     // Auto-create personal workspace for new user
     const workspace = await createPersonalWorkspace(user.id, user.name || undefined, user.email!);
+
+    // Fire-and-forget welcome email — failures here must never block signup
+    // (Resend outage, missing API key in dev, template error, etc.).
+    sendWelcomeEmail({ to: user.email!, name: user.name }).catch((err) => {
+      console.error('[Register] Welcome email failed (non-fatal):', err);
+    });
 
     return NextResponse.json({
       user: {

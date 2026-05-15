@@ -384,3 +384,159 @@ https://withforma.io
     return { success: false, error: String(error) };
   }
 }
+
+// ----- Welcome email -------------------------------------------------------
+// Sent once on signup. Subject + body are admin-editable via EmailTemplate
+// (slug = 'welcome'); if no row exists the code-defined defaults below kick in
+// so a fresh install still sends something sensible.
+
+export interface WelcomeEmailData {
+  to: string;
+  name?: string | null;
+}
+
+const WELCOME_DEFAULT_SUBJECT = 'Welcome to Forma';
+// Body uses {{name}} / {{email}} placeholders that are substituted at send
+// time. Keep the markup minimal — same shape as the invitation email.
+const WELCOME_DEFAULT_BODY = `
+<p>Hi {{name}},</p>
+<p>Thanks for signing up for Forma. Your account is ready and your personal workspace is set up — you can build your first form whenever you're ready.</p>
+<p>A few things you can do next:</p>
+<ul>
+  <li>Create a form from scratch or start from a template</li>
+  <li>Wire submissions into Slack, Notion, or any webhook</li>
+  <li>Invite a teammate to your workspace</li>
+</ul>
+<p>If you didn't sign up for this account, please ignore this email or reply to let us know.</p>
+`.trim();
+
+function substitutePlaceholders(html: string, vars: Record<string, string>): string {
+  return html.replace(/\{\{\s*(\w+)\s*\}\}/g, (_, key) => {
+    const value = vars[key];
+    return value !== undefined ? escapeHtml(value) : '';
+  });
+}
+
+function htmlToPlainText(html: string): string {
+  return html
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<\/p>/gi, '\n\n')
+    .replace(/<\/li>/gi, '\n')
+    .replace(/<li>/gi, '- ')
+    .replace(/<[^>]+>/g, '')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#039;/g, "'")
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
+
+/**
+ * Send the post-signup welcome email. Pulls subject + body from the
+ * `EmailTemplate` table (slug='welcome') when present, falls back to the
+ * code-defined defaults otherwise. Fails open — a missing API key or
+ * Resend hiccup never blocks signup.
+ */
+export async function sendWelcomeEmail(
+  data: WelcomeEmailData
+): Promise<{ success: boolean; error?: string }> {
+  const resend = getResend();
+  if (!resend) {
+    console.warn('[Email] RESEND_API_KEY not set — skipping welcome email');
+    return { success: false, error: 'Email not configured' };
+  }
+
+  const { to, name } = data;
+  const baseUrl = process.env.NEXTAUTH_URL || 'https://withforma.io';
+  const displayName = name?.trim() || to.split('@')[0] || 'there';
+
+  // Pull admin-editable template if it exists. Lazy-import prisma to avoid
+  // forcing this module's importers to also drag in the prisma client when
+  // they don't need it (the file is shared across server contexts).
+  let subject = WELCOME_DEFAULT_SUBJECT;
+  let body = WELCOME_DEFAULT_BODY;
+  try {
+    const { prisma } = await import('./prisma');
+    const tpl = await prisma.emailTemplate.findUnique({
+      where: { slug: 'welcome' },
+      select: { subject: true, body: true },
+    });
+    if (tpl) {
+      subject = tpl.subject;
+      body = tpl.body;
+    }
+  } catch (err) {
+    console.warn('[Email] Could not load welcome template from DB, using defaults', err);
+  }
+
+  const renderedBody = substitutePlaceholders(body, {
+    name: displayName,
+    email: to,
+  });
+
+  const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #1f2937; margin: 0; padding: 0; background-color: #ffffff;">
+  <div style="max-width: 600px; margin: 0 auto; padding: 40px 20px;">
+    <div style="padding: 0 0 24px;">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td style="width: 32px; height: 32px;">
+            <img src="${baseUrl}/icon.svg" alt="Forma" width="32" height="32" style="display: block;" />
+          </td>
+          <td style="padding-left: 12px; font-size: 20px; font-weight: 700; color: #1f2937;">Forma</td>
+        </tr>
+      </table>
+    </div>
+
+    <div style="padding: 0 0 32px; font-size: 15px; color: #374151;">
+      ${renderedBody}
+
+      <div style="text-align: center; margin: 32px 0 0;">
+        <a href="${baseUrl}/dashboard"
+           style="display: inline-block; padding: 14px 36px; background: #ef6f2e; color: white; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 15px;">
+          Open your dashboard
+        </a>
+      </div>
+    </div>
+
+    <div style="padding: 24px 0 0; border-top: 1px solid #e5e5e5;">
+      <p style="margin: 0; color: #9ca3af; font-size: 12px; text-align: center;">
+        <a href="${baseUrl}" style="color: #ef6f2e; text-decoration: none;">Forma</a> — The modern way to build forms
+      </p>
+    </div>
+  </div>
+</body>
+</html>
+  `.trim();
+
+  const text = htmlToPlainText(renderedBody) + `\n\nOpen your dashboard: ${baseUrl}/dashboard\n`;
+
+  try {
+    console.log(`[Email] Sending welcome email to ${to}`);
+    const result = await resend.emails.send({
+      from: EMAIL_FROM,
+      to,
+      subject,
+      html,
+      text,
+    });
+    console.log(`[Email] Welcome email sent:`, result);
+    return { success: true };
+  } catch (error) {
+    console.error('[Email] Failed to send welcome email:', error);
+    return { success: false, error: String(error) };
+  }
+}
+
+export const WELCOME_EMAIL_DEFAULTS = {
+  subject: WELCOME_DEFAULT_SUBJECT,
+  body: WELCOME_DEFAULT_BODY,
+};

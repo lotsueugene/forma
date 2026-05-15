@@ -56,6 +56,7 @@ const navSections = [
     items: [
       { href: '/admin/announcements', label: 'Announcements', icon: Megaphone },
       { href: '/admin/broadcasts', label: 'Email Broadcasts', icon: EnvelopeSimple },
+      { href: '/admin/emails', label: 'Email Templates', icon: EnvelopeSimple },
     ],
   },
   {

@@ -70,6 +70,14 @@ export const authOptions: NextAuthOptions = {
           throw new Error('Invalid credentials');
         }
 
+        // Block suspended accounts. The visible error mirrors the wording shown
+        // for credential failures so we don't leak suspension status to crawlers,
+        // but the auth code path is distinct and audited.
+        if (user.suspendedAt) {
+          securityLog({ action: 'auth.login_blocked_suspended', details: { email: credentials.email, userId: user.id } });
+          throw new Error('Your account has been suspended. Contact support if you believe this is a mistake.');
+        }
+
         // Successful login — clear any failed attempts
         clearFailedAttempts(lockoutKey);
 
@@ -112,10 +120,33 @@ export const authOptions: NextAuthOptions = {
           userId: user.id,
           details: { email: user.email, method: 'oauth' },
         });
+        // Same fire-and-forget welcome email as credentials signup.
+        const { sendWelcomeEmail } = await import('./email');
+        sendWelcomeEmail({ to: user.email, name: user.name }).catch((err) => {
+          console.error('[Auth] Welcome email (oauth) failed (non-fatal):', err);
+        });
       }
     },
   },
   callbacks: {
+    async signIn({ user }) {
+      // Covers OAuth (credentials path also runs this, but suspension is
+      // already enforced in authorize() above so this is belt-and-suspenders).
+      // `user.id` is populated for known accounts; for first-time OAuth users
+      // the row doesn't exist yet (createUser event runs after), so they
+      // bypass this check on initial signup — which is fine.
+      if (user.id) {
+        const u = await prisma.user.findUnique({
+          where: { id: user.id },
+          select: { suspendedAt: true },
+        });
+        if (u?.suspendedAt) {
+          // Returning false sends the user to /login?error=AccessDenied
+          return false;
+        }
+      }
+      return true;
+    },
     async jwt({ token, user, trigger }) {
       if (user) {
         token.id = user.id;

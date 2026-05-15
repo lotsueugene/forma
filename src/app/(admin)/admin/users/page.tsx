@@ -22,6 +22,8 @@ interface User {
   email: string | null;
   role: string;
   createdAt: string;
+  suspendedAt: string | null;
+  suspendedReason: string | null;
   workspaceCount: number;
   subscription: {
     plan: string;
@@ -116,6 +118,53 @@ export default function AdminUsersPage() {
           }
         } catch (error) {
           console.error('Failed to update user:', error);
+        }
+        setMenuOpenId(null);
+      },
+    });
+  };
+
+  const suspendUser = (userId: string, email: string | null) => {
+    setConfirmAction({
+      title: 'Suspend user',
+      message: `${email || 'This user'} won't be able to log in (credentials or OAuth) until you lift the suspension. Existing sessions remain valid until they expire (max 24h).`,
+      confirmText: 'Suspend',
+      variant: 'warning',
+      onConfirm: async () => {
+        try {
+          const res = await fetch(`/api/admin/users/${userId}/suspend`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({}),
+          });
+          if (res.ok) {
+            const { user } = await res.json();
+            setUsers(users.map(u => u.id === userId ? { ...u, suspendedAt: user.suspendedAt, suspendedReason: user.suspendedReason } : u));
+          }
+        } catch (error) {
+          console.error('Failed to suspend user:', error);
+        }
+        setMenuOpenId(null);
+      },
+    });
+  };
+
+  const unsuspendUser = (userId: string) => {
+    setConfirmAction({
+      title: 'Lift suspension',
+      message: `Restore login access for this user.`,
+      confirmText: 'Unsuspend',
+      variant: 'default',
+      onConfirm: async () => {
+        try {
+          const res = await fetch(`/api/admin/users/${userId}/suspend`, {
+            method: 'DELETE',
+          });
+          if (res.ok) {
+            setUsers(users.map(u => u.id === userId ? { ...u, suspendedAt: null, suspendedReason: null } : u));
+          }
+        } catch (error) {
+          console.error('Failed to unsuspend user:', error);
         }
         setMenuOpenId(null);
       },
@@ -219,7 +268,17 @@ export default function AdminUsersPage() {
                 users.map((user) => (
                   <tr key={user.id} className="hover:bg-gray-50">
                     <td className="px-4 py-3">
-                      <div className="text-sm text-gray-900">{user.name || 'Unnamed'}</div>
+                      <div className="flex items-center gap-2">
+                        <div className="text-sm text-gray-900">{user.name || 'Unnamed'}</div>
+                        {user.suspendedAt && (
+                          <span
+                            className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium uppercase tracking-wide bg-amber-100 text-amber-800"
+                            title={user.suspendedReason || `Suspended ${new Date(user.suspendedAt).toLocaleDateString()}`}
+                          >
+                            Suspended
+                          </span>
+                        )}
+                      </div>
                       <div className="text-xs text-gray-500">{user.email}</div>
                     </td>
                     <td className="px-4 py-3">
@@ -269,6 +328,21 @@ export default function AdminUsersPage() {
                           >
                             {user.role === 'admin' ? 'Demote' : 'Promote'}
                           </button>
+                          {user.suspendedAt ? (
+                            <button
+                              onClick={() => unsuspendUser(user.id)}
+                              className="btn btn-ghost text-xs text-amber-700"
+                            >
+                              Unsuspend
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => suspendUser(user.id, user.email)}
+                              className="btn btn-ghost text-xs text-amber-700"
+                            >
+                              Suspend
+                            </button>
+                          )}
                           <button
                             onClick={() => deleteUser(user.id, user.email)}
                             className="btn btn-ghost text-red-500 text-xs"
@@ -363,6 +437,21 @@ export default function AdminUsersPage() {
                             >
                               {user.role === 'admin' ? 'Demote to User' : 'Promote to Admin'}
                             </button>
+                            {user.suspendedAt ? (
+                              <button
+                                onClick={() => unsuspendUser(user.id)}
+                                className="w-full px-4 py-2 text-left text-sm text-amber-700 hover:bg-amber-50"
+                              >
+                                Lift suspension
+                              </button>
+                            ) : (
+                              <button
+                                onClick={() => suspendUser(user.id, user.email)}
+                                className="w-full px-4 py-2 text-left text-sm text-amber-700 hover:bg-amber-50"
+                              >
+                                Suspend user
+                              </button>
+                            )}
                             <button
                               onClick={() => deleteUser(user.id, user.email)}
                               className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50"

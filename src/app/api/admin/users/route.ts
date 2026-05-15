@@ -43,6 +43,8 @@ export async function GET(request: NextRequest) {
           email: true,
           role: true,
           createdAt: true,
+          suspendedAt: true,
+          suspendedReason: true,
           _count: {
             select: {
               workspaceMembers: true,
@@ -69,6 +71,8 @@ export async function GET(request: NextRequest) {
           email: u.email,
           role: u.role,
           createdAt: u.createdAt,
+          suspendedAt: u.suspendedAt,
+          suspendedReason: u.suspendedReason,
           workspaceCount: u._count.workspaceMembers,
           subscription: sub
             ? {
