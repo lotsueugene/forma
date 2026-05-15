@@ -14,6 +14,7 @@ import {
   X,
 } from '@phosphor-icons/react';
 import { cn } from '@/lib/utils';
+import { safeCssColor, safeRedirectUrl } from '@/lib/sanitize';
 import Link from 'next/link';
 import BookingField from '@/components/forms/BookingField';
 
@@ -105,9 +106,12 @@ export default function ConversationalForm({
   formData,
   setFormData,
 }: ConversationalFormProps) {
-  const accent = form.settings?.branding?.accentColor || '#ef6f2e';
-  const bg = form.settings?.branding?.backgroundColor || '#ffffff';
-  const textColor = form.settings?.branding?.textColor || '#111827';
+  // Hex-validated before any CSS interpolation — a form owner cannot break out
+  // of a CSS value via `;`/`}`/`url(...)` to set up selector-based exfiltration
+  // of respondent input. Invalid values silently fall back to the defaults.
+  const accent = safeCssColor(form.settings?.branding?.accentColor, '#ef6f2e');
+  const bg = safeCssColor(form.settings?.branding?.backgroundColor, '#ffffff');
+  const textColor = safeCssColor(form.settings?.branding?.textColor, '#111827');
   const isLightBg = parseInt(bg.slice(1, 3), 16) * 0.299 + parseInt(bg.slice(3, 5), 16) * 0.587 + parseInt(bg.slice(5, 7), 16) * 0.114 > 150;
 
   // Filter to visible, interactive fields only
@@ -226,8 +230,9 @@ export default function ConversationalForm({
   // Thank you screen
   if (isSubmitted) {
     const thankYou = form.settings?.thankYou;
-    if (thankYou?.redirectUrl && typeof window !== 'undefined') {
-      window.location.href = thankYou.redirectUrl;
+    const safeRedirect = safeRedirectUrl(thankYou?.redirectUrl);
+    if (safeRedirect && typeof window !== 'undefined') {
+      window.location.href = safeRedirect;
       return (
         <div className="forma-page min-h-screen flex items-center justify-center" style={{ backgroundColor: bg }}>
           <Spinner size={32} className="animate-spin" style={{ color: "var(--forma-accent)" }} />

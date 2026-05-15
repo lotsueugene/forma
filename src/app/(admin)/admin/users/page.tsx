@@ -58,6 +58,8 @@ export default function AdminUsersPage() {
     confirmText: string;
     variant: 'danger' | 'warning' | 'default';
     onConfirm: () => Promise<void>;
+    requireTypedConfirmation?: string;
+    typedConfirmationLabel?: string;
   } | null>(null);
 
   const loadUsers = useCallback(async () => {
@@ -121,11 +123,16 @@ export default function AdminUsersPage() {
   };
 
   const deleteUser = (userId: string, email: string | null) => {
+    const typeTarget = email || 'DELETE';
     setConfirmAction({
-      title: 'Delete User',
-      message: `Are you sure you want to delete ${email || 'this user'}? This action cannot be undone.`,
-      confirmText: 'Delete',
+      title: 'Delete user',
+      message: `This will permanently delete ${email || 'this user'} and every workspace, form, and submission they own. There is no undo.`,
+      confirmText: 'Delete user',
       variant: 'danger',
+      requireTypedConfirmation: typeTarget,
+      typedConfirmationLabel: email
+        ? `Type the user's email to confirm: ${email}`
+        : `Type "DELETE" to confirm`,
       onConfirm: async () => {
         try {
           const res = await fetch(`/api/admin/users/${userId}`, {
@@ -391,6 +398,8 @@ export default function AdminUsersPage() {
         message={confirmAction?.message || ''}
         confirmText={confirmAction?.confirmText || 'Confirm'}
         variant={confirmAction?.variant || 'default'}
+        requireTypedConfirmation={confirmAction?.requireTypedConfirmation}
+        typedConfirmationLabel={confirmAction?.typedConfirmationLabel}
         onConfirm={async () => { await confirmAction?.onConfirm(); setConfirmAction(null); }}
         onClose={() => setConfirmAction(null)}
       />

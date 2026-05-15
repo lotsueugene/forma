@@ -15,6 +15,7 @@ import {
   X,
 } from '@phosphor-icons/react';
 import { cn } from '@/lib/utils';
+import { safeCssColor, safeRedirectUrl } from '@/lib/sanitize';
 import Link from 'next/link';
 import ConversationalForm from './ConversationalForm';
 import BookingField from '@/components/forms/BookingField';
@@ -452,10 +453,14 @@ export default function FormPageClient({ formId }: FormPageClientProps) {
     const thankYou = form?.settings?.thankYou;
     const branding = form?.settings?.branding;
 
-    // Redirect if configured
-    if (thankYou?.redirectUrl) {
+    // Redirect if configured. The URL is owner-controlled, so we reject
+    // anything that isn't a plain http(s) navigation — otherwise a malicious
+    // form could ship a `javascript:` URI and execute in this origin against
+    // every respondent.
+    const safeRedirect = safeRedirectUrl(thankYou?.redirectUrl);
+    if (safeRedirect) {
       if (typeof window !== 'undefined') {
-        window.location.href = thankYou.redirectUrl;
+        window.location.href = safeRedirect;
       }
       return (
         <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: branding?.backgroundColor || '#ffffff' }}>
@@ -546,9 +551,11 @@ export default function FormPageClient({ formId }: FormPageClientProps) {
       )}
 
       {(() => {
-        const accent = form?.settings?.branding?.accentColor || '#ef6f2e';
-        const bg = form?.settings?.branding?.backgroundColor || '#ffffff';
-        const text = form?.settings?.branding?.textColor || '#111827';
+        // Hex-validated before any CSS interpolation — see ConversationalForm
+        // for rationale (prevents CSS-selector exfiltration of respondent input).
+        const accent = safeCssColor(form?.settings?.branding?.accentColor, '#ef6f2e');
+        const bg = safeCssColor(form?.settings?.branding?.backgroundColor, '#ffffff');
+        const text = safeCssColor(form?.settings?.branding?.textColor, '#111827');
         const textMuted = `${text}88`;
         const textFaint = `${text}44`;
         const isLightBg = parseInt(bg.slice(1, 3), 16) * 0.299 + parseInt(bg.slice(3, 5), 16) * 0.587 + parseInt(bg.slice(5, 7), 16) * 0.114 > 150;

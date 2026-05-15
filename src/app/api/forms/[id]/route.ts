@@ -7,6 +7,7 @@ import { getSubscriptionInfo } from '@/lib/subscription';
 import { auditLog } from '@/lib/audit';
 import { getClientIp } from '@/lib/api-rate-limit';
 import { normalizeSlug, validateSlug, slugRedirectExpiresAt } from '@/lib/slug';
+import { safeCssColor, safeRedirectUrl } from '@/lib/sanitize';
 
 // GET /api/forms/[id] - Get a single form
 export async function GET(
@@ -205,6 +206,32 @@ export async function PUT(
         }
         if (settings.saveAndResume) {
           settings.saveAndResume = false;
+        }
+      }
+
+      // Sanitize anything that ends up in CSS or a navigation target. The form
+      // is rendered to untrusted respondents, so a malicious owner could otherwise
+      // (a) inject CSS that exfiltrates input via selector-based attacks, or
+      // (b) ship a javascript: URI in the post-submit redirect. Render-time guards
+      // exist too — this is defense-in-depth.
+      const branding = settings.branding;
+      if (branding && typeof branding === 'object') {
+        if ('accentColor' in branding) {
+          branding.accentColor = safeCssColor(branding.accentColor, '#ef6f2e');
+        }
+        if ('backgroundColor' in branding) {
+          branding.backgroundColor = safeCssColor(branding.backgroundColor, '#ffffff');
+        }
+        if ('textColor' in branding) {
+          branding.textColor = safeCssColor(branding.textColor, '#111827');
+        }
+      }
+      if (settings.thankYou?.redirectUrl !== undefined) {
+        const sanitized = safeRedirectUrl(settings.thankYou.redirectUrl);
+        if (sanitized === null) {
+          delete settings.thankYou.redirectUrl;
+        } else {
+          settings.thankYou.redirectUrl = sanitized;
         }
       }
     }

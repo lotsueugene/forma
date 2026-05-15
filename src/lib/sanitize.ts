@@ -42,3 +42,34 @@ export function markdownToSafeHtml(content: string): string {
   const rawHtml = marked.parse(content, { async: false }) as string;
   return sanitizeHtml(rawHtml);
 }
+
+// Hex colors only: #RGB, #RGBA, #RRGGBB, #RRGGBBAA. Used to gate any
+// user-supplied color before it lands in a <style> block or inline style.
+// Anything that isn't a clean hex collapses to the fallback so attackers
+// can't break out of the CSS value via `;` / `}` / `url(...)` / etc.
+const HEX_COLOR_RE = /^#(?:[0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/;
+
+export function safeCssColor(value: unknown, fallback: string): string {
+  if (typeof value !== 'string') return fallback;
+  const trimmed = value.trim();
+  return HEX_COLOR_RE.test(trimmed) ? trimmed : fallback;
+}
+
+// Reject `javascript:`, `data:`, `vbscript:` and other non-navigation schemes
+// before passing a form-owner-controlled URL to `window.location.href`.
+// Without this, a malicious form owner can set thankYou.redirectUrl to a
+// `javascript:` URI and run arbitrary JS in the form's origin against any
+// respondent who submits.
+export function safeRedirectUrl(value: unknown): string | null {
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+  // Allow protocol-relative and root-relative paths as same-origin nav.
+  if (trimmed.startsWith('/') && !trimmed.startsWith('//')) return trimmed;
+  try {
+    const url = new URL(trimmed);
+    return url.protocol === 'http:' || url.protocol === 'https:' ? trimmed : null;
+  } catch {
+    return null;
+  }
+}

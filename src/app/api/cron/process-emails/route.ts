@@ -1,12 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { timingSafeEqual } from 'crypto';
 import { prisma } from '@/lib/prisma';
 import { sendEmail, isEmailConfigured } from '@/lib/email';
+
+function safeEqual(a: string, b: string): boolean {
+  const aBuf = Buffer.from(a);
+  const bBuf = Buffer.from(b);
+  if (aBuf.length !== bBuf.length) return false;
+  return timingSafeEqual(aBuf, bBuf);
+}
 
 // GET /api/cron/process-emails — Process pending scheduled emails
 // Call this via cron every minute: curl https://withforma.io/api/cron/process-emails?key=SECRET
 export async function GET(request: NextRequest) {
   const cronKey = request.nextUrl.searchParams.get('key');
-  if (cronKey !== process.env.CRON_SECRET) {
+  const expected = process.env.CRON_SECRET;
+  if (!expected || !cronKey || !safeEqual(cronKey, expected)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
