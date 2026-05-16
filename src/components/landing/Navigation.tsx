@@ -6,9 +6,15 @@ import { useSession } from 'next-auth/react';
 import { Stack, List, X } from '@phosphor-icons/react';
 import { AnimatePresence, motion } from 'framer-motion';
 
+// Real routes (not #anchors) wherever a dedicated page exists, so Googlebot
+// can crawl from the home page to every marketing route. Pricing stays as
+// /#pricing because there's no dedicated /pricing route yet — the slash
+// prefix makes it work from any page, not just the home.
 const navLinks = [
-  { href: '#features', label: 'Features' },
-  { href: '#pricing', label: 'Pricing' },
+  { href: '/features', label: 'Features' },
+  { href: '/templates', label: 'Templates' },
+  { href: '/integrations', label: 'Integrations' },
+  { href: '/#pricing', label: 'Pricing' },
   { href: '/docs', label: 'Docs' },
   { href: '/blog', label: 'Blog' },
 ];

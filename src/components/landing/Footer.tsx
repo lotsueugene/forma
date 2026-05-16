@@ -2,11 +2,13 @@ import { Stack } from '@phosphor-icons/react/dist/ssr';
 import Link from 'next/link';
 import { prisma } from '@/lib/prisma';
 
-// Fallback links if database fetch fails
+// Fallback links if database fetch fails. Use real /paths (not #anchors)
+// wherever a dedicated route exists — anchor links give Google zero signal
+// for indexing the destination page.
 const fallbackLinks = {
   product: [
-    { label: 'Features', href: '#features', external: false },
-    { label: 'Pricing', href: '#pricing', external: false },
+    { label: 'Features', href: '/features', external: false },
+    { label: 'Pricing', href: '/#pricing', external: false }, // no dedicated route yet
     { label: 'Templates', href: '/templates', external: false },
     { label: 'Integrations', href: '/integrations', external: false },
   ],
