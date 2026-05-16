@@ -4,6 +4,8 @@ import { prisma } from '@/lib/prisma';
 import { createPersonalWorkspace } from '@/lib/workspace-auth';
 import { checkRateLimit } from '@/lib/rate-limiter';
 import { sendWelcomeEmail } from '@/lib/email';
+import { auditLog } from '@/lib/audit';
+import { getClientIp } from '@/lib/api-rate-limit';
 
 // Email validation regex
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -110,6 +112,16 @@ export async function POST(request: NextRequest) {
 
     // Auto-create personal workspace for new user
     const workspace = await createPersonalWorkspace(user.id, user.name || undefined, user.email!);
+
+    // Audit log. OAuth signups are logged via the NextAuth events.createUser
+    // callback; credentials signups don't pass through that, so we log here
+    // to keep the audit trail complete across both paths.
+    auditLog({
+      action: 'auth.register',
+      userId: user.id,
+      ip: getClientIp(request),
+      details: { email: user.email, method: 'credentials' },
+    });
 
     // Fire-and-forget welcome email — failures here must never block signup
     // (Resend outage, missing API key in dev, template error, etc.).

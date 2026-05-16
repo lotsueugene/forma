@@ -93,6 +93,7 @@ export async function POST(request: NextRequest) {
       content,
       targetAll = true,
       targetPlans,
+      targetUserIds,
       sendNow = false,
     } = body;
 
@@ -103,13 +104,33 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Normalise targetUserIds → JSON string (we accept array or comma-string
+    // from the client to be liberal). Validate that values look like user IDs
+    // (Prisma cuid) to reject obviously bad input early.
+    let targetUserIdsJson: string | null = null;
+    if (!targetAll) {
+      const rawIds: string[] = Array.isArray(targetUserIds)
+        ? targetUserIds
+        : typeof targetUserIds === 'string'
+          ? targetUserIds.split(',').map((s: string) => s.trim()).filter(Boolean)
+          : [];
+      if (rawIds.length > 0) {
+        const cleaned = rawIds.filter((id) => typeof id === 'string' && id.length >= 8 && id.length <= 40);
+        if (cleaned.length !== rawIds.length) {
+          return NextResponse.json({ error: 'Invalid user IDs supplied' }, { status: 400 });
+        }
+        targetUserIdsJson = JSON.stringify(cleaned);
+      }
+    }
+
     // Create broadcast record
     const broadcast = await prisma.emailBroadcast.create({
       data: {
         subject,
         content,
         targetAll,
-        targetPlans,
+        targetPlans: targetUserIdsJson ? null : targetPlans, // user-list wins
+        targetUserIds: targetUserIdsJson,
         status: sendNow ? 'sending' : 'draft',
         createdBy: admin.user.id,
       },
@@ -118,7 +139,7 @@ export async function POST(request: NextRequest) {
     // If sendNow, start sending emails
     if (sendNow) {
       // Don't await - send in background
-      sendBroadcastEmails(broadcast.id, subject, content, targetAll, targetPlans)
+      sendBroadcastEmails(broadcast.id, subject, content, targetAll, targetPlans, targetUserIdsJson)
         .catch(err => console.error('Broadcast send error:', err));
     }
 
@@ -137,7 +158,8 @@ async function sendBroadcastEmails(
   subject: string,
   content: string,
   targetAll: boolean,
-  targetPlans: string | null
+  targetPlans: string | null,
+  targetUserIdsJson: string | null = null
 ) {
   if (!resend) {
     console.error('Resend not configured');
@@ -149,14 +171,20 @@ async function sendBroadcastEmails(
   }
 
   try {
-    // Build user query
+    // Parse the three targeting modes once up front. Specific-users wins over
+    // plan filter if both are somehow present (POST handler already enforces
+    // exclusivity, this is belt-and-suspenders).
+    const specificUserIds: string[] | null = targetUserIdsJson
+      ? (JSON.parse(targetUserIdsJson) as string[])
+      : null;
     const planFilter = targetPlans?.split(',').map(p => p.trim()) || null;
 
-    // Get all users with email addresses
-    // Admin broadcasts go to all users (platform communications)
+    // Get all users with email addresses. When we have a specific-user list,
+    // narrow the DB query up front instead of fetching everyone and filtering.
     const users = await prisma.user.findMany({
       where: {
         email: { not: null },
+        ...(specificUserIds ? { id: { in: specificUserIds } } : {}),
       },
       select: {
         id: true,
@@ -181,15 +209,18 @@ async function sendBroadcastEmails(
 
     console.log(`[Broadcast] Found ${eligibleUsers.length} eligible users`);
 
-    // Filter by plan if needed
-    const targetUsers = targetAll
+    // Apply targeting filters. If specific-user list was passed, the DB
+    // narrowed already — no extra filter needed.
+    const targetUsers = specificUserIds
       ? eligibleUsers
-      : eligibleUsers.filter(user => {
-          const userPlans = user.workspaceMembers
-            .map(wm => wm.workspace.subscription?.plan)
-            .filter(Boolean);
-          return planFilter?.some(plan => userPlans.includes(plan));
-        });
+      : targetAll
+        ? eligibleUsers
+        : eligibleUsers.filter(user => {
+            const userPlans = user.workspaceMembers
+              .map(wm => wm.workspace.subscription?.plan)
+              .filter(Boolean);
+            return planFilter?.some(plan => userPlans.includes(plan));
+          });
 
     // Filter out unsubscribed users
     const targetEmails = targetUsers.map(u => u.email).filter(Boolean) as string[];

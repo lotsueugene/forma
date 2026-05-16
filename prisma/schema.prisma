@@ -443,17 +443,21 @@ model AnnouncementDismissal {
 
 // Email broadcast tracking
 model EmailBroadcast {
-  id          String    @id @default(cuid())
-  subject     String
-  content     String    // HTML content
+  id            String    @id @default(cuid())
+  subject       String
+  content       String    // HTML content
 
-  // Targeting
-  targetAll   Boolean   @default(true)
-  targetPlans String?   // Comma-separated plans
+  // Targeting: exactly one of these applies, picked via UI radio.
+  // - targetAll=true (default): every user with an email
+  // - targetAll=false + targetPlans set: filter by plan slug list
+  // - targetAll=false + targetUserIds set: hand-picked specific users
+  targetAll     Boolean   @default(true)
+  targetPlans   String?   // Comma-separated plan slugs: "free,trial,pro"
+  targetUserIds String?   // JSON array of user IDs: '["cm1...","cm2..."]'
 
   // Stats
-  sentCount   Int       @default(0)
-  failedCount Int       @default(0)
+  sentCount     Int       @default(0)
+  failedCount   Int       @default(0)
 
   // Status
   status      String    @default("draft") // draft, sending, sent, failed

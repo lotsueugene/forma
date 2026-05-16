@@ -1,38 +1,36 @@
 'use client';
 
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useRef } from 'react';
+import Link from 'next/link';
 import DOMPurify from 'isomorphic-dompurify';
 import {
   Plus,
   Spinner,
   EnvelopeSimple,
   PaperPlaneTilt,
-  CheckCircle,
-  XCircle,
-  Clock,
   Trash,
   ChatCircle,
   ArrowLeft,
   User,
   EnvelopeOpen,
+  MagnifyingGlass,
+  X,
+  ClockCounterClockwise,
 } from '@phosphor-icons/react';
 import { cn } from '@/lib/utils';
 import RichTextEditor from '@/components/ui/RichTextEditor';
 import { Checkbox } from '@/components/ui/Checkbox';
 import ConfirmModal from '@/components/ui/ConfirmModal';
 
-interface Broadcast {
+interface PickableUser {
   id: string;
-  subject: string;
-  content: string;
-  targetAll: boolean;
-  targetPlans: string | null;
-  sentCount: number;
-  failedCount: number;
-  status: string;
-  sentAt: string | null;
-  createdAt: string;
+  email: string | null;
+  name: string | null;
 }
+
+type TargetMode = 'all' | 'plans' | 'users';
+
+// Broadcast list interface lives in /admin/broadcasts/history (its only consumer).
 
 interface Reply {
   id: string;
@@ -53,12 +51,7 @@ interface Reply {
   } | null;
 }
 
-const statusConfig = {
-  draft: { icon: Clock, color: 'bg-gray-100 text-gray-600', label: 'Draft' },
-  sending: { icon: Spinner, color: 'bg-blue-100 text-blue-600', label: 'Sending' },
-  sent: { icon: CheckCircle, color: 'bg-emerald-100 text-emerald-600', label: 'Sent' },
-  failed: { icon: XCircle, color: 'bg-red-100 text-red-600', label: 'Failed' },
-};
+// statusConfig moved to /admin/broadcasts/history alongside the broadcast list.
 
 const replyStatusConfig = {
   unread: { color: 'bg-orange-100 text-orange-600', label: 'New' },
@@ -68,8 +61,6 @@ const replyStatusConfig = {
 
 export default function AdminBroadcastsPage() {
   const [activeTab, setActiveTab] = useState<'broadcasts' | 'replies'>('broadcasts');
-  const [loading, setLoading] = useState(true);
-  const [broadcasts, setBroadcasts] = useState<Broadcast[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [saving, setSaving] = useState(false);
 
@@ -80,11 +71,6 @@ export default function AdminBroadcastsPage() {
   const [selectedReply, setSelectedReply] = useState<Reply | null>(null);
   const [responseText, setResponseText] = useState('');
   const [sendingResponse, setSendingResponse] = useState(false);
-
-  // Delete modal state
-  const [deleteModal, setDeleteModal] = useState<{ id: string; subject: string } | null>(null);
-  const [deleteConfirmation, setDeleteConfirmation] = useState('');
-  const [deleting, setDeleting] = useState(false);
 
   const [confirmAction, setConfirmAction] = useState<{
     title: string;
@@ -97,28 +83,53 @@ export default function AdminBroadcastsPage() {
   const [formData, setFormData] = useState({
     subject: '',
     content: '',
-    targetAll: true,
+    targetMode: 'all' as TargetMode,
     targetPlans: '',
     sendNow: false,
   });
 
+  // Specific-user targeting picker. Selected users persist on `formData` via
+  // selectedUsers; debounced search hits /api/admin/users?search=… and shows
+  // up to 8 matches in a dropdown.
+  const [selectedUsers, setSelectedUsers] = useState<PickableUser[]>([]);
+  const [userSearch, setUserSearch] = useState('');
+  const [userSearchResults, setUserSearchResults] = useState<PickableUser[]>([]);
+  const [userSearchOpen, setUserSearchOpen] = useState(false);
+  const userSearchRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
-    loadBroadcasts();
-    loadReplies();
+    if (formData.targetMode !== 'users' || userSearch.trim().length < 2) {
+      setUserSearchResults([]);
+      return;
+    }
+    const timer = setTimeout(() => {
+      fetch(`/api/admin/users?search=${encodeURIComponent(userSearch.trim())}&limit=8`)
+        .then((r) => r.json())
+        .then((data) => {
+          const selectedIds = new Set(selectedUsers.map((u) => u.id));
+          setUserSearchResults(
+            (data.users || []).filter((u: PickableUser) => !selectedIds.has(u.id))
+          );
+        })
+        .catch((e) => console.error('User search failed:', e));
+    }, 220);
+    return () => clearTimeout(timer);
+  }, [userSearch, formData.targetMode, selectedUsers]);
+
+  // Close the search dropdown when clicking outside.
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (userSearchRef.current && !userSearchRef.current.contains(e.target as Node)) {
+        setUserSearchOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
   }, []);
 
-  const loadBroadcasts = async () => {
-    setLoading(true);
-    try {
-      const res = await fetch('/api/admin/broadcasts');
-      const data = await res.json();
-      setBroadcasts(data.broadcasts || []);
-    } catch (error) {
-      console.error('Failed to load broadcasts:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  useEffect(() => {
+    loadReplies();
+  }, []);
 
   const loadReplies = async () => {
     setLoadingReplies(true);
@@ -135,6 +146,10 @@ export default function AdminBroadcastsPage() {
   };
 
   const submitBroadcast = async () => {
+    if (formData.targetMode === 'users' && selectedUsers.length === 0) {
+      // Belt-and-suspenders — UI disables submit in this state too.
+      return;
+    }
     setSaving(true);
 
     try {
@@ -142,8 +157,12 @@ export default function AdminBroadcastsPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          ...formData,
-          targetPlans: formData.targetAll ? null : formData.targetPlans,
+          subject: formData.subject,
+          content: formData.content,
+          sendNow: formData.sendNow,
+          targetAll: formData.targetMode === 'all',
+          targetPlans: formData.targetMode === 'plans' ? formData.targetPlans : null,
+          targetUserIds: formData.targetMode === 'users' ? selectedUsers.map((u) => u.id) : null,
         }),
       });
 
@@ -152,11 +171,12 @@ export default function AdminBroadcastsPage() {
         setFormData({
           subject: '',
           content: '',
-          targetAll: true,
+          targetMode: 'all',
           targetPlans: '',
           sendNow: false,
         });
-        loadBroadcasts();
+        setSelectedUsers([]);
+        setUserSearch('');
       }
     } catch (error) {
       console.error('Failed to create broadcast:', error);
@@ -182,36 +202,7 @@ export default function AdminBroadcastsPage() {
     submitBroadcast();
   };
 
-  const openDeleteModal = (id: string, subject: string) => {
-    setDeleteModal({ id, subject });
-    setDeleteConfirmation('');
-  };
-
-  const closeDeleteModal = () => {
-    setDeleteModal(null);
-    setDeleteConfirmation('');
-    setDeleting(false);
-  };
-
-  const confirmDelete = async () => {
-    if (!deleteModal || deleteConfirmation !== 'DELETE') return;
-
-    setDeleting(true);
-    try {
-      const res = await fetch(`/api/admin/broadcasts/${deleteModal.id}`, {
-        method: 'DELETE',
-      });
-
-      if (res.ok) {
-        setBroadcasts(broadcasts.filter(b => b.id !== deleteModal.id));
-        closeDeleteModal();
-      }
-    } catch (error) {
-      console.error('Failed to delete broadcast:', error);
-    } finally {
-      setDeleting(false);
-    }
-  };
+  // Delete handlers moved to /admin/broadcasts/history page.
 
   const openReply = async (reply: Reply) => {
     setSelectedReply(reply);
@@ -290,15 +281,25 @@ export default function AdminBroadcastsPage() {
           <h1 className="text-2xl font-semibold text-gray-900">Email Broadcasts</h1>
           <p className="text-gray-600">Send marketing emails and manage replies</p>
         </div>
-        {activeTab === 'broadcasts' && (
-          <button
-            onClick={() => setShowForm(!showForm)}
-            className="btn btn-primary"
+        <div className="flex items-center gap-2">
+          <Link
+            href="/admin/broadcasts/history"
+            className="btn btn-ghost p-2"
+            title="Broadcast history"
+            aria-label="Broadcast history"
           >
-            <Plus size={16} />
-            New Broadcast
-          </button>
-        )}
+            <ClockCounterClockwise size={18} />
+          </Link>
+          {activeTab === 'broadcasts' && (
+            <button
+              onClick={() => setShowForm(!showForm)}
+              className="btn btn-primary"
+            >
+              <Plus size={16} />
+              New Broadcast
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Tabs */}
@@ -368,27 +369,118 @@ export default function AdminBroadcastsPage() {
                 </p>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Checkbox
-                    checked={formData.targetAll}
-                    onChange={(e) => setFormData({ ...formData, targetAll: e.target.checked })}
-                    label="Send to all users"
-                  />
+              {/* Audience picker — three mutually exclusive modes */}
+              <div>
+                <label className="block text-sm text-gray-600 mb-2">Audience</label>
+                <div className="flex flex-wrap gap-2">
+                  {([
+                    { id: 'all',   label: 'All users' },
+                    { id: 'plans', label: 'By plan' },
+                    { id: 'users', label: 'Specific users' },
+                  ] as { id: TargetMode; label: string }[]).map((opt) => (
+                    <button
+                      key={opt.id}
+                      type="button"
+                      onClick={() => setFormData({ ...formData, targetMode: opt.id })}
+                      className={cn(
+                        'px-3 py-1.5 rounded-lg text-sm font-medium border transition-colors',
+                        formData.targetMode === opt.id
+                          ? 'bg-safety-orange/10 border-safety-orange text-safety-orange'
+                          : 'bg-white border-gray-200 text-gray-600 hover:border-gray-300'
+                      )}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
                 </div>
-                {!formData.targetAll && (
-                  <div>
-                    <label className="block text-sm text-gray-600 mb-1">Target Plans</label>
-                    <input
-                      type="text"
-                      value={formData.targetPlans}
-                      onChange={(e) => setFormData({ ...formData, targetPlans: e.target.value })}
-                      className="input w-full"
-                      placeholder="free,trial,pro"
-                    />
-                  </div>
-                )}
               </div>
+
+              {formData.targetMode === 'plans' && (
+                <div>
+                  <label className="block text-sm text-gray-600 mb-1">Target Plans</label>
+                  <input
+                    type="text"
+                    value={formData.targetPlans}
+                    onChange={(e) => setFormData({ ...formData, targetPlans: e.target.value })}
+                    className="input w-full"
+                    placeholder="free,trial,pro"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Comma-separated plan slugs. Empty matches nothing.</p>
+                </div>
+              )}
+
+              {formData.targetMode === 'users' && (
+                <div ref={userSearchRef}>
+                  <label className="block text-sm text-gray-600 mb-1">Recipients</label>
+
+                  {/* Selected chips */}
+                  {selectedUsers.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5 mb-2">
+                      {selectedUsers.map((u) => (
+                        <span
+                          key={u.id}
+                          className="inline-flex items-center gap-1.5 pl-2 pr-1 py-1 rounded-md bg-gray-100 text-xs"
+                        >
+                          <User size={12} className="text-gray-500" />
+                          <span className="text-gray-700">{u.email || u.name || u.id}</span>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setSelectedUsers(selectedUsers.filter((s) => s.id !== u.id))
+                            }
+                            className="text-gray-400 hover:text-red-600 p-0.5"
+                            aria-label="Remove recipient"
+                          >
+                            <X size={12} />
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Search input + results dropdown */}
+                  <div className="relative">
+                    <div className="relative">
+                      <MagnifyingGlass size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                      <input
+                        type="text"
+                        value={userSearch}
+                        onChange={(e) => {
+                          setUserSearch(e.target.value);
+                          setUserSearchOpen(true);
+                        }}
+                        onFocus={() => setUserSearchOpen(true)}
+                        placeholder="Search by email or name..."
+                        className="input w-full pl-9"
+                      />
+                    </div>
+                    {userSearchOpen && userSearchResults.length > 0 && (
+                      <div className="absolute z-10 top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-64 overflow-y-auto">
+                        {userSearchResults.map((u) => (
+                          <button
+                            key={u.id}
+                            type="button"
+                            onClick={() => {
+                              setSelectedUsers([...selectedUsers, u]);
+                              setUserSearch('');
+                              setUserSearchResults([]);
+                            }}
+                            className="w-full text-left px-3 py-2 hover:bg-gray-50 border-b border-gray-100 last:border-b-0"
+                          >
+                            <div className="text-sm text-gray-900">{u.email || '(no email)'}</div>
+                            {u.name && <div className="text-xs text-gray-500">{u.name}</div>}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">
+                    {selectedUsers.length === 0
+                      ? 'Pick at least one user. Search by email or name.'
+                      : `${selectedUsers.length} recipient${selectedUsers.length === 1 ? '' : 's'} selected`}
+                  </p>
+                </div>
+              )}
 
               <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
                 <Checkbox
@@ -400,7 +492,15 @@ export default function AdminBroadcastsPage() {
               </div>
 
               <div className="flex gap-2">
-                <button type="submit" className="btn btn-primary" disabled={saving}>
+                <button
+                  type="submit"
+                  className="btn btn-primary"
+                  disabled={
+                    saving ||
+                    (formData.targetMode === 'users' && selectedUsers.length === 0) ||
+                    (formData.targetMode === 'plans' && !formData.targetPlans.trim())
+                  }
+                >
                   {saving ? (
                     <Spinner size={16} className="animate-spin" />
                   ) : formData.sendNow ? (
@@ -421,69 +521,27 @@ export default function AdminBroadcastsPage() {
             </form>
           )}
 
-          {/* Broadcasts List */}
-          <div className="space-y-3">
-            {loading ? (
-              <div className="flex items-center justify-center py-8">
-                <Spinner size={24} className="animate-spin text-gray-400" />
+          {/* Past-broadcasts list moved to /admin/broadcasts/history.
+              The clock icon in the header is the entry point. */}
+          {!showForm && (
+            <div className="bg-white border border-gray-200 rounded-xl p-8 text-center">
+              <EnvelopeSimple size={48} className="mx-auto text-gray-300 mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">Compose a new broadcast</h3>
+              <p className="text-gray-500 mb-4">
+                Send an email to all users, a plan tier, or specific recipients.
+              </p>
+              <div className="flex items-center justify-center gap-2">
+                <button onClick={() => setShowForm(true)} className="btn btn-primary">
+                  <Plus size={16} />
+                  New Broadcast
+                </button>
+                <Link href="/admin/broadcasts/history" className="btn btn-ghost">
+                  <ClockCounterClockwise size={16} />
+                  View History
+                </Link>
               </div>
-            ) : broadcasts.length === 0 ? (
-              <div className="bg-white border border-gray-200 rounded-xl p-8 text-center">
-                <EnvelopeSimple size={48} className="mx-auto text-gray-300 mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">No broadcasts yet</h3>
-                <p className="text-gray-500">Create your first email broadcast to reach your users.</p>
-              </div>
-            ) : (
-              broadcasts.map((broadcast) => {
-                const status = statusConfig[broadcast.status as keyof typeof statusConfig] || statusConfig.draft;
-                const StatusIcon = status.icon;
-
-                return (
-                  <div key={broadcast.id} className="bg-white border border-gray-200 rounded-xl p-4">
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex items-start gap-3 flex-1 min-w-0">
-                        <div className="p-2 rounded-lg bg-gray-100 flex-shrink-0">
-                          <EnvelopeSimple size={18} className="text-gray-500" />
-                        </div>
-                        <div className="min-w-0">
-                          <h3 className="font-medium text-gray-900">{broadcast.subject}</h3>
-                          <p className="text-sm text-gray-500 mt-1 line-clamp-1">
-                            {broadcast.content.replace(/<[^>]*>/g, '').slice(0, 100)}...
-                          </p>
-                          <div className="flex items-center gap-4 mt-2 text-xs text-gray-500 flex-wrap">
-                            <span className={cn('inline-flex items-center gap-1 px-2 py-0.5 rounded', status.color)}>
-                              <StatusIcon size={12} className={broadcast.status === 'sending' ? 'animate-spin' : ''} />
-                              {status.label}
-                            </span>
-                            {broadcast.status === 'sent' && (
-                              <>
-                                <span className="text-emerald-600">{broadcast.sentCount} sent</span>
-                                {broadcast.failedCount > 0 && (
-                                  <span className="text-red-600">{broadcast.failedCount} failed</span>
-                                )}
-                              </>
-                            )}
-                            <span>
-                              {broadcast.sentAt
-                                ? `Sent ${new Date(broadcast.sentAt).toLocaleDateString()}`
-                                : `Created ${new Date(broadcast.createdAt).toLocaleDateString()}`}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                      <button
-                        onClick={() => openDeleteModal(broadcast.id, broadcast.subject)}
-                        className="btn btn-ghost text-red-500 hover:text-red-700 hover:bg-red-50 flex-shrink-0 p-2"
-                        title="Delete broadcast"
-                      >
-                        <Trash size={18} />
-                      </button>
-                    </div>
-                  </div>
-                );
-              })
-            )}
-          </div>
+            </div>
+          )}
         </>
       ) : (
         /* Replies Tab */
@@ -571,46 +629,6 @@ export default function AdminBroadcastsPage() {
               );
             })
           )}
-        </div>
-      )}
-
-      {/* Delete Confirmation Modal */}
-      {deleteModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl p-6 max-w-md w-full mx-4 shadow-xl">
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">Delete Broadcast</h3>
-            <p className="text-gray-600 mb-4">
-              Are you sure you want to delete &quot;{deleteModal.subject}&quot;?
-            </p>
-            <p className="text-sm text-gray-600 mb-4">
-              Type <span className="font-bold text-red-600">DELETE</span> to confirm:
-            </p>
-            <input
-              type="text"
-              value={deleteConfirmation}
-              onChange={(e) => setDeleteConfirmation(e.target.value)}
-              className="input w-full mb-4"
-              placeholder="Type DELETE here"
-              autoFocus
-            />
-            <div className="flex gap-2 justify-end">
-              <button
-                onClick={closeDeleteModal}
-                className="btn btn-ghost"
-                disabled={deleting}
-              >
-                Cancel
-              </button>
-              <button
-                onClick={confirmDelete}
-                disabled={deleteConfirmation !== 'DELETE' || deleting}
-                className="btn bg-red-500 hover:bg-red-600 text-white disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {deleting ? <Spinner size={16} className="animate-spin" /> : <Trash size={16} />}
-                Delete
-              </button>
-            </div>
-          </div>
         </div>
       )}
 
