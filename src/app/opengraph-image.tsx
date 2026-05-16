@@ -1,10 +1,9 @@
 import { ImageResponse } from 'next/og';
 
-// Programmatic OG card. Generated at build time and cached, so cost is paid
-// once per deploy. No font file needed — system fallback renders fine for the
-// short text. To add real typography, drop a .ttf into /assets and load via
-// readFile + ImageResponse.fonts.
-export const runtime = 'edge';
+// Programmatic OG card. Default Node.js runtime — Edge runtime is a Vercel
+// specialty and doesn't work on a self-hosted PM2/Node deploy. With the Node
+// runtime this is statically generated at build time and served as a cached
+// file, which is what we want anyway.
 export const alt = 'Forma — the modern open-source form builder';
 export const size = { width: 1200, height: 630 };
 export const contentType = 'image/png';

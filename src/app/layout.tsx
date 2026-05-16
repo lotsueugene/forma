@@ -15,14 +15,22 @@ const geistMono = Geist_Mono({
 
 const appUrl = process.env.NEXTAUTH_URL || 'https://withforma.io';
 
+// Title and description lengths are tuned for SERP / social previews:
+// title 52 chars (target 50-60), description 137 chars (target 110-160).
+// Shorter and Google/Twitter will pad with arbitrary text or look skimpy;
+// longer and they'll truncate the keyword tail.
+const SITE_TITLE = 'Forma — Open-Source Form Builder with Payments & API';
+const SITE_DESCRIPTION =
+  'Build powerful forms, collect submissions, accept payments, and integrate with your stack. Open-source, self-hostable, free forever plan.';
+
 export const metadata: Metadata = {
   metadataBase: new URL(appUrl),
   title: {
-    default: 'Forma - The Modern Form Builder',
+    default: SITE_TITLE,
     template: '%s | Forma',
   },
-  description: 'Build powerful forms, collect submissions, accept payments, and integrate with your favorite tools. Drag-and-drop builder with analytics, custom branding, and enterprise-grade security.',
-  keywords: ['form builder', 'forms', 'online forms', 'surveys', 'integrations', 'saas', 'typeform alternative', 'payment forms', 'form analytics', 'custom forms'],
+  description: SITE_DESCRIPTION,
+  keywords: ['form builder', 'forms', 'online forms', 'surveys', 'integrations', 'saas', 'typeform alternative', 'payment forms', 'form analytics', 'custom forms', 'open source form builder', 'self-hosted forms'],
   authors: [{ name: 'Forma', url: appUrl }],
   creator: 'Forma',
   publisher: 'Forma',
@@ -33,14 +41,14 @@ export const metadata: Metadata = {
     type: 'website',
     locale: 'en_US',
     url: appUrl,
-    title: 'Forma - The Modern Form Builder',
-    description: 'Build powerful forms, collect submissions, accept payments, and integrate with your favorite tools.',
+    title: SITE_TITLE,
+    description: SITE_DESCRIPTION,
     siteName: 'Forma',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Forma - The Modern Form Builder',
-    description: 'Build powerful forms, collect submissions, accept payments, and integrate with your favorite tools.',
+    title: SITE_TITLE,
+    description: SITE_DESCRIPTION,
   },
   verification: {
     google: 'JzO0nFZZ2-_OhGl1g2SdjyW3d-P5qP4Eb6dlhJoq78E',
