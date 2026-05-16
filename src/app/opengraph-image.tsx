@@ -28,25 +28,16 @@ export default async function Image() {
           fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif',
         }}
       >
-        {/* Header: logo mark + wordmark */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-          <div
-            style={{
-              display: 'flex',
-              width: 56,
-              height: 56,
-              borderRadius: 14,
-              background: '#ef6f2e',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: '#ffffff',
-              fontSize: 32,
-              fontWeight: 700,
-            }}
-          >
-            F
-          </div>
-          <div style={{ display: 'flex', fontSize: 32, fontWeight: 700, color: '#0a0a0a' }}>
+        {/* Header: logo mark + wordmark. SVG is inlined (not loaded from disk
+            or via URL) so the build never hits the network — Satori renders
+            it directly. Same paths as public/icon.svg / forma-mark.svg. */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 18 }}>
+          <svg width="64" height="64" viewBox="0 0 256 256" fill="#ef6f2e" xmlns="http://www.w3.org/2000/svg">
+            <path d="M220,169.09l-92,53.65L36,169.09A8,8,0,0,0,28,182.91l96,56a8,8,0,0,0,8.06,0l96-56A8,8,0,1,0,220,169.09Z" />
+            <path d="M220,121.09l-92,53.65L36,121.09A8,8,0,0,0,28,134.91l96,56a8,8,0,0,0,8.06,0l96-56A8,8,0,1,0,220,121.09Z" />
+            <path d="M28,86.91l96,56a8,8,0,0,0,8.06,0l96-56a8,8,0,0,0,0-13.82l-96-56a8,8,0,0,0-8.06,0l-96,56a8,8,0,0,0,0,13.82Z" />
+          </svg>
+          <div style={{ display: 'flex', fontSize: 36, fontWeight: 700, color: '#0a0a0a', letterSpacing: '-0.02em' }}>
             Forma
           </div>
         </div>
