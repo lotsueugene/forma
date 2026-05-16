@@ -86,11 +86,9 @@ export default function RootLayout({
                 priceCurrency: 'USD',
                 description: 'Free plan available',
               },
-              aggregateRating: {
-                '@type': 'AggregateRating',
-                ratingValue: '4.8',
-                ratingCount: '100',
-              },
+              // aggregateRating omitted until we have real collected reviews
+              // (G2, Capterra, on-platform). Google treats fabricated ratings
+              // as spam and can demote the whole site.
             }),
           }}
         />

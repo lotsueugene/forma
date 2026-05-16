@@ -96,6 +96,12 @@ export default function HeroSection() {
         <div>
 
           <h1 className="hero-headline">
+            {/* Screen-reader/SEO prefix: gives Google and assistive tech the
+                keyword-rich context before the artistic visual headline. The
+                visible lines below stay unchanged. */}
+            <span className="sr-only">
+              Forma — the modern open-source form builder.{' '}
+            </span>
             <span className="line"><span className="inner">Forms that</span></span>
             <span className="line"><span className="inner">feel like a</span></span>
             <span className="line"><span className="inner">conversation<span className="orange-dot">.</span></span></span>
