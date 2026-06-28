@@ -109,7 +109,9 @@ export async function sendSubmissionNotification(
         displayValue = `<a href="${escapeHtml(file.url || '')}" style="color: #ef6f2e; text-decoration: none; font-weight: 500;">${escapeHtml(fileName)}</a><span style="color: #9ca3af;">${fileSize}</span>`;
       } else if (parsed && typeof parsed === 'object' && 'date' in (parsed as Record<string, unknown>) && 'slots' in (parsed as Record<string, unknown>)) {
         const booking = parsed as { date: string; slots: Array<{ start: string; end: string }> };
-        const dateStr = new Date(booking.date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+        // Always include the year — bookings can be 12+ months out and the
+        // email recipient has no other anchor for when the booking is.
+        const dateStr = new Date(booking.date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
         const fmt = (t: string) => { const [h, m] = t.split(':').map(Number); const ap = h >= 12 ? 'PM' : 'AM'; return `${h === 0 ? 12 : h > 12 ? h - 12 : h}:${m.toString().padStart(2, '0')} ${ap}`; };
         const slotsStr = booking.slots.map(s => `${fmt(s.start)} – ${fmt(s.end)}`).join(', ');
         displayValue = `<strong>${escapeHtml(dateStr)}</strong> · ${escapeHtml(slotsStr)}`;

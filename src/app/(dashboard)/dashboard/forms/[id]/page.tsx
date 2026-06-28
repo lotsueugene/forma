@@ -968,7 +968,7 @@ export default function FormDetailPage() {
                 const formatBookingValue = (value: string): string => {
                   try {
                     const parsed = JSON.parse(value);
-                    const date = new Date(parsed.date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+                    const date = new Date(parsed.date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
                     const slots = (parsed.slots as Array<{ start: string; end: string }>).map(s => {
                       const fmt = (t: string) => { const [h, m] = t.split(':').map(Number); const ap = h >= 12 ? 'PM' : 'AM'; return `${h === 0 ? 12 : h > 12 ? h - 12 : h}:${m.toString().padStart(2, '0')} ${ap}`; };
                       return `${fmt(s.start)} - ${fmt(s.end)}`;

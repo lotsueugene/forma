@@ -734,7 +734,7 @@ export default function BookingsView({ submissions, bookingFieldIds, fields, for
                     <div className="w-2 h-2 rounded-full bg-red-400 shrink-0" />
                     <div className="text-sm">
                       <span className="text-gray-800 font-medium">
-                        {new Date(block.date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+                        {new Date(block.date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}
                       </span>
                       {block.reason && (
                         <span className="text-gray-400 ml-2 text-xs">&middot; {block.reason}</span>

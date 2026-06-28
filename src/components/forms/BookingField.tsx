@@ -61,7 +61,9 @@ function slotsOverlap(a: BookingSlot, b: BookingSlot): boolean {
 }
 
 function formatDateDisplay(date: Date): string {
-  return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+  // Year is always shown — bookings often span into next year and recipients
+  // have no other anchor for when the date actually is.
+  return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
 }
 
 export default function BookingField({
