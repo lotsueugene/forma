@@ -6,6 +6,7 @@ import { checkRateLimit } from '@/lib/rate-limiter';
 import { sendWelcomeEmail } from '@/lib/email';
 import { auditLog } from '@/lib/audit';
 import { getClientIp } from '@/lib/api-rate-limit';
+import { grantSignupPremiumIfEnabled } from '@/lib/entitlements';
 
 // Email validation regex
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -122,6 +123,12 @@ export async function POST(request: NextRequest) {
       ip: getClientIp(request),
       details: { email: user.email, method: 'credentials' },
     });
+
+    try {
+      await grantSignupPremiumIfEnabled(user.id);
+    } catch (err) {
+      console.error('[Register] Signup premium grant failed (non-fatal):', err);
+    }
 
     // Fire-and-forget welcome email — failures here must never block signup
     // (Resend outage, missing API key in dev, template error, etc.).

@@ -10,7 +10,9 @@ export interface DashboardNotification {
   body: string | null;
   /** In-app navigation, e.g. /dashboard/forms/xyz/submissions */
   href: string | null;
+  entitlementId?: string | null;
   read: boolean;
+  displayedAt?: string | null;
   createdAt: string;
 }
 

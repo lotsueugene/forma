@@ -22,6 +22,7 @@ export async function GET() {
     // so grouping there double-counts users who have both (e.g. total
     // would come out higher than totalUsers). See getOrCreateSubscription
     // for the canonical resolution order we mirror here.
+    const now = new Date();
     const [
       totalUsers,
       totalWorkspaces,
@@ -29,6 +30,7 @@ export async function GET() {
       totalSubmissions,
       recentUsers,
       usersForPlan,
+      activePremiumRows,
     ] = await Promise.all([
       prisma.user.count(),
       prisma.workspace.count(),
@@ -65,6 +67,18 @@ export async function GET() {
             },
           },
         },
+      }),
+      prisma.entitlement.findMany({
+        where: {
+          type: 'premium',
+          startsAt: { lte: now },
+          revokedAt: null,
+          OR: [
+            { expiresAt: null },
+            { expiresAt: { gt: now } },
+          ],
+        },
+        select: { userId: true },
       }),
     ]);
 
@@ -113,10 +127,10 @@ export async function GET() {
     // workspace, then any owned workspace. Admin role users count as
     // Pro (they get Pro-equivalent features in getSubscriptionInfo).
     // Expired trials collapse to Free.
-    const now = new Date();
+    const premiumUserIds = new Set(activePremiumRows.map((row) => row.userId));
     let free = 0, trial = 0, pro = 0;
     for (const u of usersForPlan) {
-      if (u.role === 'admin') {
+      if (u.role === 'admin' || premiumUserIds.has(u.id)) {
         pro++;
         continue;
       }

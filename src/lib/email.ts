@@ -254,6 +254,132 @@ export function isEmailConfigured(): boolean {
   return !!process.env.RESEND_API_KEY;
 }
 
+export interface PremiumGrantedEmailData {
+  to: string;
+  name?: string | null;
+  startsAt: Date;
+  expiresAt?: Date | null;
+}
+
+/**
+ * Send the premium entitlement email after the entitlement has already been
+ * persisted. Callers should treat failures as non-fatal to access.
+ */
+export async function sendPremiumGrantedEmail(
+  data: PremiumGrantedEmailData
+): Promise<{ success: boolean; error?: string }> {
+  const resend = getResend();
+
+  if (!resend) {
+    console.warn('[Email] RESEND_API_KEY not set - skipping premium grant email');
+    return { success: false, error: 'Email not configured' };
+  }
+
+  const { to, name, startsAt, expiresAt } = data;
+  const baseUrl = process.env.NEXTAUTH_URL || 'https://withforma.io';
+  const displayName = name?.trim() || to.split('@')[0] || 'there';
+  const startDate = startsAt.toLocaleString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+  });
+  const expirationDate = expiresAt
+    ? expiresAt.toLocaleString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit',
+      })
+    : null;
+
+  const expirationHtml = expirationDate
+    ? `<p style="margin: 0 0 8px; color: #6b7280; font-size: 14px;">Your Premium access expires:</p>
+       <p style="margin: 0 0 24px; color: #1f2937; font-size: 16px; font-weight: 600;">${escapeHtml(expirationDate)}</p>`
+    : `<p style="margin: 0 0 24px; color: #1f2937; font-size: 16px; font-weight: 600;">Your Premium access has no expiration date.</p>`;
+
+  const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #1f2937; margin: 0; padding: 0; background-color: #ffffff;">
+  <div style="max-width: 600px; margin: 0 auto; padding: 40px 20px;">
+    <div style="padding: 0 0 24px;">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td style="width: 32px; height: 32px;">
+            <img src="${baseUrl}/icon.svg" alt="Forma" width="32" height="32" style="display: block;" />
+          </td>
+          <td style="padding-left: 12px; font-size: 20px; font-weight: 700; color: #1f2937;">Forma</td>
+        </tr>
+      </table>
+    </div>
+
+    <div style="padding: 0 0 24px;">
+      <h1 style="margin: 0; color: #1f2937; font-size: 24px; font-weight: 600;">
+        You've received Premium
+      </h1>
+    </div>
+
+    <div style="padding: 0 0 32px;">
+      <p style="margin: 0 0 24px; font-size: 16px; color: #374151;">
+        Hi ${escapeHtml(displayName)},
+      </p>
+      <p style="margin: 0 0 24px; font-size: 15px; color: #374151;">
+        Premium access has just been added to your account.
+      </p>
+      <p style="margin: 0 0 8px; color: #6b7280; font-size: 14px;">Your Premium access begins:</p>
+      <p style="margin: 0 0 24px; color: #1f2937; font-size: 16px; font-weight: 600;">${escapeHtml(startDate)}</p>
+      ${expirationHtml}
+
+      <div style="text-align: center; margin: 32px 0;">
+        <a href="${baseUrl}/dashboard"
+           style="display: inline-block; padding: 14px 36px; background: #ef6f2e; color: white; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 15px;">
+          Open your dashboard
+        </a>
+      </div>
+
+      <p style="margin: 24px 0 0; color: #6b7280; font-size: 14px; text-align: center;">
+        Enjoy your Premium features.
+      </p>
+    </div>
+
+    <div style="padding: 24px 0 0; border-top: 1px solid #e5e5e5;">
+      <p style="margin: 0; color: #9ca3af; font-size: 12px; text-align: center;">
+        <a href="${baseUrl}" style="color: #ef6f2e; text-decoration: none;">Forma</a> — The modern way to build forms
+      </p>
+    </div>
+  </div>
+</body>
+</html>
+  `.trim();
+
+  const text = expirationDate
+    ? `Hi ${displayName},\n\nPremium access has just been added to your account.\n\nYour Premium access begins:\n${startDate}\n\nYour Premium access expires:\n${expirationDate}\n\nYou can sign in now to start using your Premium features.\n\nOpen your dashboard: ${baseUrl}/dashboard\n\nEnjoy!`
+    : `Hi ${displayName},\n\nPremium access has just been added to your account with no expiration date.\n\nYour Premium access begins:\n${startDate}\n\nYou can sign in now to start using your Premium features.\n\nOpen your dashboard: ${baseUrl}/dashboard\n\nEnjoy!`;
+
+  try {
+    console.log(`[Email] Sending premium grant email to ${to}`);
+    const result = await resend.emails.send({
+      from: EMAIL_FROM,
+      to,
+      subject: "You've received Premium 🎉",
+      html,
+      text,
+    });
+    console.log('[Email] Premium grant email sent:', result);
+    return { success: true };
+  } catch (error) {
+    console.error('[Email] Failed to send premium grant email:', error);
+    return { success: false, error: String(error) };
+  }
+}
+
 export interface InvitationEmailData {
   token: string;
   email: string;

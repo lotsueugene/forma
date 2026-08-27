@@ -1,5 +1,6 @@
 import { prisma } from './prisma';
 import { PLAN_LIMITS, PlanType, PlanFeatures, STRIPE_PRICES, getPlanLimitsFromDB } from './stripe';
+import { hasEntitlement } from './entitlements';
 
 /**
  * Check if workspace has an admin owner (admins get Pro features automatically)
@@ -42,6 +43,7 @@ export interface SubscriptionInfo {
     members: number;
   };
   isTrialing: boolean;
+  isPremiumEntitled: boolean;
   trialEndsAt: Date | null;
   canInviteMembers: boolean;
   canAccessAnalytics: boolean;
@@ -173,14 +175,16 @@ export async function incrementSubmissionCount(workspaceId: string) {
 export async function getSubscriptionInfo(workspaceId: string): Promise<SubscriptionInfo> {
   const subscription = await getOrCreateSubscription(workspaceId);
   const usage = await getCurrentUsage(workspaceId);
+  const ownerId = subscription.userId || await getWorkspaceOwnerId(workspaceId);
 
-  const [formsCount, membersCount, pendingInviteCount, isAdminWorkspace] = await Promise.all([
+  const [formsCount, membersCount, pendingInviteCount, isAdminWorkspace, isPremiumEntitled] = await Promise.all([
     prisma.form.count({ where: { workspaceId } }),
     prisma.workspaceMember.count({ where: { workspaceId } }),
     prisma.invitation.count({
       where: { workspaceId, expiresAt: { gt: new Date() } },
     }),
     hasAdminOwner(workspaceId),
+    ownerId ? hasEntitlement(ownerId, 'premium') : Promise.resolve(false),
   ]);
 
   const plan = subscription.plan as PlanType;
@@ -192,6 +196,9 @@ export async function getSubscriptionInfo(workspaceId: string): Promise<Subscrip
 
   let effectivePlan: PlanType = (subscription.plan === 'trial' && !isTrialing) ? 'free' : plan;
   if (isAdminWorkspace) {
+    effectivePlan = 'pro';
+  }
+  if (isPremiumEntitled) {
     effectivePlan = 'pro';
   }
   const effectiveConfig = PLAN_LIMITS[effectivePlan];
@@ -233,6 +240,7 @@ export async function getSubscriptionInfo(workspaceId: string): Promise<Subscrip
     features: effectiveConfig.features,
     usage: currentUsage,
     isTrialing,
+    isPremiumEntitled,
     trialEndsAt: subscription.trialEndsAt,
     canInviteMembers,
     canAccessAnalytics: effectiveConfig.features.analytics,

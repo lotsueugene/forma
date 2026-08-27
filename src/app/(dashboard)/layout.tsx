@@ -30,6 +30,7 @@ import { WorkspaceProvider, useWorkspace } from '@/contexts/workspace-context';
 import { NotificationBell } from '@/components/dashboard/NotificationBell';
 import { AnnouncementBanner } from '@/components/announcement-banner';
 import { UpgradeBanner } from '@/components/dashboard/UpgradeBanner';
+import { PremiumGrantModal } from '@/components/dashboard/PremiumGrantModal';
 
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: House, minRole: 'viewer' },
@@ -511,6 +512,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
           <AnnouncementBanner />
           <UpgradeBanner />
           {children}
+          <PremiumGrantModal />
         </main>
       </div>
     </div>

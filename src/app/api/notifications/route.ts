@@ -87,7 +87,9 @@ export async function GET(request: NextRequest) {
       title: n.title,
       body: n.body,
       href: n.href,
+      entitlementId: n.entitlementId,
       read: n.readAt != null,
+      displayedAt: n.displayedAt?.toISOString() ?? null,
       createdAt: n.createdAt.toISOString(),
     }));
 

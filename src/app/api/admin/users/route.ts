@@ -21,6 +21,7 @@ export async function GET(request: NextRequest) {
     const where = {
       ...(search && {
         OR: [
+          { id: { contains: search } },
           { email: { contains: search } },
           { name: { contains: search } },
         ],
@@ -61,10 +62,49 @@ export async function GET(request: NextRequest) {
       Array<{ userId: string; plan: string; status: string; trialEndsAt: Date | null; stripeCurrentPeriodEnd: Date | null }>
     >`SELECT "userId", plan, status, "trialEndsAt", "stripeCurrentPeriodEnd" FROM "Subscription" WHERE "userId" = ANY(${userIds}::text[])`;
     const subByUser = new Map(subscriptions.map((s) => [s.userId, s]));
+    const now = new Date();
+    const premiumRows = userIds.length > 0
+      ? await prisma.entitlement.findMany({
+          where: {
+            userId: { in: userIds },
+            type: 'premium',
+            startsAt: { lte: now },
+            revokedAt: null,
+            OR: [
+              { expiresAt: null },
+              { expiresAt: { gt: now } },
+            ],
+          },
+          select: { id: true, userId: true, startsAt: true, expiresAt: true },
+        })
+      : [];
+    const premiumByUser = new Map<string, { active: boolean; entitlementId: string; startsAt: Date; expiresAt: Date | null }>();
+    for (const row of premiumRows) {
+      const current = premiumByUser.get(row.userId);
+      if (!current) {
+        premiumByUser.set(row.userId, {
+          active: true,
+          entitlementId: row.id,
+          startsAt: row.startsAt,
+          expiresAt: row.expiresAt,
+        });
+        continue;
+      }
+      if (current.expiresAt == null) continue;
+      if (row.expiresAt == null || row.expiresAt > current.expiresAt) {
+        premiumByUser.set(row.userId, {
+          active: true,
+          entitlementId: row.id,
+          startsAt: row.startsAt,
+          expiresAt: row.expiresAt,
+        });
+      }
+    }
 
     return NextResponse.json({
       users: users.map(u => {
         const sub = subByUser.get(u.id);
+        const premium = premiumByUser.get(u.id);
         return {
           id: u.id,
           name: u.name,
@@ -74,6 +114,14 @@ export async function GET(request: NextRequest) {
           suspendedAt: u.suspendedAt,
           suspendedReason: u.suspendedReason,
           workspaceCount: u._count.workspaceMembers,
+          premium: premium
+            ? {
+                active: true,
+                entitlementId: premium.entitlementId,
+                startsAt: premium.startsAt,
+                expiresAt: premium.expiresAt,
+              }
+            : { active: false, entitlementId: null, startsAt: null, expiresAt: null },
           subscription: sub
             ? {
                 plan: sub.plan,

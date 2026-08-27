@@ -51,13 +51,14 @@ model User {
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 
-  accounts           Account[]
-  sessions           Session[]
-  workspaceMembers   WorkspaceMember[]
-  invitationsSent    Invitation[]
-  settings           UserSettings?
-  notifications      Notification[]
-  subscription       Subscription?
+  accounts         Account[]
+  sessions         Session[]
+  workspaceMembers WorkspaceMember[]
+  invitationsSent  Invitation[]
+  settings         UserSettings?
+  notifications    Notification[]
+  subscription     Subscription?
+  entitlements     Entitlement[]
 
   @@index([suspendedAt])
 }
@@ -72,12 +73,12 @@ model VerificationToken {
 
 // Workspace (Organization) model
 model Workspace {
-  id          String   @id @default(cuid())
-  name        String
-  slug        String   @unique
-  isPersonal  Boolean  @default(false)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id         String   @id @default(cuid())
+  name       String
+  slug       String   @unique
+  isPersonal Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
   // Stripe customer ID (for subscriptions)
   stripeCustomerId String?
@@ -86,79 +87,159 @@ model Workspace {
   stripeConnectAccountId String?
 
   // Email notification settings
-  notificationEmail String?  // Email to receive submission notifications
+  notificationEmail String? // Email to receive submission notifications
 
   // Branding
-  logoUrl String?  // Logo URL for email broadcasts
+  logoUrl String? // Logo URL for email broadcasts
 
-  forms        Form[]
-  members      WorkspaceMember[]
-  invitations  Invitation[]
-  integrations Integration[]
-  apiKeys      ApiKey[]
-  subscription Subscription?
-  usageRecords UsageRecord[]
-  notifications Notification[]
-  webhookEndpoints WebhookEndpoint[]
-  customDomain CustomDomain?
+  forms                Form[]
+  members              WorkspaceMember[]
+  invitations          Invitation[]
+  integrations         Integration[]
+  apiKeys              ApiKey[]
+  subscription         Subscription?
+  usageRecords         UsageRecord[]
+  notifications        Notification[]
+  webhookEndpoints     WebhookEndpoint[]
+  customDomain         CustomDomain?
   respondentBroadcasts RespondentBroadcast[]
 }
 
 model Notification {
-  id          String   @id @default(cuid())
-  userId      String
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   workspaceId String?
   workspace   Workspace? @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
 
-  type        String   // submission, billing, system, etc.
-  title       String
-  body        String?
-  href        String?
+  type          String // submission, billing, system, etc.
+  title         String
+  body          String?
+  href          String?
+  entitlementId String?
+  entitlement   Entitlement? @relation(fields: [entitlementId], references: [id], onDelete: SetNull)
+  dedupeKey     String?      @unique
 
   readAt      DateTime?
+  displayedAt DateTime?
   deletedAt   DateTime?
-  createdAt   DateTime @default(now())
+  createdAt   DateTime  @default(now())
 
   @@index([userId, createdAt])
   @@index([workspaceId, createdAt])
   @@index([userId, readAt])
   @@index([userId, deletedAt])
+  @@index([userId, type, displayedAt])
+  @@index([entitlementId])
 }
 
 // Subscription plans
 // Subscription is per-USER, not per-workspace
 // All workspaces owned by a Pro user get Pro features
 model Subscription {
-  id                   String    @id @default(cuid())
+  id String @id @default(cuid())
 
   // User-level subscription (primary)
-  userId               String?   @unique
-  user                 User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
+  userId String? @unique
+  user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
 
   // Legacy: workspace-level (kept for backward compat during migration)
-  workspaceId          String?   @unique
-  workspace            Workspace? @relation(fields: [workspaceId], references: [id], onDelete: SetNull)
+  workspaceId String?    @unique
+  workspace   Workspace? @relation(fields: [workspaceId], references: [id], onDelete: SetNull)
 
-  plan                 String    @default("free") // free, pro, trial
-  status               String    @default("active") // active, canceled, past_due, trialing
+  plan   String @default("free") // free, pro, trial
+  status String @default("active") // active, canceled, past_due, trialing
 
   // Stripe subscription data
-  stripeSubscriptionId String?   @unique
-  stripePriceId        String?
+  stripeSubscriptionId   String?   @unique
+  stripePriceId          String?
   stripeCurrentPeriodEnd DateTime?
 
   // Trial info
-  trialEndsAt          DateTime?
+  trialEndsAt DateTime?
 
   // Limits
-  submissionsLimit     Int       @default(50)
-  formsLimit           Int       @default(3)
-  membersLimit         Int       @default(1) // 1 = owner only (no team)
+  submissionsLimit Int @default(50)
+  formsLimit       Int @default(3)
+  membersLimit     Int @default(1) // 1 = owner only (no team)
 
-  createdAt            DateTime  @default(now())
-  updatedAt            DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Durable, extensible user entitlements. "premium" is the first supported type,
+// but authorization code accepts a type so future feature entitlements can reuse
+// the same path.
+model Entitlement {
+  id             String    @id @default(cuid())
+  userId         String
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type           String
+  status         String    @default("active") // active, expired, revoked, scheduled
+  startsAt       DateTime  @default(now())
+  expiresAt      DateTime?
+  grantedAt      DateTime  @default(now())
+  grantedBy      String?
+  grantReason    String
+  source         String    @default("admin")
+  metadata       String?
+  idempotencyKey String?   @unique
+  revokedAt      DateTime?
+  revokedBy      String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  auditLogs     EntitlementAuditLog[]
+  events        EntitlementEvent[]
+  notifications Notification[]
+
+  @@index([userId, type, startsAt])
+  @@index([userId, type, revokedAt])
+  @@index([status])
+  @@index([expiresAt])
+  @@index([grantedBy])
+}
+
+model EntitlementAuditLog {
+  id             String       @id @default(cuid())
+  entitlementId  String?
+  entitlement    Entitlement? @relation(fields: [entitlementId], references: [id], onDelete: SetNull)
+  userId         String
+  action         String // granted, extended, revoked, expired
+  actorId        String?
+  source         String
+  reason         String?
+  previousValue  String?
+  newValue       String?
+  metadata       String?
+  idempotencyKey String?      @unique
+  createdAt      DateTime     @default(now())
+
+  @@index([entitlementId])
+  @@index([userId, createdAt])
+  @@index([actorId])
+  @@index([action])
+}
+
+model EntitlementEvent {
+  id             String       @id @default(cuid())
+  entitlementId  String?
+  entitlement    Entitlement? @relation(fields: [entitlementId], references: [id], onDelete: SetNull)
+  userId         String
+  type           String // entitlement.granted, entitlement.extended, entitlement.revoked, entitlement.expired
+  payload        String
+  status         String       @default("pending") // pending, processed, failed
+  attempts       Int          @default(0)
+  processedAt    DateTime?
+  lastError      String?
+  idempotencyKey String?      @unique
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@index([userId, createdAt])
+  @@index([type, status])
+  @@index([entitlementId])
 }
 
 // Track monthly usage
@@ -172,76 +253,76 @@ model UsageRecord {
   periodEnd   DateTime
 
   // Counts
-  submissions Int       @default(0)
+  submissions Int @default(0)
 
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([workspaceId, periodStart])
 }
 
 // Workspace membership with roles
 model WorkspaceMember {
-  id          String    @id @default(cuid())
-  role        String    // owner, admin, editor, viewer
+  id   String @id @default(cuid())
+  role String // owner, admin, editor, viewer
 
   workspaceId String
   workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
 
-  userId      String
-  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([workspaceId, userId])
 }
 
 // Pending invitations
 model Invitation {
-  id          String    @id @default(cuid())
-  email       String
-  role        String    // admin, editor, viewer (not owner)
-  token       String    @unique @default(cuid())
-  expiresAt   DateTime
+  id        String   @id @default(cuid())
+  email     String
+  role      String // admin, editor, viewer (not owner)
+  token     String   @unique @default(cuid())
+  expiresAt DateTime
 
   workspaceId String
   workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
 
   invitedById String
-  invitedBy   User      @relation(fields: [invitedById], references: [id], onDelete: Cascade)
+  invitedBy   User   @relation(fields: [invitedById], references: [id], onDelete: Cascade)
 
-  createdAt   DateTime  @default(now())
+  createdAt DateTime @default(now())
 
   @@unique([workspaceId, email])
 }
 
 // Application models
 model Form {
-  id          String   @id @default(cuid())
+  id          String  @id @default(cuid())
   name        String
   description String?
-  slug        String?  // URL-friendly slug for custom domains (e.g., "contact")
-  bookingSlug String?  // URL-friendly slug that serves the booking-only UI on custom domains (e.g., "bookings")
-  status      String   @default("draft") // draft, active, archived, paused
-  formType    String   @default("builder") // endpoint (quick) or builder (full)
-  fields      String   @default("[]") // JSON string of form fields
-  settings    String?  // JSON string of form settings
+  slug        String? // URL-friendly slug for custom domains (e.g., "contact")
+  bookingSlug String? // URL-friendly slug that serves the booking-only UI on custom domains (e.g., "bookings")
+  status      String  @default("draft") // draft, active, archived, paused
+  formType    String  @default("builder") // endpoint (quick) or builder (full)
+  fields      String  @default("[]") // JSON string of form fields
+  settings    String? // JSON string of form settings
 
   workspaceId String
   workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
 
-  submissions Submission[]
-  integrations Integration[]
-  bookingBlocks BookingBlock[]
-  automations Automation[]
+  submissions          Submission[]
+  integrations         Integration[]
+  bookingBlocks        BookingBlock[]
+  automations          Automation[]
   respondentBroadcasts RespondentBroadcast[]
-  defaultForDomains CustomDomain[] @relation("DefaultForm")
-  slugRedirects FormSlugRedirect[]
+  defaultForDomains    CustomDomain[]        @relation("DefaultForm")
+  slugRedirects        FormSlugRedirect[]
 
-  views       Int      @default(0)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  views     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([workspaceId, slug])
   @@unique([workspaceId, bookingSlug])
@@ -254,8 +335,8 @@ model Form {
 model FormSlugRedirect {
   id          String   @id @default(cuid())
   workspaceId String
-  slug        String   // The OLD slug/bookingSlug being redirected
-  kind        String   // 'slug' or 'bookingSlug' — which field the old value came from
+  slug        String // The OLD slug/bookingSlug being redirected
+  kind        String // 'slug' or 'bookingSlug' — which field the old value came from
   formId      String
   form        Form     @relation(fields: [formId], references: [id], onDelete: Cascade)
   expiresAt   DateTime
@@ -270,8 +351,8 @@ model Submission {
   id        String   @id @default(cuid())
   formId    String
   form      Form     @relation(fields: [formId], references: [id], onDelete: Cascade)
-  data      String   // JSON string of submission data
-  metadata  String?  // JSON string of metadata (IP, user agent, etc.)
+  data      String // JSON string of submission data
+  metadata  String? // JSON string of metadata (IP, user agent, etc.)
   createdAt DateTime @default(now())
 
   @@index([formId, createdAt])
@@ -282,11 +363,11 @@ model BookingBlock {
   id        String   @id @default(cuid())
   formId    String
   form      Form     @relation(fields: [formId], references: [id], onDelete: Cascade)
-  fieldId   String   // Which booking field this applies to
-  date      String   // "2026-04-15" for specific date, or empty for recurring
-  startTime String?  // "12:00" — null means entire day blocked
-  endTime   String?  // "13:00"
-  reason    String?  // "Lunch break", "Day off"
+  fieldId   String // Which booking field this applies to
+  date      String // "2026-04-15" for specific date, or empty for recurring
+  startTime String? // "12:00" — null means entire day blocked
+  endTime   String? // "13:00"
+  reason    String? // "Lunch break", "Day off"
   createdAt DateTime @default(now())
 
   @@index([formId, fieldId])
@@ -294,98 +375,98 @@ model BookingBlock {
 }
 
 model Integration {
-  id          String   @id @default(cuid())
-  type        String   // slack, zapier, hubspot, etc.
-  name        String
+  id      String  @id @default(cuid())
+  type    String // slack, zapier, hubspot, etc.
+  name    String
   // AES-256-GCM encrypted JSON of the integration's config (API keys,
   // OAuth tokens, webhook URLs). Legacy rows written before encryption
   // was introduced are stored as raw JSON and transparently upgraded on
   // next save — see src/lib/integration-secrets.ts.
-  config      String
-  enabled     Boolean  @default(true)
+  config  String
+  enabled Boolean @default(true)
 
   workspaceId String
   workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
 
-  formId      String?  // Optional: only trigger for this specific form (null = all forms)
-  form        Form?    @relation(fields: [formId], references: [id], onDelete: SetNull)
+  formId String? // Optional: only trigger for this specific form (null = all forms)
+  form   Form?   @relation(fields: [formId], references: [id], onDelete: SetNull)
 
   // Observability: last delivery attempt. Populated by deliverToIntegrations
   // so the UI can show a "Last: HTTP 200 · 2m ago" strip per integration
   // without us needing a separate IntegrationDelivery log table.
   lastRunAt      DateTime?
-  lastStatus     String?    // 'success' | 'error'
-  lastStatusCode Int?       // HTTP status from the provider, if applicable
-  lastError      String?    // truncated error message on failure
+  lastStatus     String? // 'success' | 'error'
+  lastStatusCode Int? // HTTP status from the provider, if applicable
+  lastError      String? // truncated error message on failure
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 // API Keys for workspace
 model ApiKey {
-  id          String    @id @default(cuid())
-  name        String
-  key         String    @unique  // The actual API key (hashed in production)
-  prefix      String    // First 8 chars for display (e.g., "frm_live")
-  lastUsedAt  DateTime?
-  expiresAt   DateTime?
+  id         String    @id @default(cuid())
+  name       String
+  key        String    @unique // The actual API key (hashed in production)
+  prefix     String // First 8 chars for display (e.g., "frm_live")
+  lastUsedAt DateTime?
+  expiresAt  DateTime?
 
   workspaceId String
   workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
 
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 // User notification preferences
 model UserSettings {
-  id                    String   @id @default(cuid())
-  userId                String   @unique
-  user                  User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   // Notification preferences
-  notifyNewSubmissions  Boolean  @default(true)
-  notifyWeeklyDigest    Boolean  @default(true)
-  notifyFormErrors      Boolean  @default(true)
-  notifyTeamInvites     Boolean  @default(true)
-  notifyBilling         Boolean  @default(true)
-  notifyMarketing       Boolean  @default(false)
+  notifyNewSubmissions Boolean @default(true)
+  notifyWeeklyDigest   Boolean @default(true)
+  notifyFormErrors     Boolean @default(true)
+  notifyTeamInvites    Boolean @default(true)
+  notifyBilling        Boolean @default(true)
+  notifyMarketing      Boolean @default(false)
 
   // Other settings
-  timezone              String?
+  timezone String?
 
-  createdAt             DateTime @default(now())
-  updatedAt             DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 // Outgoing webhook endpoints configured by workspace admins
 model WebhookEndpoint {
-  id             String    @id @default(cuid())
-  workspaceId    String
-  workspace      Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  id          String    @id @default(cuid())
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
 
-  name           String
-  url            String
-  secret         String
-  events         String    @default("submission.created") // comma-separated events
-  active         Boolean   @default(true)
+  name   String
+  url    String
+  secret String
+  events String  @default("submission.created") // comma-separated events
+  active Boolean @default(true)
 
   lastTriggeredAt DateTime?
   lastStatusCode  Int?
   lastError       String?
 
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([workspaceId, active])
 }
 
 // One custom domain per workspace for now
 model CustomDomain {
-  id                String    @id @default(cuid())
-  workspaceId       String    @unique
-  workspace         Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  id          String    @id @default(cuid())
+  workspaceId String    @unique
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
 
   domain            String    @unique
   verificationToken String
@@ -393,39 +474,39 @@ model CustomDomain {
   status            String    @default("pending") // pending, verified
 
   // Default form to show at root of custom domain
-  defaultFormId     String?
-  defaultForm       Form?     @relation("DefaultForm", fields: [defaultFormId], references: [id], onDelete: SetNull)
+  defaultFormId String?
+  defaultForm   Form?   @relation("DefaultForm", fields: [defaultFormId], references: [id], onDelete: SetNull)
 
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 // Platform-wide announcements (admin only)
 model Announcement {
-  id          String    @id @default(cuid())
-  title       String
-  content     String    // Markdown or HTML
-  type        String    @default("info") // info, warning, success, update
-  priority    Int       @default(0) // Higher = more important
+  id       String @id @default(cuid())
+  title    String
+  content  String // Markdown or HTML
+  type     String @default("info") // info, warning, success, update
+  priority Int    @default(0) // Higher = more important
 
   // Targeting
-  targetAll   Boolean   @default(true)
-  targetPlans String?   // Comma-separated: "free,trial,pro" or null for all
+  targetAll   Boolean @default(true)
+  targetPlans String? // Comma-separated: "free,trial,pro" or null for all
 
   // Display settings
-  dismissible Boolean   @default(true)
-  showBanner  Boolean   @default(true) // Show as top banner
-  showModal   Boolean   @default(false) // Show as modal on first visit
+  dismissible Boolean @default(true)
+  showBanner  Boolean @default(true) // Show as top banner
+  showModal   Boolean @default(false) // Show as modal on first visit
 
   // Scheduling
-  startsAt    DateTime  @default(now())
-  expiresAt   DateTime?
+  startsAt  DateTime  @default(now())
+  expiresAt DateTime?
 
   // Tracking
-  createdBy   String?   // Admin user ID
+  createdBy String? // Admin user ID
 
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([startsAt, expiresAt])
 }
@@ -443,31 +524,31 @@ model AnnouncementDismissal {
 
 // Email broadcast tracking
 model EmailBroadcast {
-  id            String    @id @default(cuid())
-  subject       String
-  content       String    // HTML content
+  id      String @id @default(cuid())
+  subject String
+  content String // HTML content
 
   // Targeting: exactly one of these applies, picked via UI radio.
   // - targetAll=true (default): every user with an email
   // - targetAll=false + targetPlans set: filter by plan slug list
   // - targetAll=false + targetUserIds set: hand-picked specific users
-  targetAll     Boolean   @default(true)
-  targetPlans   String?   // Comma-separated plan slugs: "free,trial,pro"
-  targetUserIds String?   // JSON array of user IDs: '["cm1...","cm2..."]'
+  targetAll     Boolean @default(true)
+  targetPlans   String? // Comma-separated plan slugs: "free,trial,pro"
+  targetUserIds String? // JSON array of user IDs: '["cm1...","cm2..."]'
 
   // Stats
-  sentCount     Int       @default(0)
-  failedCount   Int       @default(0)
+  sentCount   Int @default(0)
+  failedCount Int @default(0)
 
   // Status
-  status      String    @default("draft") // draft, sending, sent, failed
-  sentAt      DateTime?
-  createdBy   String?
+  status    String    @default("draft") // draft, sending, sent, failed
+  sentAt    DateTime?
+  createdBy String?
 
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  replies     BroadcastReply[]
+  replies BroadcastReply[]
 }
 
 // Workspace broadcasts to form respondents
@@ -476,60 +557,60 @@ model RespondentBroadcast {
   workspaceId String
   workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
 
-  subject     String
-  content     String    // HTML content
-  fromName    String?   // Sender display name
+  subject  String
+  content  String // HTML content
+  fromName String? // Sender display name
 
   // Targeting
-  formId      String?   // null = all forms
-  form        Form?     @relation(fields: [formId], references: [id], onDelete: SetNull)
+  formId String? // null = all forms
+  form   Form?   @relation(fields: [formId], references: [id], onDelete: SetNull)
 
   // Stats
-  recipientCount Int    @default(0)
-  sentCount      Int    @default(0)
-  failedCount    Int    @default(0)
+  recipientCount Int @default(0)
+  sentCount      Int @default(0)
+  failedCount    Int @default(0)
 
   // Status
-  status      String    @default("draft") // draft, sending, sent, failed
-  sentAt      DateTime?
-  createdBy   String?
+  status    String    @default("draft") // draft, sending, sent, failed
+  sentAt    DateTime?
+  createdBy String?
 
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 // Replies to email broadcasts (via Resend inbound)
 model BroadcastReply {
-  id           String    @id @default(cuid())
+  id String @id @default(cuid())
 
   // Link to original broadcast (if identifiable)
-  broadcastId  String?
-  broadcast    EmailBroadcast? @relation(fields: [broadcastId], references: [id], onDelete: SetNull)
+  broadcastId String?
+  broadcast   EmailBroadcast? @relation(fields: [broadcastId], references: [id], onDelete: SetNull)
 
   // Sender info
-  fromEmail    String
-  fromName     String?
+  fromEmail String
+  fromName  String?
 
   // Email content
-  subject      String
-  textContent  String?   // Plain text body
-  htmlContent  String?   // HTML body
+  subject     String
+  textContent String? // Plain text body
+  htmlContent String? // HTML body
 
   // Status
-  status       String    @default("unread") // unread, read, replied
-  readAt       DateTime?
+  status String    @default("unread") // unread, read, replied
+  readAt DateTime?
 
   // Admin response
   repliedAt    DateTime?
-  replyContent String?   // What admin replied with
-  repliedBy    String?   // Admin user ID
+  replyContent String? // What admin replied with
+  repliedBy    String? // Admin user ID
 
   // Resend metadata
-  resendEmailId String?  // Resend's email ID
+  resendEmailId String? // Resend's email ID
 
-  receivedAt   DateTime  @default(now())
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  receivedAt DateTime @default(now())
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
   @@index([status, receivedAt])
   @@index([fromEmail])
@@ -537,51 +618,51 @@ model BroadcastReply {
 
 // Pricing plans (admin configurable)
 model PricingPlan {
-  id             String   @id @default(cuid())
-  name           String   // e.g., "Starter", "Pro", "Enterprise"
-  slug           String   @unique // e.g., "starter", "pro", "enterprise"
-  description    String   // Short description
+  id          String @id @default(cuid())
+  name        String // e.g., "Starter", "Pro", "Enterprise"
+  slug        String @unique // e.g., "starter", "pro", "enterprise"
+  description String // Short description
 
   // Pricing
-  monthlyPrice   Float?   // Price in dollars (null for "Contact Sales")
-  yearlyPrice    Float?   // Price in dollars per month when billed yearly
+  monthlyPrice Float? // Price in dollars (null for "Contact Sales")
+  yearlyPrice  Float? // Price in dollars per month when billed yearly
 
   // Limits (-1 = unlimited, used for enforcement)
-  submissionsLimit Int     @default(50)   // Monthly submission limit
-  formsLimit       Int     @default(3)    // Max forms allowed
-  membersLimit     Int     @default(1)    // Max team members
+  submissionsLimit Int @default(50) // Monthly submission limit
+  formsLimit       Int @default(3) // Max forms allowed
+  membersLimit     Int @default(1) // Max team members
 
   // Display
-  icon           String   @default("Lightning") // Phosphor icon name
-  popular        Boolean  @default(false)
-  ctaText        String   @default("Get Started")
-  ctaLink        String?  // Custom link (null = default signup)
+  icon    String  @default("Lightning") // Phosphor icon name
+  popular Boolean @default(false)
+  ctaText String  @default("Get Started")
+  ctaLink String? // Custom link (null = default signup)
 
   // Features (JSON array of {text: string, included: boolean})
-  features       String   @default("[]")
+  features String @default("[]")
 
   // Ordering and visibility
-  sortOrder      Int      @default(0)
-  active         Boolean  @default(true)
+  sortOrder Int     @default(0)
+  active    Boolean @default(true)
 
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([active, sortOrder])
 }
 
 // Footer links (admin configurable)
 model FooterLink {
-  id          String   @id @default(cuid())
-  section     String   // product, developers, company, legal
-  label       String   // Display text
-  href        String   // URL or path
-  external    Boolean  @default(false) // Opens in new tab
-  sortOrder   Int      @default(0)
-  active      Boolean  @default(true)
+  id        String  @id @default(cuid())
+  section   String // product, developers, company, legal
+  label     String // Display text
+  href      String // URL or path
+  external  Boolean @default(false) // Opens in new tab
+  sortOrder Int     @default(0)
+  active    Boolean @default(true)
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([section, active, sortOrder])
 }
@@ -590,7 +671,7 @@ model FooterLink {
 model SiteSetting {
   id        String   @id @default(cuid())
   key       String   @unique // e.g., "footer_tagline", "system_status"
-  value     String   // JSON value
+  value     String // JSON value
   updatedAt DateTime @updatedAt
 }
 
@@ -599,14 +680,14 @@ model Page {
   id          String    @id @default(cuid())
   slug        String    @unique // e.g., "privacy", "terms", "about"
   title       String
-  content     String    // Markdown or HTML content
-  metaTitle   String?   // SEO title
-  metaDesc    String?   // SEO description
+  content     String // Markdown or HTML content
+  metaTitle   String? // SEO title
+  metaDesc    String? // SEO description
   published   Boolean   @default(false)
   publishedAt DateTime?
 
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([slug, published])
 }
@@ -616,19 +697,19 @@ model BlogPost {
   id          String    @id @default(cuid())
   slug        String    @unique
   title       String
-  excerpt     String?   // Short summary
-  content     String    // Markdown or HTML content
-  coverImage  String?   // Cover image URL
-  author      String?   // Author name
-  tags        String?   // Comma-separated tags
-  metaTitle   String?   // SEO title
-  metaDesc    String?   // SEO description
+  excerpt     String? // Short summary
+  content     String // Markdown or HTML content
+  coverImage  String? // Cover image URL
+  author      String? // Author name
+  tags        String? // Comma-separated tags
+  metaTitle   String? // SEO title
+  metaDesc    String? // SEO description
   published   Boolean   @default(false)
   publishedAt DateTime?
   featured    Boolean   @default(false)
 
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([published, publishedAt])
   @@index([featured, published])
@@ -636,25 +717,25 @@ model BlogPost {
 
 // Job postings for careers page
 model JobPosting {
-  id          String    @id @default(cuid())
-  slug        String    @unique
-  title       String
-  department  String    // e.g., "Engineering", "Design", "Marketing"
-  location    String    // e.g., "Remote", "San Francisco, CA"
-  type        String    // e.g., "Full-time", "Part-time", "Contract"
-  description String    // Full job description (Markdown)
-  requirements String?  // Requirements/qualifications
-  benefits    String?   // Benefits and perks
-  salary      String?   // Salary range (optional)
-  applyFormId String?   // Forma form ID for applications
-  applyUrl    String?   // External application URL (fallback)
-  applyEmail  String?   // Email to apply (fallback)
-  published   Boolean   @default(false)
-  publishedAt DateTime?
-  featured    Boolean   @default(false)
+  id           String    @id @default(cuid())
+  slug         String    @unique
+  title        String
+  department   String // e.g., "Engineering", "Design", "Marketing"
+  location     String // e.g., "Remote", "San Francisco, CA"
+  type         String // e.g., "Full-time", "Part-time", "Contract"
+  description  String // Full job description (Markdown)
+  requirements String? // Requirements/qualifications
+  benefits     String? // Benefits and perks
+  salary       String? // Salary range (optional)
+  applyFormId  String? // Forma form ID for applications
+  applyUrl     String? // External application URL (fallback)
+  applyEmail   String? // Email to apply (fallback)
+  published    Boolean   @default(false)
+  publishedAt  DateTime?
+  featured     Boolean   @default(false)
 
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([published, publishedAt])
   @@index([department, published])
@@ -664,7 +745,7 @@ model JobPosting {
 model EmailUnsubscribe {
   id        String   @id @default(cuid())
   email     String
-  scope     String   // "platform" (admin broadcasts) or workspaceId (workspace broadcasts)
+  scope     String // "platform" (admin broadcasts) or workspaceId (workspace broadcasts)
   createdAt DateTime @default(now())
 
   @@unique([email, scope])
@@ -673,17 +754,17 @@ model EmailUnsubscribe {
 
 // Form automations (auto-reply, follow-up sequences, conditional actions)
 model Automation {
-  id          String   @id @default(cuid())
-  formId      String
-  form        Form     @relation(fields: [formId], references: [id], onDelete: Cascade)
-  name        String
-  trigger     String   @default("submission") // submission
-  enabled     Boolean  @default(true)
-  actions     String   // JSON array of actions [{type, config, delay}]
-  conditions  String?  // JSON conditions for when to trigger
+  id         String  @id @default(cuid())
+  formId     String
+  form       Form    @relation(fields: [formId], references: [id], onDelete: Cascade)
+  name       String
+  trigger    String  @default("submission") // submission
+  enabled    Boolean @default(true)
+  actions    String // JSON array of actions [{type, config, delay}]
+  conditions String? // JSON conditions for when to trigger
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   scheduledEmails ScheduledEmail[]
 
@@ -692,19 +773,19 @@ model Automation {
 
 // Scheduled emails for delayed automation actions
 model ScheduledEmail {
-  id            String   @id @default(cuid())
-  automationId  String
-  automation    Automation @relation(fields: [automationId], references: [id], onDelete: Cascade)
-  submissionId  String
-  actionIndex   Int      // Which action in the automation's actions array
-  to            String   // Recipient email
-  subject       String
-  body          String
-  scheduledFor  DateTime // When to send
-  sentAt        DateTime?
-  status        String   @default("pending") // pending, sent, failed, cancelled
+  id           String     @id @default(cuid())
+  automationId String
+  automation   Automation @relation(fields: [automationId], references: [id], onDelete: Cascade)
+  submissionId String
+  actionIndex  Int // Which action in the automation's actions array
+  to           String // Recipient email
+  subject      String
+  body         String
+  scheduledFor DateTime // When to send
+  sentAt       DateTime?
+  status       String     @default("pending") // pending, sent, failed, cancelled
 
-  createdAt     DateTime @default(now())
+  createdAt DateTime @default(now())
 
   @@index([status, scheduledFor])
   @@index([automationId])
@@ -713,12 +794,12 @@ model ScheduledEmail {
 // Security audit log — persistent record of sensitive operations
 model AuditLog {
   id           String   @id @default(cuid())
-  action       String   // e.g. auth.login_success, workspace.delete, admin.promote_user
-  userId       String?  // Who performed the action (null for system/anonymous)
-  ip           String?  // IP address if available
-  resourceType String?  // e.g. workspace, form, user
-  resourceId   String?  // ID of the affected resource
-  details      String?  // JSON string with extra context
+  action       String // e.g. auth.login_success, workspace.delete, admin.promote_user
+  userId       String? // Who performed the action (null for system/anonymous)
+  ip           String? // IP address if available
+  resourceType String? // e.g. workspace, form, user
+  resourceId   String? // ID of the affected resource
+  details      String? // JSON string with extra context
   createdAt    DateTime @default(now())
 
   @@index([action])
@@ -734,8 +815,8 @@ model EmailTemplate {
   id        String   @id @default(cuid())
   slug      String   @unique
   subject   String
-  body      String   // HTML body — keep it simple, plain text wrapped in basic tags
-  updatedBy String?  // userId of admin who last edited
+  body      String // HTML body — keep it simple, plain text wrapped in basic tags
+  updatedBy String? // userId of admin who last edited
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }

@@ -125,6 +125,10 @@ export const authOptions: NextAuthOptions = {
         sendWelcomeEmail({ to: user.email, name: user.name }).catch((err) => {
           console.error('[Auth] Welcome email (oauth) failed (non-fatal):', err);
         });
+        const { grantSignupPremiumIfEnabled } = await import('./entitlements');
+        grantSignupPremiumIfEnabled(user.id).catch((err) => {
+          console.error('[Auth] Signup premium grant (oauth) failed (non-fatal):', err);
+        });
       }
     },
   },

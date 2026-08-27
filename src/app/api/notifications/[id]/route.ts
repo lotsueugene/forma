@@ -16,12 +16,24 @@ export async function PATCH(
     }
 
     const { id } = await params;
-    const body = (await request.json().catch(() => ({}))) as { read?: boolean };
-    const read = body.read === true;
+    const body = (await request.json().catch(() => ({}))) as {
+      read?: boolean;
+      displayed?: boolean;
+    };
+    const data: { readAt?: Date | null; displayedAt?: Date | null } = {};
+    if (typeof body.read === 'boolean') {
+      data.readAt = body.read ? new Date() : null;
+    }
+    if (typeof body.displayed === 'boolean') {
+      data.displayedAt = body.displayed ? new Date() : null;
+    }
+    if (Object.keys(data).length === 0) {
+      return NextResponse.json({ error: 'No notification update provided' }, { status: 400 });
+    }
 
     const updated = await prisma.notification.updateMany({
       where: { id, userId: session.user.id, deletedAt: null },
-      data: { readAt: read ? new Date() : null },
+      data,
     });
 
     if (updated.count === 0) {
@@ -70,4 +82,3 @@ export async function DELETE(
     );
   }
 }
-
