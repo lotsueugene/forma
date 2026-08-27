@@ -246,9 +246,6 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
   const { currentWorkspace } = useWorkspace();
   const userRole = currentWorkspace?.role || 'viewer';
   const userRoleLevel = roleLevel[userRole] || 1;
-  const filteredNavigation = navigation.filter(
-    (item) => userRoleLevel >= (roleLevel[item.minRole] || 1)
-  );
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -263,10 +260,18 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
   const [isAdmin, setIsAdmin] = useState(false);
   const notificationPanelRef = useRef<HTMLDivElement>(null);
   const userMenuRef = useRef<HTMLDivElement>(null);
+  const filteredNavigation = [
+    ...navigation.filter(
+      (item) => userRoleLevel >= (roleLevel[item.minRole] || 1)
+    ),
+    ...(isAdmin
+      ? [{ name: 'Admin Panel', href: '/admin', icon: Shield, minRole: 'viewer' }]
+      : []),
+  ];
 
   // Check if user is admin
   useEffect(() => {
-    fetch('/api/admin')
+    fetch('/api/admin/check')
       .then(res => {
         if (res.ok) setIsAdmin(true);
       })

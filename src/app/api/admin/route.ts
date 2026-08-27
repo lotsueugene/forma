@@ -79,6 +79,9 @@ export async function GET() {
           ],
         },
         select: { userId: true },
+      }).catch((error) => {
+        console.error('Premium entitlement stats unavailable:', error);
+        return [];
       }),
     ]);
 

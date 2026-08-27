@@ -89,14 +89,17 @@ export default function AdminLayout({
     return initial;
   });
 
-  // Keep section open when navigating within it
-  useEffect(() => {
-    for (const section of navSections) {
-      if (section.label && section.items.some((item) => pathname === item.href || pathname.startsWith(item.href + '/'))) {
-        setOpenSections((prev) => new Set(prev).add(section.label!));
-      }
-    }
-  }, [pathname]);
+  const activeSectionLabels = new Set(
+    navSections
+      .filter(
+        (section) =>
+          section.label &&
+          section.items.some(
+            (item) => pathname === item.href || pathname.startsWith(item.href + '/')
+          )
+      )
+      .map((section) => section.label!)
+  );
 
   const toggleSection = (label: string) => {
     setOpenSections((prev) => {
@@ -109,7 +112,7 @@ export default function AdminLayout({
 
   useEffect(() => {
     // Check if user is admin
-    fetch('/api/admin')
+    fetch('/api/admin/check')
       .then(res => {
         if (res.ok) {
           setIsAdmin(true);
@@ -124,11 +127,6 @@ export default function AdminLayout({
         setLoading(false);
       });
   }, [router]);
-
-  // Close sidebar on route change
-  useEffect(() => {
-    setSidebarOpen(false);
-  }, [pathname]);
 
   if (loading) {
     return (
@@ -166,7 +164,11 @@ export default function AdminLayout({
       >
         <div className="p-4 border-b border-gray-200">
           <div className="flex items-center justify-between">
-            <Link href="/dashboard" className="flex items-center gap-2 text-gray-500 hover:text-gray-900 text-sm">
+            <Link
+              href="/dashboard"
+              onClick={() => setSidebarOpen(false)}
+              className="flex items-center gap-2 text-gray-500 hover:text-gray-900 text-sm"
+            >
               <CaretLeft size={16} />
               Back to Dashboard
             </Link>
@@ -190,6 +192,7 @@ export default function AdminLayout({
                   <Link
                     key={item.href}
                     href={item.href}
+                    onClick={() => setSidebarOpen(false)}
                     className={cn(
                       'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors',
                       isActive
@@ -204,7 +207,8 @@ export default function AdminLayout({
               });
             }
 
-            const isOpen = openSections.has(section.label);
+            const isOpen =
+              openSections.has(section.label) || activeSectionLabels.has(section.label);
             const hasActive = section.items.some(
               (item) => pathname === item.href || pathname.startsWith(item.href + '/')
             );
@@ -234,6 +238,7 @@ export default function AdminLayout({
                         <Link
                           key={item.href}
                           href={item.href}
+                          onClick={() => setSidebarOpen(false)}
                           className={cn(
                             'flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors',
                             isActive
