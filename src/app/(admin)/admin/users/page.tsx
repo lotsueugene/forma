@@ -182,6 +182,7 @@ export default function AdminUsersPage() {
   const { data: session } = useSession();
   const currentUserId = session?.user?.id;
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [users, setUsers] = useState<User[]>([]);
   const [pagination, setPagination] = useState<Pagination>({
     page: 1,
@@ -216,6 +217,7 @@ export default function AdminUsersPage() {
 
   const loadUsers = useCallback(async () => {
     setLoading(true);
+    setLoadError(null);
     try {
       const params = new URLSearchParams({
         page: String(pagination.page),
@@ -226,11 +228,16 @@ export default function AdminUsersPage() {
 
       const res = await fetch(`/api/admin/users?${params}`);
       const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to load users');
+      }
 
       setUsers(data.users || []);
       setPagination((current) => data.pagination || current);
     } catch (error) {
       console.error('Failed to load users:', error);
+      setLoadError(error instanceof Error ? error.message : 'Failed to load users');
+      setUsers([]);
     } finally {
       setLoading(false);
     }
@@ -569,6 +576,11 @@ export default function AdminUsersPage() {
 
       {/* Users Table - Desktop */}
       <div className="card overflow-hidden hidden sm:block">
+        {loadError && (
+          <div className="border-b border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            {loadError}
+          </div>
+        )}
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead className="bg-gray-50 border-b border-gray-200">
@@ -725,6 +737,11 @@ export default function AdminUsersPage() {
 
       {/* Users Cards - Mobile */}
       <div className="sm:hidden space-y-3">
+        {loadError && (
+          <div className="card border-red-200 bg-red-50 p-4 text-sm text-red-700">
+            {loadError}
+          </div>
+        )}
         {loading ? (
           <div className="card p-8 text-center">
             <Spinner size={24} className="animate-spin text-gray-400 mx-auto" />

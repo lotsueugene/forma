@@ -342,7 +342,7 @@ export function Select({
                 role="listbox"
                 tabIndex={-1}
                 className={[
-                  'fixed z-60 min-w-40 max-h-80 overflow-auto',
+                  'fixed z-[120] min-w-40 max-h-80 overflow-auto',
                   'rounded-[0.625rem] border border-gray-200 bg-white shadow-lg',
                   'py-1 outline-none',
                 ].join(' ')}

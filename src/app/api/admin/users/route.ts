@@ -58,9 +58,15 @@ export async function GET(request: NextRequest) {
 
     // Fetch subscriptions for these users via parameterized raw query
     const userIds = users.map((u) => u.id);
-    const subscriptions = await prisma.$queryRaw<
-      Array<{ userId: string; plan: string; status: string; trialEndsAt: Date | null; stripeCurrentPeriodEnd: Date | null }>
-    >`SELECT "userId", plan, status, "trialEndsAt", "stripeCurrentPeriodEnd" FROM "Subscription" WHERE "userId" = ANY(${userIds}::text[])`;
+    const subscriptions = userIds.length > 0
+      ? await prisma.$queryRaw<
+          Array<{ userId: string; plan: string; status: string; trialEndsAt: Date | null; stripeCurrentPeriodEnd: Date | null }>
+        >`SELECT "userId", plan, status, "trialEndsAt", "stripeCurrentPeriodEnd" FROM "Subscription" WHERE "userId" = ANY(${userIds}::text[])`
+          .catch((error) => {
+            console.error('User subscription badges unavailable:', error);
+            return [];
+          })
+      : [];
     const subByUser = new Map(subscriptions.map((s) => [s.userId, s]));
     const now = new Date();
     const premiumRows = userIds.length > 0
@@ -76,6 +82,9 @@ export async function GET(request: NextRequest) {
             ],
           },
           select: { id: true, userId: true, startsAt: true, expiresAt: true },
+        }).catch((error) => {
+          console.error('Premium entitlement user badges unavailable:', error);
+          return [];
         })
       : [];
     const premiumByUser = new Map<string, { active: boolean; entitlementId: string; startsAt: Date; expiresAt: Date | null }>();
