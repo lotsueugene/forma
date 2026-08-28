@@ -11,6 +11,7 @@ import {
   UserPlus,
   Key,
   ArrowsClockwise,
+  Lightning,
 } from '@phosphor-icons/react';
 import Pagination from '@/components/ui/Pagination';
 import { Select } from '@/components/ui/Select';
@@ -46,12 +47,14 @@ const actionCategories = [
   { value: 'form', label: 'Forms' },
   { value: 'admin', label: 'Admin' },
   { value: 'subscription', label: 'Billing' },
+  { value: 'ai', label: 'AI' },
   { value: 'security', label: 'Security' },
   { value: 'api_key', label: 'API Keys' },
 ];
 
 function getActionIcon(action: string) {
   if (action.startsWith('auth.login')) return SignIn;
+  if (action.startsWith('ai.')) return Lightning;
   if (action.startsWith('auth.')) return Key;
   if (action.startsWith('security.')) return Warning;
   if (action.startsWith('admin.delete')) return Trash;
@@ -66,6 +69,7 @@ function getActionColor(action: string) {
   if (action.includes('failed') || action.startsWith('security.')) return 'text-red-600 bg-red-50';
   if (action.includes('delete') || action.includes('remove')) return 'text-red-600 bg-red-50';
   if (action.includes('login_success')) return 'text-emerald-600 bg-emerald-50';
+  if (action.startsWith('ai.')) return 'text-purple-600 bg-purple-50';
   if (action.startsWith('admin.')) return 'text-amber-600 bg-amber-50';
   return 'text-blue-600 bg-blue-50';
 }
@@ -113,7 +117,7 @@ export default function AdminAuditLogPage() {
       const res = await fetch(`/api/admin/audit-log?${params}`);
       const data = await res.json();
       setLogs(data.logs || []);
-      setPagination(data.pagination || pagination);
+      setPagination((current) => data.pagination || current);
     } catch (error) {
       console.error('Failed to load audit logs:', error);
     } finally {

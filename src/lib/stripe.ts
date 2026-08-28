@@ -29,6 +29,7 @@ export const PLAN_LIMITS = {
       webhooks: false,
       integrations: false,
       emailNotifications: false,
+      aiGeneration: false,
       spamProtection: true, // Basic (honeypot only)
       payments: false,
     },
@@ -45,6 +46,7 @@ export const PLAN_LIMITS = {
       webhooks: true,
       integrations: true,
       emailNotifications: true,
+      aiGeneration: true,
       spamProtection: true, // Full (honeypot + rate limit + reCAPTCHA)
       payments: true,
     },
@@ -61,6 +63,7 @@ export const PLAN_LIMITS = {
       webhooks: true,
       integrations: true,
       emailNotifications: true,
+      aiGeneration: true,
       spamProtection: true,
       payments: true,
     },

@@ -22,6 +22,7 @@ import {
   X,
   Gear,
   Shield,
+  Lightning,
 } from '@phosphor-icons/react';
 import { cn } from '@/lib/utils';
 import { CaretDown } from '@phosphor-icons/react';
@@ -62,6 +63,7 @@ const navSections = [
   {
     label: 'System',
     items: [
+      { href: '/admin/ai-usage', label: 'AI Usage', icon: Lightning },
       { href: '/admin/audit-log', label: 'Audit Log', icon: Shield },
       { href: '/admin/settings', label: 'Settings', icon: Gear },
     ],

@@ -59,6 +59,7 @@ model User {
   notifications    Notification[]
   subscription     Subscription?
   entitlements     Entitlement[]
+  aiUsageLogs      AiUsageLog[]
 
   @@index([suspendedAt])
 }
@@ -99,6 +100,7 @@ model Workspace {
   apiKeys              ApiKey[]
   subscription         Subscription?
   usageRecords         UsageRecord[]
+  aiUsageLogs          AiUsageLog[]
   notifications        Notification[]
   webhookEndpoints     WebhookEndpoint[]
   customDomain         CustomDomain?
@@ -259,6 +261,40 @@ model UsageRecord {
   updatedAt DateTime @updatedAt
 
   @@unique([workspaceId, periodStart])
+}
+
+// Durable AI usage telemetry for abuse detection, quota enforcement, and cost review.
+// Prompt content is intentionally not stored; promptHash lets admins correlate
+// repeated requests without retaining potentially sensitive form descriptions.
+model AiUsageLog {
+  id                  String     @id @default(cuid())
+  userId              String
+  user                User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workspaceId         String?
+  workspace           Workspace? @relation(fields: [workspaceId], references: [id], onDelete: SetNull)
+  action              String     @default("form.generate")
+  provider            String     @default("bedrock")
+  modelId             String
+  status              String // success, failed, blocked, rate_limited
+  promptHash          String?
+  promptChars         Int        @default(0)
+  inputTokens         Int?
+  outputTokens        Int?
+  totalTokens         Int?
+  generatedFieldCount Int?
+  latencyMs           Int?
+  ip                  String?
+  userAgent           String?
+  errorCode           String?
+  errorMessage        String?
+  createdAt           DateTime   @default(now())
+
+  @@index([userId, createdAt])
+  @@index([workspaceId, createdAt])
+  @@index([status, createdAt])
+  @@index([provider, modelId, createdAt])
+  @@index([ip, createdAt])
+  @@index([createdAt])
 }
 
 // Workspace membership with roles
