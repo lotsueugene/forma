@@ -144,6 +144,7 @@ export default function FormSettingsPanel({
     contentFilter: { ...defaults.contentFilter, ...settings.spam?.contentFilter },
     allowedDomains: settings.spam?.allowedDomains ?? defaults.allowedDomains,
     requireChallenge: settings.spam?.requireChallenge ?? defaults.requireChallenge,
+    blockHeadless: settings.spam?.blockHeadless ?? defaults.blockHeadless,
   };
   const updateSpam = (patch: Partial<SpamSettings>) => {
     setSettings({
@@ -836,7 +837,7 @@ export default function FormSettingsPanel({
                   className="input font-mono text-xs h-28 w-full"
                 />
                 <p className="text-xs text-gray-500 mt-1.5">
-                  Keep your current form. Paste this before the submit button so bots can&apos;t hit the endpoint directly.
+                  Optional extra lock. Your contact form already works without this — only add it if bots are still getting through.
                 </p>
                 <button
                   onClick={() => copyToClipboard(protectSnippet, 'protect')}
@@ -871,10 +872,30 @@ export default function FormSettingsPanel({
             <div>
               <h3 className="font-medium text-gray-900">Spam Protection</h3>
               <p className="text-sm text-gray-500 mt-1">
-                Your submission URL is public. These checks stop automated posts without adding a CAPTCHA.
+                Handled on Forma. Existing contact forms do not need a code change — browsers already send the headers we check.
               </p>
             </div>
             <div className="space-y-4 max-w-lg">
+              <div className="flex items-start justify-between py-3 border-b border-gray-200 gap-4">
+                <div>
+                  <label className="text-sm text-gray-900">Block automated posts</label>
+                  <p className="text-xs text-gray-500">
+                    Rejects curl/bots that hit the endpoint with no browser Origin. Your contact form keeps working as-is.
+                    Turn this off only if you submit from Zapier, a server, or another backend.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => updateSpam({ blockHeadless: !spam.blockHeadless })}
+                  className={cn(
+                    'w-11 h-6 rounded-full transition-colors relative shrink-0 mt-0.5',
+                    spam.blockHeadless ? 'bg-safety-orange' : 'bg-gray-300'
+                  )}
+                >
+                  <div className={cn('w-5 h-5 rounded-full bg-white absolute top-0.5 transition-transform shadow', spam.blockHeadless ? 'translate-x-5' : 'translate-x-0.5')} />
+                </button>
+              </div>
+
               <div className="flex items-center justify-between py-3 border-b border-gray-200">
                 <div>
                   <label className="text-sm text-gray-900">Honeypot field</label>
@@ -979,10 +1000,10 @@ export default function FormSettingsPanel({
 
               <div className="flex items-start justify-between py-3 border-b border-gray-200 gap-4">
                 <div>
-                  <label className="text-sm text-gray-900">Require browser verification</label>
+                  <label className="text-sm text-gray-900">Require verification script</label>
                   <p className="text-xs text-gray-500">
-                    Best for contact forms that post to this endpoint. Bots that skip your page and POST the URL directly are blocked.
-                    Add the protection snippet from Embed & API to your existing form.
+                    Extra lock for stubborn bots that fake a browser. Needs the snippet on Embed &amp; API.
+                    Leave this off unless automated posts are still getting through.
                   </p>
                 </div>
                 <button
@@ -1000,9 +1021,8 @@ export default function FormSettingsPanel({
                 <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-50 border border-amber-200 -mt-1">
                   <Warning size={16} className="text-amber-600 shrink-0 mt-0.5" />
                   <p className="text-xs text-amber-800">
-                    If your contact form already posts to the Forma endpoint, don&apos;t replace the form.
-                    Open <strong>Embed & API</strong> and paste the “Add to an existing contact form” snippet
-                    before the submit button. Hosted Forma pages already send a token.
+                    This one does need a small snippet on your site. Paste “Add to an existing contact form”
+                    from Embed &amp; API before the submit button. Hosted Forma pages already send a token.
                   </p>
                 </div>
               )}

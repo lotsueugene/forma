@@ -27,13 +27,19 @@ export interface SpamSettings {
   };
   /** When true, submissions must include a valid one-time challenge token. */
   requireChallenge?: boolean;
+  /**
+   * When true (default), reject posts that have no Origin or Referer.
+   * Browser contact forms send these automatically — no HTML change needed.
+   * Curl / Zapier / server proxies do not, so turn this off for those.
+   */
+  blockHeadless?: boolean;
   /** Hostnames allowed to submit (empty = any origin). www. is treated as equivalent. */
   allowedDomains?: string[];
 }
 
 export function getDefaultSpamSettings(): Required<Pick<
   SpamSettings,
-  'honeypot' | 'rateLimit' | 'recaptcha' | 'contentFilter' | 'requireChallenge' | 'allowedDomains'
+  'honeypot' | 'rateLimit' | 'recaptcha' | 'contentFilter' | 'requireChallenge' | 'blockHeadless' | 'allowedDomains'
 >> {
   return {
     honeypot: {
@@ -55,6 +61,7 @@ export function getDefaultSpamSettings(): Required<Pick<
       maxLinks: 10,
     },
     requireChallenge: false,
+    blockHeadless: true,
     allowedDomains: [],
   };
 }
@@ -82,6 +89,7 @@ export function parseSpamSettings(formSettings: string | null): SpamSettings {
       recaptcha: { ...defaults.recaptcha, ...spam.recaptcha },
       contentFilter: { ...defaults.contentFilter, ...spam.contentFilter },
       requireChallenge: spam.requireChallenge ?? defaults.requireChallenge,
+      blockHeadless: spam.blockHeadless ?? defaults.blockHeadless,
       allowedDomains,
     };
 

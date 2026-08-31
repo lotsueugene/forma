@@ -232,7 +232,7 @@ export async function POST(
         );
       }
 
-      if (spamCheck.code === 'origin' || spamCheck.code === 'challenge') {
+      if (spamCheck.code === 'origin' || spamCheck.code === 'challenge' || spamCheck.code === 'headless') {
         return NextResponse.json(
           { error: spamCheck.reason || 'Submission blocked' },
           { status: 403, headers: corsHeaders }

@@ -18,6 +18,7 @@ test('default spam settings enable honeypot, rate limit, and link filter', () =>
   assert.equal(defaults.rateLimit.enabled, true);
   assert.equal(defaults.contentFilter.enabled, true);
   assert.equal(defaults.requireChallenge, false);
+  assert.equal(defaults.blockHeadless, true);
   assert.deepEqual(defaults.allowedDomains, []);
 });
 
@@ -29,6 +30,7 @@ test('parseSpamSettings fills defaults for partial spam objects', () => {
   assert.equal(parsed.honeypot?.enabled, false);
   assert.equal(parsed.honeypot?.fieldName, '_gotcha');
   assert.equal(parsed.contentFilter?.enabled, true);
+  assert.equal(parsed.blockHeadless, true);
 });
 
 test('honeypot only trips on dedicated trap fields, not a real website field', () => {
@@ -112,9 +114,32 @@ test('checkSpam drops filled honeypots and URL-stuffed payloads', async () => {
       message: 'https://a.test https://b.test https://c.test https://d.test https://e.test https://f.test https://g.test https://h.test https://i.test https://j.test https://k.test',
     },
     settings,
+    origin: 'https://yoursite.com',
   });
   assert.equal(links.allowed, false);
   assert.equal(links.code, 'content_filter');
+});
+
+test('checkSpam blocks headless posts and allows a normal contact-form Origin', async () => {
+  const settings = getDefaultSpamSettings();
+
+  const headless = await checkSpam({
+    formId: 'form_spam',
+    ip: null,
+    data: { name: 'Bot', email: 'bot@spam.test' },
+    settings,
+  });
+  assert.equal(headless.allowed, false);
+  assert.equal(headless.code, 'headless');
+
+  const fromBrowser = await checkSpam({
+    formId: 'form_spam',
+    ip: null,
+    data: { name: 'Ada', email: 'ada@example.com' },
+    settings,
+    origin: 'https://yoursite.com',
+  });
+  assert.equal(fromBrowser.allowed, true);
 });
 
 test('checkSpam enforces origin allowlist and required challenge tokens', async () => {

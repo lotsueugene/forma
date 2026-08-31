@@ -38,7 +38,8 @@ export type SpamCheckCode =
   | 'origin'
   | 'challenge'
   | 'too_fast'
-  | 'duplicate';
+  | 'duplicate'
+  | 'headless';
 
 export interface SpamCheckResult {
   allowed: boolean;
@@ -137,6 +138,19 @@ export async function checkSpam(params: SpamCheckParams): Promise<SpamCheckResul
       reason: 'This form requires browser verification',
       code: 'challenge',
     };
+  }
+
+  // 3b. Block scripted posts with no browser Origin/Referer.
+  // Contact forms already send these headers — no HTML change required.
+  if (settings.blockHeadless !== false && !origin && !referer) {
+    const tokenOk = Boolean(challengeToken && verifyFormChallenge(challengeToken, formId).ok);
+    if (!tokenOk) {
+      return {
+        allowed: false,
+        reason: 'Submission blocked',
+        code: 'headless',
+      };
+    }
   }
 
   // 4. Rate limiting
