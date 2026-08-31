@@ -14,6 +14,7 @@ import {
   isOriginAllowed,
   cleanSpamFields,
 } from './spam-settings';
+import { isSpammySubmission } from './spam-content';
 
 export type {
   SpamSettings,
@@ -182,8 +183,9 @@ export async function checkSpam(params: SpamCheckParams): Promise<SpamCheckResul
   // 6. Link-density content filter
   if (settings.contentFilter?.enabled !== false) {
     const maxLinks = settings.contentFilter?.maxLinks ?? 10;
-    const links = countLinks(cleanSpamFields(data));
-    if (links > maxLinks) {
+    const cleaned = cleanSpamFields(data);
+    const links = countLinks(cleaned);
+    if (links > maxLinks || isSpammySubmission(cleaned)) {
       return {
         allowed: false,
         reason: 'Submission blocked',

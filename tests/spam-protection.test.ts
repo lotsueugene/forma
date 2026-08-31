@@ -142,6 +142,24 @@ test('checkSpam blocks headless posts and allows a normal contact-form Origin', 
   assert.equal(fromBrowser.allowed, true);
 });
 
+test('checkSpam blocks random-name + dotted-gmail + phone-as-message spam', async () => {
+  const result = await checkSpam({
+    formId: 'form_spam',
+    ip: null,
+    data: {
+      NAME: 'CToJbXBvxinLenJUX',
+      EMAIL: 't.a.mm.yow.ens.4.25.8@gmail.com',
+      PHONE: '6514245016',
+      SUBJECT: '-',
+      MESSAGE: '2818385684',
+    },
+    settings: getDefaultSpamSettings(),
+    origin: 'https://yoursite.com',
+  });
+  assert.equal(result.allowed, false);
+  assert.equal(result.code, 'content_filter');
+});
+
 test('checkSpam enforces origin allowlist and required challenge tokens', async () => {
   const settings = {
     ...getDefaultSpamSettings(),
