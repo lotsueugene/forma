@@ -222,6 +222,7 @@ export default function FormSettingsPanel({
   const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
   const formPageUrl = `${baseUrl}/f/${form.id}`;
   const apiEndpoint = `${baseUrl}/api/forms/${form.id}/submissions`;
+  const challengeEndpoint = `${baseUrl}/api/forms/${form.id}/challenge`;
   const htmlEmbed = buildHtmlEmbed({
     actionUrl: apiEndpoint,
     fields: form.fields,
@@ -229,6 +230,18 @@ export default function FormSettingsPanel({
     scriptOrigin: baseUrl,
     honeypotField: spam.honeypot.fieldName,
   });
+  const curlFields = form.fields
+    .filter((f) => !['page_break', 'image', 'video'].includes(f.type))
+    .map((f) => `    "${f.id}": "value"`)
+    .join(',\n');
+  const curlExample = spam.requireChallenge
+    ? `# 1. Get a short-lived token\ncurl -X POST ${challengeEndpoint}\n\n# 2. Wait 1 second, then submit it as _forma_token\ncurl -X POST ${apiEndpoint} \\\n  -H "Content-Type: application/json" \\\n  -d '{\n${curlFields}${curlFields ? ',\n' : ''}    "_forma_token": "TOKEN_FROM_STEP_1"\n  }'`
+    : `curl -X POST ${apiEndpoint} \\\n  -H "Content-Type: application/json" \\\n  -d '{\n${curlFields}\n  }'`;
+  const protectSnippet = `<!-- Add inside your existing contact form -->
+<div aria-hidden="true" style="position:absolute;left:-10000px">
+  <input type="text" name="_gotcha" tabindex="-1" autocomplete="off" />
+</div>
+<script src="${baseUrl}/js/forma-protect.js" data-form="${form.id}" defer></script>`;
 
   const copyToClipboard = (text: string, key: string) => {
     navigator.clipboard.writeText(text);
@@ -790,6 +803,12 @@ export default function FormSettingsPanel({
                     {copied === 'api' ? <Check size={16} /> : <Copy size={16} />}
                   </button>
                 </div>
+                {spam.requireChallenge && (
+                  <p className="text-xs text-amber-700 mt-2">
+                    If this URL is the action on a contact form, add the protection snippet below.
+                    A bare POST with no script will be rejected.
+                  </p>
+                )}
               </div>
               <div className="form-field">
                 <label className="form-label">HTML Embed</label>
@@ -799,8 +818,7 @@ export default function FormSettingsPanel({
                   className="input font-mono text-xs h-40 w-full"
                 />
                 <p className="text-xs text-gray-500 mt-1.5">
-                  Includes a hidden honeypot and a small script that blocks the most common bot posts.
-                  Re-copy this snippet if you already embedded an older version.
+                  Full form markup, including spam protection. Use this if you&apos;re starting from scratch.
                 </p>
                 <button
                   onClick={() => copyToClipboard(htmlEmbed, 'html')}
@@ -811,14 +829,32 @@ export default function FormSettingsPanel({
                 </button>
               </div>
               <div className="form-field">
+                <label className="form-label">Add to an existing contact form</label>
+                <textarea
+                  readOnly
+                  value={protectSnippet}
+                  className="input font-mono text-xs h-28 w-full"
+                />
+                <p className="text-xs text-gray-500 mt-1.5">
+                  Keep your current form. Paste this before the submit button so bots can&apos;t hit the endpoint directly.
+                </p>
+                <button
+                  onClick={() => copyToClipboard(protectSnippet, 'protect')}
+                  className="btn btn-secondary mt-2"
+                >
+                  {copied === 'protect' ? <Check size={16} /> : <Copy size={16} />}
+                  Copy snippet
+                </button>
+              </div>
+              <div className="form-field">
                 <label className="form-label">cURL Example</label>
                 <textarea
                   readOnly
-                  value={`curl -X POST ${apiEndpoint} \\\n  -H "Content-Type: application/json" \\\n  -d '{\n${form.fields.filter(f => !['page_break', 'image', 'video'].includes(f.type)).map(f => `    "${f.id}": "value"`).join(',\n')}\n  }'`}
-                  className="input font-mono text-xs h-32 w-full"
+                  value={curlExample}
+                  className="input font-mono text-xs h-40 w-full"
                 />
                 <button
-                  onClick={() => copyToClipboard(`curl -X POST ${apiEndpoint} \\\n  -H "Content-Type: application/json" \\\n  -d '{\n${form.fields.filter(f => !['page_break', 'image', 'video'].includes(f.type)).map(f => `    "${f.id}": "value"`).join(',\n')}\n  }'`, 'curl')}
+                  onClick={() => copyToClipboard(curlExample, 'curl')}
                   className="btn btn-secondary mt-2"
                 >
                   {copied === 'curl' ? <Check size={16} /> : <Copy size={16} />}
@@ -945,8 +981,8 @@ export default function FormSettingsPanel({
                 <div>
                   <label className="text-sm text-gray-900">Require browser verification</label>
                   <p className="text-xs text-gray-500">
-                    Blocks raw POST spam to your endpoint. Use this if bots are hitting the API URL directly.
-                    Curl, Zapier, and other server-side posts will fail unless they request a challenge token first.
+                    Best for contact forms that post to this endpoint. Bots that skip your page and POST the URL directly are blocked.
+                    Add the protection snippet from Embed & API to your existing form.
                   </p>
                 </div>
                 <button
@@ -964,8 +1000,9 @@ export default function FormSettingsPanel({
                 <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-50 border border-amber-200 -mt-1">
                   <Warning size={16} className="text-amber-600 shrink-0 mt-0.5" />
                   <p className="text-xs text-amber-800">
-                    Re-copy the HTML embed from the Embed & API tab so your site loads the verification script.
-                    Hosted Forma pages already send a token.
+                    If your contact form already posts to the Forma endpoint, don&apos;t replace the form.
+                    Open <strong>Embed & API</strong> and paste the “Add to an existing contact form” snippet
+                    before the submit button. Hosted Forma pages already send a token.
                   </p>
                 </div>
               )}
