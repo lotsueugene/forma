@@ -181,12 +181,17 @@ Content-Type: application/json
             <CodeBlock language="html">{`<form action="https://forma.app/api/forms/FORM_ID/submissions" method="POST">
   <input type="text" name="name" />
   <input type="hidden" name="_redirect" value="https://yoursite.com/thanks" />
+  <div aria-hidden="true" style="position:absolute;left:-10000px">
+    <input type="text" name="_gotcha" tabindex="-1" autocomplete="off" />
+  </div>
   <button type="submit">Submit</button>
-</form>`}</CodeBlock>
+</form>
+<script src="https://forma.app/js/forma-protect.js" data-form="FORM_ID" defer></script>`}</CodeBlock>
             <h4 className="font-semibold text-gray-900 mb-2 mt-4">Special Fields</h4>
             <ul className="list-disc list-inside text-gray-600 space-y-1">
               <li><code className="bg-gray-100 px-1 rounded">_redirect</code> - URL to redirect after submission</li>
-              <li><code className="bg-gray-100 px-1 rounded">_honeypot</code> - Spam protection (should be empty)</li>
+              <li><code className="bg-gray-100 px-1 rounded">_gotcha</code> - Honeypot (must stay empty)</li>
+              <li><code className="bg-gray-100 px-1 rounded">_forma_token</code> - Browser verification token (added by forma-protect.js)</li>
             </ul>
           </>
         ),
@@ -327,16 +332,29 @@ Content-Type: application/json
         content: (
           <>
             <h3 className="text-lg font-semibold text-gray-900 mb-3">Spam Protection</h3>
-            <h4 className="font-semibold text-gray-900 mb-2">Honeypot Field</h4>
-            <CodeBlock language="html">{`<input type="text" name="_honeypot" style="display:none" tabindex="-1" />`}</CodeBlock>
-            <h4 className="font-semibold text-gray-900 mb-2 mt-4">Rate Limiting</h4>
-            <p className="text-gray-600 mb-2">Automatic limits per IP:</p>
+            <p className="text-gray-600 mb-3">
+              Endpoint URLs are public, so bots can POST to them. Open <strong>Settings → Spam Protection</strong>
+              on a form to tighten this. Built-in layers:
+            </p>
+            <h4 className="font-semibold text-gray-900 mb-2">Honeypot field</h4>
+            <CodeBlock language="html">{`<div aria-hidden="true" style="position:absolute;left:-10000px">
+  <input type="text" name="_gotcha" tabindex="-1" autocomplete="off" />
+</div>`}</CodeBlock>
+            <p className="text-gray-600 text-sm mb-3">Filled-in honeypots are dropped silently. <code className="bg-gray-100 px-1 rounded">_honeypot</code> still works too.</p>
+            <h4 className="font-semibold text-gray-900 mb-2 mt-4">Browser verification</h4>
+            <p className="text-gray-600 mb-2">
+              Turn on <strong>Require browser verification</strong> if bots are posting straight to the API.
+              HTML embeds should include:
+            </p>
+            <CodeBlock language="html">{`<script src="https://forma.app/js/forma-protect.js" data-form="FORM_ID" defer></script>`}</CodeBlock>
+            <h4 className="font-semibold text-gray-900 mb-2 mt-4">Rate limiting</h4>
+            <p className="text-gray-600 mb-2">Default limits per IP, configurable per form:</p>
             <ul className="list-disc list-inside text-gray-600 space-y-1">
               <li>5 submissions per minute</li>
               <li>30 submissions per hour</li>
             </ul>
-            <h4 className="font-semibold text-gray-900 mb-2 mt-4">reCAPTCHA v3</h4>
-            <p className="text-gray-600">Enable invisible bot detection in your form settings.</p>
+            <h4 className="font-semibold text-gray-900 mb-2 mt-4">Link filter &amp; allowed websites</h4>
+            <p className="text-gray-600">Submissions with too many URLs are blocked. You can also restrict which domains may submit.</p>
           </>
         ),
       },

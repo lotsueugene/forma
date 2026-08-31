@@ -30,6 +30,7 @@ function startCleanup() {
       }
     }
   }, CLEANUP_INTERVAL);
+  cleanupTimer.unref?.();
 }
 
 // Start cleanup on module load

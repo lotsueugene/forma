@@ -48,6 +48,8 @@ export interface FormField {
   termsText?: string; // Rich text content for terms field, supports [link text](url) syntax
 }
 
+import type { SpamSettings } from '@/lib/spam-settings';
+
 export interface FormSettings {
   branding?: {
     accentColor?: string;
@@ -69,4 +71,5 @@ export interface FormSettings {
     ogImage?: string;
     favicon?: string;
   };
+  spam?: SpamSettings;
 }

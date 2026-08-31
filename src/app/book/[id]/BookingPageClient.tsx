@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import { Spinner, Check, UploadSimple, Star, File as FileIcon, X, Stack } from '@phosphor-icons/react';
 import BookingField from '@/components/forms/BookingField';
 import Link from 'next/link';
+import { fetchFormChallenge } from '@/lib/fetch-form-challenge';
+import { CHALLENGE_FIELD, HONEYPOT_FIELD } from '@/lib/spam-settings';
 
 interface FormField {
   id: string;
@@ -50,6 +52,7 @@ export default function BookingPageClient({ formId }: { formId: string }) {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [formData, setFormData] = useState<Record<string, string | string[]>>({});
   const [hasBookingSelected, setHasBookingSelected] = useState(false);
+  const [challengeToken, setChallengeToken] = useState<string | null>(null);
 
   // Fetch form data
   useEffect(() => {
@@ -63,6 +66,10 @@ export default function BookingPageClient({ formId }: { formId: string }) {
       })
       .catch(() => setError('This booking link is no longer available.'))
       .finally(() => setIsLoading(false));
+
+    fetchFormChallenge(formId).then((token) => {
+      if (token) setChallengeToken(token);
+    });
   }, [formId]);
 
   // Find the booking field and non-booking fields
@@ -107,10 +114,20 @@ export default function BookingPageClient({ formId }: { formId: string }) {
     setIsSubmitting(true);
 
     try {
+      let token = challengeToken;
+      if (!token) {
+        token = await fetchFormChallenge(formId);
+        if (token) setChallengeToken(token);
+      }
+
       const response = await fetch(`/api/forms/${formId}/submissions`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          ...formData,
+          [HONEYPOT_FIELD]: '',
+          ...(token && { [CHALLENGE_FIELD]: token }),
+        }),
       });
 
       if (!response.ok) {

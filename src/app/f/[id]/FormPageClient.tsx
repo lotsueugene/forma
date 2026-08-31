@@ -19,6 +19,8 @@ import { safeCssColor, safeRedirectUrl } from '@/lib/sanitize';
 import Link from 'next/link';
 import ConversationalForm from './ConversationalForm';
 import BookingField from '@/components/forms/BookingField';
+import { fetchFormChallenge } from '@/lib/fetch-form-challenge';
+import { CHALLENGE_FIELD, HONEYPOT_FIELD } from '@/lib/spam-settings';
 
 // reCAPTCHA site key from environment
 const RECAPTCHA_SITE_KEY = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY;
@@ -153,6 +155,7 @@ export default function FormPageClient({ formId }: FormPageClientProps) {
   const [formData, setFormData] = useState<Record<string, string | string[]>>({});
   const [currentStep, setCurrentStep] = useState(0);
   const [isCustomDomain, setIsCustomDomain] = useState(false);
+  const [challengeToken, setChallengeToken] = useState<string | null>(null);
 
   // Save & Resume — persist form data to localStorage
   useEffect(() => {
@@ -268,6 +271,9 @@ export default function FormPageClient({ formId }: FormPageClientProps) {
   useEffect(() => {
     if (formId) {
       fetchForm();
+      fetchFormChallenge(formId).then((token) => {
+        if (token) setChallengeToken(token);
+      });
     }
   }, [formId]);
 
@@ -336,11 +342,19 @@ export default function FormPageClient({ formId }: FormPageClientProps) {
         }
       }
 
+      let token = challengeToken;
+      if (!token) {
+        token = await fetchFormChallenge(formId);
+        if (token) setChallengeToken(token);
+      }
+
       const response = await fetch(`/api/forms/${formId}/submissions`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...formData,
+          [HONEYPOT_FIELD]: '',
+          ...(token && { [CHALLENGE_FIELD]: token }),
           ...(recaptchaToken && { recaptchaToken }),
         }),
       });
@@ -690,7 +704,7 @@ export default function FormPageClient({ formId }: FormPageClientProps) {
                       if (shouldSubmit) handleSubmit(e);
                     }
                   }}
-                  className="rounded-2xl p-6 sm:p-8 space-y-7"
+                  className="relative rounded-2xl p-6 sm:p-8 space-y-7"
                   style={{
                     backgroundColor: 'var(--forma-card-bg)',
                     border: '1px solid var(--forma-card-border)',
@@ -699,6 +713,16 @@ export default function FormPageClient({ formId }: FormPageClientProps) {
                     WebkitBackdropFilter: 'blur(12px)',
                   }}
                 >
+                  <div aria-hidden="true" className="absolute w-px h-px overflow-hidden" style={{ left: '-10000px' }}>
+                    <label htmlFor="company_website">Company website</label>
+                    <input
+                      id="company_website"
+                      type="text"
+                      name={HONEYPOT_FIELD}
+                      tabIndex={-1}
+                      autoComplete="off"
+                    />
+                  </div>
                   <AnimatePresence mode="sync">
                     {currentPageFields
                       .filter((field) => field.type !== 'hidden' && evaluateCondition(field.condition, formData))

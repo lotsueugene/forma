@@ -76,12 +76,16 @@ const docs: Record<string, { title: string; description: string; content: React.
   <input type="text" name="name" placeholder="Your name" required />
   <input type="email" name="email" placeholder="Your email" required />
   <textarea name="message" placeholder="Your message"></textarea>
+  <div aria-hidden="true" style="position:absolute;left:-10000px">
+    <input type="text" name="_gotcha" tabindex="-1" autocomplete="off" />
+  </div>
   <button type="submit">Send Message</button>
-</form>`}</CodeBlock>
+</form>
+<script src="https://forma.app/js/forma-protect.js" data-form="YOUR_FORM_ID" defer></script>`}</CodeBlock>
 
         <h2>Step 4: Start Receiving Submissions</h2>
         <p>
-          That's it! When users submit your form, the data will appear in your Forma dashboard.
+          That&apos;s it! When users submit your form, the data will appear in your Forma dashboard.
           You can also set up email notifications, webhooks, and integrations to process submissions automatically.
         </p>
 
@@ -89,11 +93,11 @@ const docs: Record<string, { title: string; description: string; content: React.
           <div className="flex items-start gap-3">
             <Lightning size={20} className="text-[#ef6f2e] mt-0.5" />
             <div>
-              <p className="font-medium text-gray-900">Pro Tip</p>
+              <p className="font-medium text-gray-900">Stop bot spam</p>
               <p className="text-sm text-gray-600">
-                Add a hidden honeypot field to prevent spam submissions. Just add a hidden input
-                field named <code className="bg-gray-100 px-1 rounded">_honeypot</code> and we'll automatically
-                reject submissions that fill it in.
+                Open the form&apos;s <strong>Settings → Spam Protection</strong> tab and turn on
+                <strong> Require browser verification</strong> if bots are posting directly to your endpoint.
+                Re-copy the HTML embed after changing that setting.
               </p>
             </div>
           </div>
@@ -273,8 +277,12 @@ Content-Type: application/json
   <input type="text" name="name" required />
   <input type="email" name="email" required />
   <input type="hidden" name="_redirect" value="https://yoursite.com/thanks" />
+  <div aria-hidden="true" style="position:absolute;left:-10000px">
+    <input type="text" name="_gotcha" tabindex="-1" autocomplete="off" />
+  </div>
   <button type="submit">Submit</button>
-</form>`}</CodeBlock>
+</form>
+<script src="https://forma.app/js/forma-protect.js" data-form="FORM_ID" defer></script>`}</CodeBlock>
 
         <h2>List Submissions</h2>
         <p>Retrieve all submissions for a form (requires authentication):</p>
@@ -284,7 +292,8 @@ Authorization: Bearer YOUR_API_KEY`}</CodeBlock>
         <h2>Special Fields</h2>
         <ul>
           <li><code>_redirect</code> - URL to redirect after submission</li>
-          <li><code>_honeypot</code> - Spam protection field (should be empty)</li>
+          <li><code>_gotcha</code> / <code>_honeypot</code> - Spam protection field (should be empty)</li>
+          <li><code>_forma_token</code> - Browser verification token from <code>/api/forms/FORM_ID/challenge</code></li>
           <li><code>g-recaptcha-response</code> - reCAPTCHA token</li>
         </ul>
       </>
@@ -521,32 +530,67 @@ function verifySignature(payload, signature, secret) {
     description: 'Protect your forms from spam submissions.',
     content: (
       <>
-        <h2>Honeypot Fields</h2>
+        <h2>Why bots get through</h2>
         <p>
-          The simplest spam protection. Add a hidden field that bots will fill in but humans won't:
+          Every Forma form has a public POST URL. Bots don&apos;t need your HTML page — they post JSON
+          straight to <code>/api/forms/FORM_ID/submissions</code>. Honeypots only help if the bot
+          actually fills the hidden field, and rate limits reset if they rotate IPs.
         </p>
-        <CodeBlock language="html">{`<input type="text" name="_honeypot" style="display:none" tabindex="-1" autocomplete="off" />`}</CodeBlock>
-
-        <h2>Rate Limiting</h2>
         <p>
-          Forma automatically rate limits submissions by IP address. Default limits:
+          Configure protection per form under <strong>Settings → Spam Protection</strong>.
+        </p>
+
+        <h2>Honeypot fields</h2>
+        <p>
+          A hidden field that humans never see. Bots that autofill every input get dropped silently:
+        </p>
+        <CodeBlock language="html">{`<div aria-hidden="true" style="position:absolute;left:-10000px;top:auto;width:1px;height:1px;overflow:hidden">
+  <label for="company_website">Company website</label>
+  <input type="text" id="company_website" name="_gotcha" tabindex="-1" autocomplete="off" />
+</div>`}</CodeBlock>
+        <p>
+          New HTML embeds from the dashboard include this automatically, plus a small script.
+          <code> _honeypot</code> is still accepted as an alias.
+        </p>
+
+        <h2>Browser verification (recommended for spam)</h2>
+        <p>
+          Turn on <strong>Require browser verification</strong> to reject posts that didn&apos;t load
+          your form first. Hosted Forma pages send a token automatically. For your own HTML, include:
+        </p>
+        <CodeBlock language="html">{`<script src="https://forma.app/js/forma-protect.js" data-form="FORM_ID" defer></script>`}</CodeBlock>
+        <p>
+          This will block curl, Zapier, and other server-side posts unless they first call
+          <code> POST /api/forms/FORM_ID/challenge</code> and send the token as <code>_forma_token</code>.
+        </p>
+
+        <h2>Allowed websites</h2>
+        <p>
+          Restrict submissions to specific domains (your marketing site, etc.). Requests with no
+          Origin or Referer — including most bots and curl — are rejected when this list is set.
+        </p>
+
+        <h2>Rate limiting</h2>
+        <p>
+          Forma rate limits submissions by IP address. Defaults (configurable per form):
         </p>
         <ul>
           <li>5 submissions per minute per IP</li>
           <li>30 submissions per hour per IP</li>
         </ul>
 
+        <h2>Link filter</h2>
+        <p>
+          Submissions with more than 10 URLs (configurable) are blocked. That catches typical
+          SEO/comment spam without affecting normal messages.
+        </p>
+
         <h2>reCAPTCHA v3</h2>
         <p>
-          For stronger protection, enable reCAPTCHA v3 in your form settings. This provides
-          invisible bot detection without annoying your users.
+          Hosted forms on the main Forma domain send a reCAPTCHA token when platform keys are
+          configured. Custom domains skip reCAPTCHA because Google keys are domain-locked —
+          use browser verification there instead.
         </p>
-        <ol>
-          <li>Get a reCAPTCHA v3 site key from Google</li>
-          <li>Add the reCAPTCHA script to your page</li>
-          <li>Include the token in your form submission</li>
-          <li>Configure the secret key in Forma</li>
-        </ol>
       </>
     ),
   },

@@ -1,31 +1,49 @@
 /**
- * Spam protection for form submissions
- * Supports: honeypot fields, rate limiting, reCAPTCHA v3
+ * Spam protection for form submissions.
+ * Layers: honeypot, origin allowlist, challenge token, rate limit,
+ * duplicate payload, content (link density), reCAPTCHA v3.
  */
 
+import { createHash } from 'node:crypto';
 import { checkRateLimit } from './rate-limiter';
+import { verifyFormChallenge } from './form-challenge';
+import {
+  type SpamSettings,
+  honeypotTriggered,
+  countLinks,
+  isOriginAllowed,
+  cleanSpamFields,
+} from './spam-settings';
 
-export interface SpamSettings {
-  honeypot?: {
-    enabled: boolean;
-    fieldName: string; // Custom honeypot field name (default: _honeypot)
-  };
-  rateLimit?: {
-    enabled: boolean;
-    maxPerMinute: number; // Default: 5
-    maxPerHour: number; // Default: 30
-  };
-  recaptcha?: {
-    enabled: boolean;
-    secretKey: string;
-    minScore: number; // 0.0 - 1.0, default: 0.5
-  };
-}
+export type {
+  SpamSettings,
+} from './spam-settings';
+
+export {
+  parseSpamSettings,
+  getDefaultSpamSettings,
+  cleanSpamFields,
+  honeypotHtml,
+  buildHtmlEmbed,
+  HONEYPOT_FIELD,
+  CHALLENGE_FIELD,
+} from './spam-settings';
+
+export type SpamCheckCode =
+  | 'honeypot'
+  | 'rate_limit'
+  | 'recaptcha'
+  | 'recaptcha_error'
+  | 'content_filter'
+  | 'origin'
+  | 'challenge'
+  | 'too_fast'
+  | 'duplicate';
 
 export interface SpamCheckResult {
   allowed: boolean;
   reason?: string;
-  code?: 'honeypot' | 'rate_limit' | 'recaptcha' | 'recaptcha_error';
+  code?: SpamCheckCode;
   retryAfter?: number;
 }
 
@@ -35,34 +53,49 @@ interface SpamCheckParams {
   data: Record<string, unknown>;
   settings: SpamSettings;
   recaptchaToken?: string;
+  challengeToken?: string;
+  origin?: string | null;
+  referer?: string | null;
+}
+
+const duplicateStore = new Map<string, number>();
+const DUPLICATE_WINDOW_MS = 15_000;
+
+setInterval(() => {
+  const cutoff = Date.now() - DUPLICATE_WINDOW_MS;
+  for (const [key, ts] of duplicateStore.entries()) {
+    if (ts < cutoff) duplicateStore.delete(key);
+  }
+}, 60_000).unref?.();
+
+function payloadFingerprint(formId: string, ip: string, data: Record<string, unknown>): string {
+  const cleaned = cleanSpamFields(data);
+  const canonical = JSON.stringify(cleaned, Object.keys(cleaned).sort());
+  const hash = createHash('sha256').update(canonical).digest('hex').slice(0, 16);
+  return `${formId}:${ip}:${hash}`;
+}
+
+function isDuplicate(formId: string, ip: string, data: Record<string, unknown>): boolean {
+  const key = payloadFingerprint(formId, ip, data);
+  const now = Date.now();
+  const previous = duplicateStore.get(key);
+  if (previous && now - previous < DUPLICATE_WINDOW_MS) {
+    return true;
+  }
+  duplicateStore.set(key, now);
+  return false;
 }
 
 /**
- * Check submission for spam
- * Returns immediately on first failure
+ * Check submission for spam. Returns on first failure.
  */
 export async function checkSpam(params: SpamCheckParams): Promise<SpamCheckResult> {
-  const { formId, ip, data, settings, recaptchaToken } = params;
+  const { formId, ip, data, settings, recaptchaToken, challengeToken, origin, referer } = params;
 
-  // 1. Honeypot check
-  if (settings.honeypot?.enabled) {
-    const fieldName = settings.honeypot.fieldName || '_honeypot';
-    const honeypotValue = data[fieldName];
-
-    // Also check common honeypot field names
-    const commonHoneypots = ['_honeypot', '_gotcha', 'honeypot', 'website', 'url_field'];
-    for (const field of commonHoneypots) {
-      if (data[field] && typeof data[field] === 'string' && data[field] !== '') {
-        // Don't reveal to bots that we caught them - return success-like response
-        return {
-          allowed: false,
-          reason: 'spam_detected',
-          code: 'honeypot',
-        };
-      }
-    }
-
-    if (honeypotValue && typeof honeypotValue === 'string' && honeypotValue !== '') {
+  // 1. Honeypot — bots that autofill every input
+  if (settings.honeypot?.enabled !== false) {
+    const fieldName = settings.honeypot?.fieldName || '_gotcha';
+    if (honeypotTriggered(data, fieldName)) {
       return {
         allowed: false,
         reason: 'spam_detected',
@@ -71,17 +104,48 @@ export async function checkSpam(params: SpamCheckParams): Promise<SpamCheckResul
     }
   }
 
-  // 2. Rate limiting (always enforced with defaults, configurable limits)
-  if (ip) {
+  // 2. Origin / Referer allowlist (opt-in)
+  const allowedDomains = settings.allowedDomains || [];
+  if (allowedDomains.length > 0 && !isOriginAllowed(origin, referer, allowedDomains)) {
+    return {
+      allowed: false,
+      reason: 'This form does not accept submissions from this website',
+      code: 'origin',
+    };
+  }
+
+  // 3. Browser challenge token
+  // Always validate a token if one is present (hosted forms send it).
+  // Only require it when the form owner turned on "browser verification".
+  if (challengeToken) {
+    const result = verifyFormChallenge(challengeToken, formId);
+    if (!result.ok) {
+      if (result.code === 'too_fast') {
+        return { allowed: false, reason: 'spam_detected', code: 'too_fast' };
+      }
+      if (settings.requireChallenge) {
+        return {
+          allowed: false,
+          reason: 'Verification expired. Refresh the page and try again.',
+          code: 'challenge',
+        };
+      }
+    }
+  } else if (settings.requireChallenge) {
+    return {
+      allowed: false,
+      reason: 'This form requires browser verification',
+      code: 'challenge',
+    };
+  }
+
+  // 4. Rate limiting
+  if (settings.rateLimit?.enabled !== false && ip) {
     const config = {
       maxPerMinute: settings.rateLimit?.maxPerMinute || 5,
       maxPerHour: settings.rateLimit?.maxPerHour || 30,
     };
-
-    // Rate limit by IP + formId combination
-    const rateLimitKey = `${ip}:${formId}`;
-    const result = checkRateLimit(rateLimitKey, config);
-
+    const result = checkRateLimit(`${ip}:${formId}`, config);
     if (!result.allowed) {
       return {
         allowed: false,
@@ -92,8 +156,37 @@ export async function checkSpam(params: SpamCheckParams): Promise<SpamCheckResul
     }
   }
 
-  // 3. reCAPTCHA v3 verification (only if token provided)
-  // Hosted form page sends token automatically, API calls don't need it
+  // 5. Duplicate identical payload from the same IP (double-submit / retry bots)
+  if (ip && isDuplicate(formId, ip, data)) {
+    return {
+      allowed: false,
+      reason: 'Duplicate submission. Please wait a moment before sending again.',
+      code: 'duplicate',
+    };
+  }
+
+  // 6. Link-density content filter
+  if (settings.contentFilter?.enabled !== false) {
+    const maxLinks = settings.contentFilter?.maxLinks ?? 10;
+    const links = countLinks(cleanSpamFields(data));
+    if (links > maxLinks) {
+      return {
+        allowed: false,
+        reason: 'Submission blocked',
+        code: 'content_filter',
+      };
+    }
+  }
+
+  // 7. reCAPTCHA v3 — verify when a token is sent; require it when enabled
+  if (settings.recaptcha?.enabled && !recaptchaToken) {
+    return {
+      allowed: false,
+      reason: 'reCAPTCHA verification required',
+      code: 'recaptcha',
+    };
+  }
+
   if (recaptchaToken) {
     const secretKey = settings.recaptcha?.secretKey || process.env.RECAPTCHA_SECRET_KEY;
     if (secretKey) {
@@ -103,7 +196,6 @@ export async function checkSpam(params: SpamCheckParams): Promise<SpamCheckResul
         ip,
         settings.recaptcha?.minScore || 0.5
       );
-
       if (!recaptchaResult.allowed) {
         return recaptchaResult;
       }
@@ -113,9 +205,6 @@ export async function checkSpam(params: SpamCheckParams): Promise<SpamCheckResul
   return { allowed: true };
 }
 
-/**
- * Verify reCAPTCHA v3 token with Google
- */
 async function verifyRecaptcha(
   secretKey: string,
   token: string,
@@ -138,9 +227,6 @@ async function verifyRecaptcha(
     const data = await response.json() as {
       success: boolean;
       score?: number;
-      action?: string;
-      challenge_ts?: string;
-      hostname?: string;
       'error-codes'?: string[];
     };
 
@@ -153,7 +239,6 @@ async function verifyRecaptcha(
       };
     }
 
-    // Check score (v3 only)
     if (typeof data.score === 'number' && data.score < minScore) {
       return {
         allowed: false,
@@ -165,72 +250,7 @@ async function verifyRecaptcha(
     return { allowed: true };
   } catch (error) {
     console.error('reCAPTCHA verification error:', error);
-    // On error, allow submission but log the issue
-    // This prevents legitimate users from being blocked due to network issues
+    // Don't block humans because Google was unreachable
     return { allowed: true };
   }
-}
-
-/**
- * Parse spam settings from form settings JSON
- * If reCAPTCHA is enabled but no secretKey provided, uses env var
- */
-export function parseSpamSettings(formSettings: string | null): SpamSettings {
-  if (!formSettings) {
-    return getDefaultSpamSettings();
-  }
-
-  try {
-    const settings = JSON.parse(formSettings) as { spam?: SpamSettings };
-    const spamSettings = settings.spam || getDefaultSpamSettings();
-
-    // If reCAPTCHA enabled but no key, use env var
-    if (spamSettings.recaptcha?.enabled && !spamSettings.recaptcha.secretKey) {
-      spamSettings.recaptcha.secretKey = process.env.RECAPTCHA_SECRET_KEY || '';
-    }
-
-    return spamSettings;
-  } catch {
-    return getDefaultSpamSettings();
-  }
-}
-
-/**
- * Get default spam settings for new forms
- * reCAPTCHA is disabled by default - must be explicitly enabled per form
- */
-export function getDefaultSpamSettings(): SpamSettings {
-  return {
-    honeypot: {
-      enabled: true,
-      fieldName: '_honeypot',
-    },
-    rateLimit: {
-      enabled: true,
-      maxPerMinute: 5,
-      maxPerHour: 30,
-    },
-    recaptcha: {
-      enabled: false,
-      secretKey: '',
-      minScore: 0.5,
-    },
-  };
-}
-
-/**
- * Clean spam-related fields from submission data
- */
-export function cleanSpamFields(data: Record<string, unknown>): Record<string, unknown> {
-  const cleaned = { ...data };
-  const spamFields = [
-    '_honeypot', '_gotcha', 'honeypot', 'g-recaptcha-response',
-    'recaptchaToken', '_recaptcha', '_redirect', '_subject'
-  ];
-
-  for (const field of spamFields) {
-    delete cleaned[field];
-  }
-
-  return cleaned;
 }

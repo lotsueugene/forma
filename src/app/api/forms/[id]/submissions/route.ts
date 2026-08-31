@@ -7,6 +7,8 @@ import { checkLimit, incrementSubmissionCount, getSubscriptionInfo } from '@/lib
 import { publishToUser } from '@/lib/notifications/pubsub';
 import { deliverSubmissionCreatedWebhook } from '@/lib/webhooks';
 import { checkSpam, parseSpamSettings, cleanSpamFields } from '@/lib/spam-protection';
+import { getClientIp } from '@/lib/api-rate-limit';
+import { CHALLENGE_FIELD } from '@/lib/spam-settings';
 import { sendSubmissionNotification, isEmailConfigured } from '@/lib/email';
 import { deliverToIntegrations } from '@/lib/integrations';
 import { stripe, getPlatformFeePercentage } from '@/lib/stripe';
@@ -189,9 +191,10 @@ export async function POST(
     // Extract special fields before spam check
     const redirectUrl = data._redirect as string | undefined;
     const recaptchaToken = (data['g-recaptcha-response'] || data.recaptchaToken) as string | undefined;
+    const challengeToken = (data[CHALLENGE_FIELD] || data._challenge) as string | undefined;
 
-    // Get metadata from request
-    const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip');
+    // Use the proxy-appended IP, not the client-controlled first X-Forwarded-For hop
+    const ip = getClientIp(request);
 
     // Run spam protection checks
     const spamSettings = parseSpamSettings(form.settings);
@@ -201,11 +204,14 @@ export async function POST(
       data,
       settings: spamSettings,
       recaptchaToken,
+      challengeToken,
+      origin: request.headers.get('origin'),
+      referer: request.headers.get('referer'),
     });
 
     if (!spamCheck.allowed) {
-      // For honeypot, silently accept but don't store (don't reveal to bots)
-      if (spamCheck.code === 'honeypot') {
+      // Honeypot / instant-submit: look successful so bots don't iterate
+      if (spamCheck.code === 'honeypot' || spamCheck.code === 'too_fast') {
         if (redirectUrl) {
           return NextResponse.redirect(redirectUrl, 303);
         }
@@ -215,8 +221,7 @@ export async function POST(
         );
       }
 
-      // For rate limiting, return 429 with retry-after header
-      if (spamCheck.code === 'rate_limit') {
+      if (spamCheck.code === 'rate_limit' || spamCheck.code === 'duplicate') {
         const headers = new Headers(corsHeaders);
         if (spamCheck.retryAfter) {
           headers.set('Retry-After', String(spamCheck.retryAfter));
@@ -227,7 +232,13 @@ export async function POST(
         );
       }
 
-      // For reCAPTCHA failures
+      if (spamCheck.code === 'origin' || spamCheck.code === 'challenge') {
+        return NextResponse.json(
+          { error: spamCheck.reason || 'Submission blocked' },
+          { status: 403, headers: corsHeaders }
+        );
+      }
+
       return NextResponse.json(
         { error: spamCheck.reason || 'Submission blocked' },
         { status: 422, headers: corsHeaders }

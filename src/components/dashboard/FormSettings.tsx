@@ -7,8 +7,6 @@ import {
   LinkSimple,
   Code,
   EyeSlash,
-  Bell,
-  Lock,
   Trash,
   Check,
   Spinner,
@@ -16,6 +14,7 @@ import {
   UploadSimple,
   Warning,
   Info,
+  ShieldCheck,
 } from '@phosphor-icons/react';
 import { cn } from '@/lib/utils';
 import { useWorkspace } from '@/contexts/workspace-context';
@@ -23,6 +22,12 @@ import UpgradeModal from './UpgradeModal';
 import { validateSlug } from '@/lib/slug';
 import { Select } from '@/components/ui/Select';
 import { ColorPicker } from '@/components/ui/ColorPicker';
+import {
+  getDefaultSpamSettings,
+  buildHtmlEmbed,
+  normalizeDomain,
+  type SpamSettings,
+} from '@/lib/spam-settings';
 
 interface FormField {
   id: string;
@@ -52,6 +57,7 @@ interface FormSettings {
   saveAndResume?: boolean;
   customCss?: string;
   displayMode?: 'classic' | 'conversational';
+  spam?: SpamSettings;
 }
 
 interface Form {
@@ -66,7 +72,7 @@ interface Form {
   views: number;
 }
 
-type SettingsTab = 'general' | 'branding' | 'link' | 'hidden' | 'embed' | 'danger';
+type SettingsTab = 'general' | 'branding' | 'link' | 'hidden' | 'embed' | 'spam' | 'danger';
 
 const settingsTabs: { id: SettingsTab; label: string; icon: typeof Gear }[] = [
   { id: 'general', label: 'General', icon: Gear },
@@ -74,6 +80,7 @@ const settingsTabs: { id: SettingsTab; label: string; icon: typeof Gear }[] = [
   { id: 'link', label: 'Link & Customizations', icon: LinkSimple },
   { id: 'hidden', label: 'Hidden Fields', icon: EyeSlash },
   { id: 'embed', label: 'Embed & API', icon: Code },
+  { id: 'spam', label: 'Spam Protection', icon: ShieldCheck },
   { id: 'danger', label: 'Danger Zone', icon: Trash },
 ];
 
@@ -126,6 +133,24 @@ export default function FormSettingsPanel({
 
   const hasBookingField = (form.fields || []).some((f) => f.type === 'booking');
   const hasChanges = JSON.stringify({ name, description, slug, bookingSlug, status, settings }) !== originalState;
+
+  const defaults = getDefaultSpamSettings();
+  const spam = {
+    ...defaults,
+    ...settings.spam,
+    honeypot: { ...defaults.honeypot, ...settings.spam?.honeypot },
+    rateLimit: { ...defaults.rateLimit, ...settings.spam?.rateLimit },
+    recaptcha: { ...defaults.recaptcha, ...settings.spam?.recaptcha },
+    contentFilter: { ...defaults.contentFilter, ...settings.spam?.contentFilter },
+    allowedDomains: settings.spam?.allowedDomains ?? defaults.allowedDomains,
+    requireChallenge: settings.spam?.requireChallenge ?? defaults.requireChallenge,
+  };
+  const updateSpam = (patch: Partial<SpamSettings>) => {
+    setSettings({
+      ...settings,
+      spam: { ...spam, ...patch },
+    });
+  };
 
   // Workspace-level info for live URL preview + as-you-type collision detection
   type WorkspaceFormRef = { id: string; name: string; slug: string | null; bookingSlug: string | null; hasBookingField?: boolean };
@@ -197,6 +222,13 @@ export default function FormSettingsPanel({
   const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
   const formPageUrl = `${baseUrl}/f/${form.id}`;
   const apiEndpoint = `${baseUrl}/api/forms/${form.id}/submissions`;
+  const htmlEmbed = buildHtmlEmbed({
+    actionUrl: apiEndpoint,
+    fields: form.fields,
+    formId: form.id,
+    scriptOrigin: baseUrl,
+    honeypotField: spam.honeypot.fieldName,
+  });
 
   const copyToClipboard = (text: string, key: string) => {
     navigator.clipboard.writeText(text);
@@ -208,6 +240,13 @@ export default function FormSettingsPanel({
     setSaving(true);
     setError('');
     try {
+      const allowedDomains = (settings.spam?.allowedDomains || [])
+        .map(normalizeDomain)
+        .filter((domain): domain is string => Boolean(domain));
+      const payloadSettings = settings.spam
+        ? { ...settings, spam: { ...settings.spam, allowedDomains } }
+        : settings;
+
       const res = await fetch(`/api/forms/${form.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -217,7 +256,7 @@ export default function FormSettingsPanel({
           slug: slug || null,
           bookingSlug: bookingSlug || null,
           status,
-          settings,
+          settings: payloadSettings,
           fields: form.fields,
         }),
       });
@@ -225,7 +264,10 @@ export default function FormSettingsPanel({
         const data = await res.json().catch(() => ({}));
         throw new Error(data.error || 'Failed to save');
       }
-      setOriginalState(JSON.stringify({ name, description, slug, bookingSlug, status, settings }));
+      if (payloadSettings !== settings) {
+        setSettings(payloadSettings);
+      }
+      setOriginalState(JSON.stringify({ name, description, slug, bookingSlug, status, settings: payloadSettings }));
       onFormUpdate();
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to save');
@@ -753,11 +795,15 @@ export default function FormSettingsPanel({
                 <label className="form-label">HTML Embed</label>
                 <textarea
                   readOnly
-                  value={`<form action="${apiEndpoint}" method="POST">\n${form.fields.filter(f => !['page_break', 'hidden', 'image', 'video', 'payment'].includes(f.type)).map(f => `  <label>${f.label}</label>\n  <input type="${f.type === 'textarea' ? 'text' : f.type}" name="${f.id}">`).join('\n')}\n  <button type="submit">Submit</button>\n</form>`}
+                  value={htmlEmbed}
                   className="input font-mono text-xs h-40 w-full"
                 />
+                <p className="text-xs text-gray-500 mt-1.5">
+                  Includes a hidden honeypot and a small script that blocks the most common bot posts.
+                  Re-copy this snippet if you already embedded an older version.
+                </p>
                 <button
-                  onClick={() => copyToClipboard(`<form action="${apiEndpoint}" method="POST">\n${form.fields.filter(f => !['page_break', 'hidden', 'image', 'video', 'payment'].includes(f.type)).map(f => `  <label>${f.label}</label>\n  <input type="${f.type === 'textarea' ? 'text' : f.type}" name="${f.id}">`).join('\n')}\n  <button type="submit">Submit</button>\n</form>`, 'html')}
+                  onClick={() => copyToClipboard(htmlEmbed, 'html')}
                   className="btn btn-secondary mt-2"
                 >
                   {copied === 'html' ? <Check size={16} /> : <Copy size={16} />}
@@ -779,6 +825,177 @@ export default function FormSettingsPanel({
                   Copy cURL
                 </button>
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* Spam Protection */}
+        {activeTab === 'spam' && (
+          <div className="card p-6 space-y-5">
+            <div>
+              <h3 className="font-medium text-gray-900">Spam Protection</h3>
+              <p className="text-sm text-gray-500 mt-1">
+                Your submission URL is public. These checks stop automated posts without adding a CAPTCHA.
+              </p>
+            </div>
+            <div className="space-y-4 max-w-lg">
+              <div className="flex items-center justify-between py-3 border-b border-gray-200">
+                <div>
+                  <label className="text-sm text-gray-900">Honeypot field</label>
+                  <p className="text-xs text-gray-500">Trap bots that autofill hidden inputs. Always on for hosted forms.</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => updateSpam({
+                    honeypot: { ...spam.honeypot, enabled: !spam.honeypot.enabled },
+                  })}
+                  className={cn(
+                    'w-11 h-6 rounded-full transition-colors relative',
+                    spam.honeypot.enabled ? 'bg-safety-orange' : 'bg-gray-300'
+                  )}
+                >
+                  <div className={cn('w-5 h-5 rounded-full bg-white absolute top-0.5 transition-transform shadow', spam.honeypot.enabled ? 'translate-x-5' : 'translate-x-0.5')} />
+                </button>
+              </div>
+
+              <div className="flex items-center justify-between py-3 border-b border-gray-200">
+                <div>
+                  <label className="text-sm text-gray-900">Rate limiting</label>
+                  <p className="text-xs text-gray-500">Cap how often the same visitor can submit this form.</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => updateSpam({
+                    rateLimit: { ...spam.rateLimit, enabled: !spam.rateLimit.enabled },
+                  })}
+                  className={cn(
+                    'w-11 h-6 rounded-full transition-colors relative',
+                    spam.rateLimit.enabled ? 'bg-safety-orange' : 'bg-gray-300'
+                  )}
+                >
+                  <div className={cn('w-5 h-5 rounded-full bg-white absolute top-0.5 transition-transform shadow', spam.rateLimit.enabled ? 'translate-x-5' : 'translate-x-0.5')} />
+                </button>
+              </div>
+              {spam.rateLimit.enabled && (
+                <div className="grid grid-cols-2 gap-3 -mt-1 pb-3 border-b border-gray-200">
+                  <div className="form-field">
+                    <label className="form-label">Per minute</label>
+                    <input
+                      type="number"
+                      min={1}
+                      max={60}
+                      value={spam.rateLimit.maxPerMinute}
+                      onChange={(e) => updateSpam({
+                        rateLimit: { ...spam.rateLimit, maxPerMinute: Math.max(1, parseInt(e.target.value, 10) || 1) },
+                      })}
+                      className="input"
+                    />
+                  </div>
+                  <div className="form-field">
+                    <label className="form-label">Per hour</label>
+                    <input
+                      type="number"
+                      min={1}
+                      max={500}
+                      value={spam.rateLimit.maxPerHour}
+                      onChange={(e) => updateSpam({
+                        rateLimit: { ...spam.rateLimit, maxPerHour: Math.max(1, parseInt(e.target.value, 10) || 1) },
+                      })}
+                      className="input"
+                    />
+                  </div>
+                </div>
+              )}
+
+              <div className="flex items-center justify-between py-3 border-b border-gray-200">
+                <div>
+                  <label className="text-sm text-gray-900">Link filter</label>
+                  <p className="text-xs text-gray-500">Block submissions stuffed with URLs (typical SEO spam).</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => updateSpam({
+                    contentFilter: { ...spam.contentFilter, enabled: !spam.contentFilter.enabled },
+                  })}
+                  className={cn(
+                    'w-11 h-6 rounded-full transition-colors relative',
+                    spam.contentFilter.enabled ? 'bg-safety-orange' : 'bg-gray-300'
+                  )}
+                >
+                  <div className={cn('w-5 h-5 rounded-full bg-white absolute top-0.5 transition-transform shadow', spam.contentFilter.enabled ? 'translate-x-5' : 'translate-x-0.5')} />
+                </button>
+              </div>
+              {spam.contentFilter.enabled && (
+                <div className="form-field -mt-1 pb-3 border-b border-gray-200">
+                  <label className="form-label">Max links per submission</label>
+                  <input
+                    type="number"
+                    min={1}
+                    max={50}
+                    value={spam.contentFilter.maxLinks}
+                    onChange={(e) => updateSpam({
+                      contentFilter: { ...spam.contentFilter, maxLinks: Math.max(1, parseInt(e.target.value, 10) || 1) },
+                    })}
+                    className="input w-28"
+                  />
+                </div>
+              )}
+
+              <div className="flex items-start justify-between py-3 border-b border-gray-200 gap-4">
+                <div>
+                  <label className="text-sm text-gray-900">Require browser verification</label>
+                  <p className="text-xs text-gray-500">
+                    Blocks raw POST spam to your endpoint. Use this if bots are hitting the API URL directly.
+                    Curl, Zapier, and other server-side posts will fail unless they request a challenge token first.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => updateSpam({ requireChallenge: !spam.requireChallenge })}
+                  className={cn(
+                    'w-11 h-6 rounded-full transition-colors relative shrink-0 mt-0.5',
+                    spam.requireChallenge ? 'bg-safety-orange' : 'bg-gray-300'
+                  )}
+                >
+                  <div className={cn('w-5 h-5 rounded-full bg-white absolute top-0.5 transition-transform shadow', spam.requireChallenge ? 'translate-x-5' : 'translate-x-0.5')} />
+                </button>
+              </div>
+              {spam.requireChallenge && (
+                <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-50 border border-amber-200 -mt-1">
+                  <Warning size={16} className="text-amber-600 shrink-0 mt-0.5" />
+                  <p className="text-xs text-amber-800">
+                    Re-copy the HTML embed from the Embed & API tab so your site loads the verification script.
+                    Hosted Forma pages already send a token.
+                  </p>
+                </div>
+              )}
+
+              <div className="form-field py-3">
+                <label className="form-label">Allowed websites</label>
+                <p className="text-xs text-gray-500 mb-2">
+                  Optional. One domain per line (e.g. yoursite.com). Leave empty to accept submissions from anywhere.
+                  When set, curl and other clients with no Origin header are blocked.
+                  Include this app&apos;s domain too if you still use the hosted form page.
+                </p>
+                <textarea
+                  value={(settings.spam?.allowedDomains || []).join('\n')}
+                  onChange={(e) => {
+                    const allowedDomains = e.target.value.split('\n');
+                    updateSpam({ allowedDomains });
+                  }}
+                  className="input min-h-24 font-mono text-sm"
+                  placeholder={'yoursite.com\nwww.yoursite.com'}
+                />
+              </div>
+
+              <button
+                onClick={saveSettings}
+                disabled={saving || !hasChanges || hasSlugConflict}
+                className={cn('btn btn-primary', (!hasChanges || hasSlugConflict) && 'opacity-50')}
+                title={hasSlugConflict ? 'Fix slug conflicts before saving' : undefined}
+              >
+                {saving ? <><Spinner size={16} className="animate-spin" /> Saving...</> : 'Save Changes'}
+              </button>
             </div>
           </div>
         )}

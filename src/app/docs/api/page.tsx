@@ -52,8 +52,12 @@ print(response.json())`,
   <input type="text" name="name" placeholder="Name" required />
   <input type="email" name="email" placeholder="Email" required />
   <textarea name="message" placeholder="Message"></textarea>
+  <div aria-hidden="true" style="position:absolute;left:-10000px">
+    <input type="text" name="_gotcha" tabindex="-1" autocomplete="off" />
+  </div>
   <button type="submit">Submit</button>
-</form>`,
+</form>
+<script src="https://yourapp.com/js/forma-protect.js" data-form="FORM_ID" defer></script>`,
 };
 
 type CodeLang = keyof typeof codeExamples;

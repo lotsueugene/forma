@@ -798,6 +798,18 @@ export default function FormDetailPage() {
               {form.formType === 'endpoint' && (
                 <p className="text-xs text-gray-500 mt-2">
                   POST any JSON data to this endpoint. No predefined fields required.
+                  {canEdit && (
+                    <>
+                      {' '}Getting bot spam?{' '}
+                      <button
+                        type="button"
+                        onClick={() => setActiveTab('settings')}
+                        className="text-safety-orange hover:underline font-medium"
+                      >
+                        Open spam protection
+                      </button>
+                    </>
+                  )}
                 </p>
               )}
             </div>
